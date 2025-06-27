@@ -26,7 +26,7 @@ app.use('/invoice', invoiceRoutes);
 app.use('/admin', authRoutes);
 
 app.get('/', (req, res) => {
-  res.redirect('/admin');
+  res.redirect('/admin/login');
 });
 
 const PORT = process.env.PORT || 3000;
