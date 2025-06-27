@@ -1,0 +1,11 @@
+<%- include('../partials/header', { title: 'Login', isAdmin: false }) %>
+
+<h2>Login Admin</h2>
+<form action="/admin/login" method="POST">
+  <input type="text" name="username" placeholder="Username" required>
+  <input type="password" name="password" placeholder="Password" required>
+  <button type="submit">Login</button>
+  <% if (error) { %><p class="error"><%= error %></p><% } %>
+</form>
+
+<%- include('../partials/footer') %>

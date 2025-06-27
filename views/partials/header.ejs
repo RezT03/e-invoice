@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title || 'Invoice App' %></title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="/invoice/history">Riwayat Invoice</a>
+      <% if (isAdmin) { %>
+        <a href="/invoice/create">+ Buat Invoice</a>
+        <a href="/admin/logout">Logout</a>
+      <% } else { %>
+        <a href="/admin/login">Login Admin</a>
+      <% } %>
+    </nav>
+  </header>
+  <main>
