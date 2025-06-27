@@ -87,7 +87,7 @@ module.exports = function (invoice) {
 			.lineWidth(2)
 			.stroke() // garis tebal atas
 		doc.font("Helvetica-Bold").fontSize(9)
-		doc.text("Produk", col.produk, tableTop, { width: 170 })
+		doc.text("Produk", col.produk +5, tableTop, { width: 170 })
 		doc.text("Kuantitas", col.qty, tableTop, { width: 60, align: "center" })
 		doc.text("Harga", col.harga, tableTop, { width: 70, align: "center" })
 		doc.text("Diskon", col.diskon, tableTop, { width: 50, align: "center" })
@@ -106,11 +106,11 @@ module.exports = function (invoice) {
 			const itemTotal = item.qty * item.unit_price
 			subtotal += itemTotal
 			doc.font("Helvetica").fontSize(9)
-			doc.text(item.name, col.produk, y, { width: 170 })
+			doc.text(item.name, col.produk + 5, y, { width: 170 })
 			doc.text(item.qty, col.qty, y, { width: 60, align: "center" })
-			doc.text(formatRupiah(item.unit_price), col.harga, y, {
+			doc.text(formatRupiah(item.unit_price), col.harga -10, y, {
 				width: 70,
-				align: "center",
+				align: "right",
 			})
 			doc.text(item.discount ? `${item.discount}%` : "0%", col.diskon, y, {
 				width: 50,
@@ -122,9 +122,9 @@ module.exports = function (invoice) {
 				y,
 				{ width: 60, align: "center" },
 			)
-			doc.text(formatRupiah(itemTotal), col.jumlah, y, {
+			doc.text(formatRupiah(itemTotal), col.jumlah - 5, y, {
 				width: 70,
-				align: "center",
+				align: "right",
 			})
 			// garis tipis antar item
 			doc
@@ -146,9 +146,9 @@ module.exports = function (invoice) {
 		doc
 			.font("Helvetica-Bold")
 			.text("Subtotal", col.pajak, y, { width: 60, align: "center" })
-		doc.text(formatRupiah(subtotal), col.jumlah, y, {
+		doc.text(formatRupiah(subtotal), col.jumlah - 5, y, {
 			width: 70,
-			align: "center",
+			align: "right",
 		})
 		y += 15
 		;(invoice.taxes || []).forEach((tax) => {
@@ -156,15 +156,15 @@ module.exports = function (invoice) {
 			doc
 				.font("Helvetica-Bold")
 				.text(tax.name, col.pajak, y, { width: 60, align: "center" })
-			doc.text(formatRupiah(t), col.jumlah, y, { width: 70, align: "center" })
+			doc.text(formatRupiah(t), col.jumlah - 5, y, { width: 70, align: "right" })
 			y += 15
 		})
 		doc
 			.font("Helvetica-Bold")
 			.text("Total", col.pajak, y, { width: 60, align: "center" })
-		doc.text(formatRupiah(subtotal + taxTotal), col.jumlah, y, {
+		doc.text(formatRupiah(subtotal + taxTotal), col.jumlah - 5, y, {
 			width: 70,
-			align: "center",
+			align: "right",
 		})
 
 		// garis tebal bawah summary

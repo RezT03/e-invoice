@@ -29,7 +29,7 @@ module.exports = function (invoice) {
 			})
 
 		// Cek apakah alamat melewati batas tengah halaman (misal Y > 400)
-		let nextY = alamatResult.y + 10
+		let nextY = alamatResult.y + 5
 		if (nextY > 400) nextY = 400
 
 		// Nomor telepon dan elemen berikutnya
@@ -66,6 +66,12 @@ module.exports = function (invoice) {
 		doc
 			.font("Helvetica")
 			.text(`  : ${formatTanggal(invoice.invoice_date)}`, 400, 170)
+		if (invoice.recipient_npwp) {
+			yAfter = doc.font("Helvetica-Bold").text("NPWP", 320, 190, { width: 200 })
+			doc
+				.font("Helvetica")
+				.text(`  : ${invoice.recipient_npwp}`, 400, 190)
+		}
 
 		// Tabel Barang
 		const tableTop = 230
@@ -74,14 +80,15 @@ module.exports = function (invoice) {
 			desc: 80,
 			qty: 270,
 			unit: 330,
-			total: 370,
+			unit_price: 390, // <--- Tambahkan ini
+			total: 460,
 			right: 540,
 		}
 
 		// Table Header
 		doc
 			.lineWidth(1)
-			.rect(col.no, tableTop, col.right - col.no, 25)
+			.rect(col.no, tableTop, col.right - col.no, 0)
 			.stroke()
 		doc.font("Helvetica-Bold").fontSize(11)
 		doc.text("No", col.no, tableTop + 7, {
@@ -92,12 +99,16 @@ module.exports = function (invoice) {
 			width: col.qty - col.desc,
 			align: "center",
 		})
-		doc.text("Kuantitas", col.qty, tableTop + 7, {
+		doc.text("Kuantitas", col.qty - 15, tableTop + 7, {
 			width: col.unit - col.qty,
 			align: "center",
 		})
-		doc.text("Satuan", col.unit, tableTop + 7, {
-			width: col.total - col.unit+25,
+		doc.text("Satuan", col.unit - 15, tableTop + 7, {
+			width: col.unit_price - col.unit,
+			align: "center",
+		})
+		doc.text("Harga Satuan", col.unit_price - 15, tableTop + 7, {
+			width: col.total - col.unit_price + 10,
 			align: "center",
 		})
 		doc.text("Total", col.total, tableTop + 7, {
@@ -124,26 +135,35 @@ module.exports = function (invoice) {
 				width: col.desc - col.no,
 				align: "center",
 			})
-			doc.text(item.name, col.desc, y + 7, {
+			doc.text(item.name, col.desc + 10, y + 7, {
 				width: col.qty - col.desc,
-				align: "center",
+				align: "left",
 			})
-			doc.text(item.qty, col.qty, y + 7, {
+			doc.text(item.qty, col.qty - 15, y + 7, {
 				width: col.unit - col.qty,
 				align: "center",
 			})
-			doc.text(item.unit, col.unit, y + 7, {
-				width: col.total - col.unit+25,
+			doc.text(item.unit, col.unit - 15 , y + 7, {
+				width: col.unit_price - col.unit,
 				align: "center",
 			})
-			doc.text(formatRupiah(item.qty * item.unit_price), col.total - 5, y + 7, {
-				width: col.right - col.total,
+			doc.text(formatRupiah(item.unit_price), col.unit_price - 15, y + 7, {
+				width: col.total - col.unit_price,
 				align: "right",
 			})
+			doc.text(
+				formatRupiah(item.qty * item.unit_price),
+				col.total - 10,
+				y + 7,
+				{
+					width: col.right - col.total,
+					align: "right",
+				},
+			)
 			// Garis kotak tiap baris (opsional)
 			doc
-				.lineWidth(1)
-				.rect(col.no, y, col.right - col.no, 25)
+				.lineWidth(0.2)
+				.rect(col.no, y, col.right - col.no, 0)
 				.stroke()
 			y += 25
 		})
@@ -162,48 +182,48 @@ module.exports = function (invoice) {
 		let taxValue = subtotal * (taxPercent / 100)
 		let total = subtotal - discount + taxValue
 
-		doc.font("Helvetica-Bold").text("SUBTOTAL", col.total, y, {
+		doc.font("Helvetica-Bold").text("SUBTOTAL", col.total - 70, y + 5, {
 			width: col.right - col.total,
 			align: "left",
 		})
 		doc
 			.font("Helvetica")
-			.text(formatRupiah(subtotal), col.total + 10, y, { align: "right" })
+			.text(formatRupiah(subtotal), col.total + 10, y + 5, { align: "right" })
 		y += 18
-		doc.font("Helvetica-Bold").text("DISKON", col.total, y, {
+		doc.font("Helvetica-Bold").text("DISKON", col.total- 70, y + 5, {
 			width: col.right - col.total,
 			align: "left",
 		})
 		doc
 			.font("Helvetica")
-			.text(formatRupiah(discount), col.total + 10, y, { align: "right" })
+			.text(formatRupiah(discount), col.total + 10, y + 5, { align: "right" })
 		y += 18
-		doc.font("Helvetica-Bold").text("RASIO PAJAK", col.total, y, {
+		doc.font("Helvetica-Bold").text("RASIO PAJAK", col.total- 70, y + 5, {
 			width: col.right - col.total,
 			align: "left",
 		})
 		doc
 			.font("Helvetica")
-			.text(`${taxPercent.toFixed(2)}%`, col.total + 10, y, { align: "right" })
+			.text(`${taxPercent.toFixed(2)}%`, col.total + 10, y + 5, { align: "right" })
 		y += 18
-		doc.font("Helvetica-Bold").text(`TOTAL ${taxName}`, col.total, y, {
+		doc.font("Helvetica-Bold").text(`TOTAL ${taxName}`, col.total- 70, y + 5, {
 			width: col.right - col.total,
 			align: "left",
 		})
 		doc
 			.font("Helvetica")
-			.text(formatRupiah(taxValue), col.total + 10, y, { align: "right" })
+			.text(formatRupiah(taxValue), col.total - 10, y + 5, { align: "right" })
 		y += 18
-		doc.font("Helvetica-Bold").text("TOTAL", col.total, y, {
+		doc.font("Helvetica-Bold").text("TOTAL", col.total- 70, y + 5, {
 			width: col.right - col.total,
 			align: "left",
 		})
 		doc
 			.font("Helvetica-Bold")
-			.text(formatRupiah(total), col.total + 10, y, { align: "right" })
+			.text(formatRupiah(total), col.total + 10, y + 5, { align: "right" })
 
 		// Footer
-		y -= 50
+		y -= 60
 		doc.font("Helvetica").fontSize(11).text("Hormat Kami", 95, y)
 		y += 60
 		doc.font("Helvetica-Bold").fontSize(12).text(invoice.company_name, 70, y)
