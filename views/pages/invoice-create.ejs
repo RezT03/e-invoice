@@ -2,55 +2,99 @@
 
 <h2>Buat Invoice Baru</h2>
 <form id="invoiceForm">
-  <!-- Data Umum -->
-  <input type="text" name="invoice_number" placeholder="Nomor Invoice" required>
-  <input type="text" name="recipient_name" placeholder="Nama Penerima" required>
-  <input type="text" name="recipient_phone" placeholder="Nomor HP" required>
-  <input type="text" name="recipient_npwp" placeholder="NPWP (opsional)">
-  <textarea name="recipient_address" placeholder="Alamat" required></textarea>
-  <input type="date" name="invoice_date" required>
+	<!-- Data Umum -->
+	<input
+		type="text"
+		name="invoice_number"
+		placeholder="Nomor Invoice"
+		required
+	/>
+	<input
+		type="text"
+		name="recipient_name"
+		placeholder="Nama Penerima"
+		required
+	/>
+	<input type="text" name="recipient_phone" placeholder="Nomor HP" required />
+	<input type="text" name="recipient_npwp" placeholder="NPWP (opsional)" />
+	<textarea name="recipient_address" placeholder="Alamat" required></textarea>
+	<input type="date" name="invoice_date" required />
 
-  <label>Pilih Perusahaan Pengirim:</label>
-  <select name="company_id" required>
-    <% companies.forEach(c => { %>
-      <option value="<%= c.id %>"><%= c.name %></option>
-    <% }) %>
-  </select>
+	<label>Pilih Perusahaan Pengirim:</label>
+	<select name="company_id" required>
+		<% companies.forEach(c => { %>
+		<option value="<%= c.id %>"><%= c.name %></option>
+		<% }) %>
+	</select>
 
-  <!-- Barang -->
-  <h3>Barang</h3>
-  <table id="itemTable">
-    <thead>
-      <tr>
-        <th>Nama</th><th>Jumlah</th><th>Satuan</th><th>Harga Satuan</th><th>Total</th>
-      </tr>
-    </thead>
-    <tbody id="items"></tbody>
-  </table>
-  <button type="button" onclick="addItem()">+ Barang</button>
+	<!-- Barang -->
+	<h3>Barang</h3>
+	<table id="itemTable">
+		<thead>
+			<tr>
+				<th>Nama</th>
+				<th>Jumlah</th>
+				<th>Satuan</th>
+				<th>Harga Satuan</th>
+				<th>Total</th>
+			</tr>
+		</thead>
+		<tbody id="items"></tbody>
+	</table>
+	<button type="button" onclick="addItem()">+ Barang</button>
 
-  <!-- Pajak -->
-  <h3>Pajak</h3>
-  <table id="taxTable">
-    <thead>
-      <tr>
-        <th>Jenis Pajak</th><th>Rasio (%)</th>
-      </tr>
-    </thead>
-    <tbody id="taxes"></tbody>
-  </table>
-  <button type="button" onclick="addTax()">+ Pajak</button>
+	<!-- Pajak -->
+	<h3>Pajak</h3>
+	<table id="taxTable">
+		<thead>
+			<tr>
+				<th>Jenis Pajak</th>
+				<th>Rasio (%)</th>
+			</tr>
+		</thead>
+		<tbody id="taxes"></tbody>
+	</table>
+	<button type="button" onclick="addTax()">+ Pajak</button>
 
-  <label>Status:</label>
-  <select name="status">
-    <option value="belum dibayar">Belum Dibayar</option>
-    <option value="lunas">Lunas</option>
-    <option value="dibayar sebagian">Dibayar Sebagian</option>
-  </select>
+	<label>Status:</label>
+	<select name="status">
+		<option value="belum dibayar">Belum Dibayar</option>
+		<option value="lunas">Lunas</option>
+		<option value="dibayar sebagian">Dibayar Sebagian</option>
+	</select>
 
-  <button type="submit">Simpan Invoice</button>
+	<label id="paidDateLabel" style="display: none">Tanggal Pelunasan:</label>
+	<input
+		type="date"
+		name="paid_date"
+		id="paidDateInput"
+		style="display: none"
+	/>
+
+	<button type="submit">Simpan Invoice</button>
 </form>
 <script src="/js/create.js"></script>
+<script>
+	const statusSelect = document.querySelector('select[name="status"]')
+	const paidDateLabel = document.getElementById("paidDateLabel")
+	const paidDateInput = document.getElementById("paidDateInput")
 
+	function togglePaidDate() {
+		if (statusSelect.value === "lunas") {
+			paidDateLabel.style.display = ""
+			paidDateInput.style.display = ""
+			paidDateInput.required = true
+		} else {
+			paidDateLabel.style.display = "none"
+			paidDateInput.style.display = "none"
+			paidDateInput.required = false
+			paidDateInput.value = ""
+		}
+	}
+
+	statusSelect.addEventListener("change", togglePaidDate)
+	// Inisialisasi saat halaman dimuat
+	togglePaidDate()
+</script>
 
 <%- include('../partials/footer') %>

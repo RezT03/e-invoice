@@ -15,13 +15,14 @@ exports.createInvoice = async (req, res) => {
 		items,
 		taxes,
 		status,
+		paid_date,
 	} = req.body
 
 	await db.execute(
 		`INSERT INTO invoices
     (id, invoice_number, recipient_name, recipient_phone, recipient_npwp, recipient_address,
-     invoice_date, company_id, items, taxes, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     invoice_date, company_id, items, taxes, status, paid_date)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		[
 			id,
 			invoice_number,
@@ -34,6 +35,7 @@ exports.createInvoice = async (req, res) => {
 			JSON.stringify(items),
 			JSON.stringify(taxes),
 			status,
+			paid_date || null, // <-- tambahkan ini
 		],
 	)
 
@@ -91,9 +93,10 @@ exports.updateInvoice = async (req, res) => {
 		recipient_address,
 		items,
 		taxes,
+		paid_date, // <-- tambahkan ini jika ingin bisa update
 	} = req.body
 	await db.execute(
-		`UPDATE invoices SET recipient_name=?, recipient_phone=?, recipient_npwp=?, recipient_address=?, items=?, taxes=? WHERE id=?`,
+		`UPDATE invoices SET recipient_name=?, recipient_phone=?, recipient_npwp=?, recipient_address=?, items=?, taxes=?, paid_date=? WHERE id=?`,
 		[
 			recipient_name,
 			recipient_phone,
@@ -101,6 +104,7 @@ exports.updateInvoice = async (req, res) => {
 			recipient_address,
 			JSON.stringify(items),
 			JSON.stringify(taxes),
+			paid_date || null, // <-- tambahkan ini
 			uuid,
 		],
 	)

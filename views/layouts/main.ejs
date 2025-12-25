@@ -1,30 +1,48 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %></title>
-  <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-  <header>
-    <nav>
-      <a href="/invoice/history">Riwayat Invoice</a>
-      <% if (isAdmin) { %>
-        <a href="/invoice/create">+ Buat Invoice</a>
-        <a href="/admin/logout">Logout</a>
-      <% } else { %>
-        <a href="/admin/login">Login Admin</a>
-      <% } %>
-    </nav>
-  </header>
-  <main>
-    <%- body %>
-  </main>
-</body>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title><%= title %></title>
+
+		<!-- FontAwesome CDN 6.4.0 (Icons library) -->
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+			integrity="sha512-iecdLmaskl7CVJkEzyD6lkDNlzVUbarSmtgQXxDcNqWoMg0do32T5D7mKontZWMNDL25AVyIu7G6CxSucVIurGQ=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		/>
+
+		<link rel="stylesheet" href="/css/style.css" />
+	</head>
+	<body>
+		<header>
+			<nav>
+				<a href="/invoice/history">
+					<i class="fas fa-list"></i>
+					Riwayat Invoice
+				</a>
+				<% if (isAdmin) { %>
+				<a href="/admin/invoice/create">
+					<i class="fa-regular fa-plus-circle"></i>
+					Buat Invoice
+				</a>
+				<a href="/auth/logout">
+					<i class="fa-regular fa-sign-out-alt"></i>
+					Logout
+				</a>
+				<% } else { %>
+				<a href="/auth/login">
+					<i class="fa-regular fa-sign-in-alt"></i>
+					Login Admin
+				</a>
+				<% } %>
+			</nav>
+		</header>
+		<main><%- body %></main>
+	</body>
 </html>
 
-// ==== FILE: views/pages/invoice-history.ejs ====
-
-
-// ==== FILE: views/pages/invoice-detail.ejs ====
+// ==== FILE: views/pages/invoice-history.ejs ==== // ==== FILE:
+views/pages/invoice-detail.ejs ====

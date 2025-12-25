@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="id">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Riwayat Invoice - Admin Dashboard</title>
+		<link rel="stylesheet" href="/css/admin-style.css" />
+		<style>
+			.filters {
+				background: white;
+				padding: 1.5rem;
+				border-radius: 8px;
+				margin-bottom: 2rem;
+				display: flex;
+				gap: 1rem;
+				flex-wrap: wrap;
+				align-items: center;
+			}
+
+			.filter-group {
+				display: flex;
+				gap: 0.5rem;
+				align-items: center;
+			}
+
+			.filter-group input,
+			.filter-group select {
+				padding: 0.5rem 0.75rem;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				font-size: 0.9rem;
+			}
+
+			.filter-group input:focus,
+			.filter-group select:focus {
+				outline: none;
+				border-color: #667eea;
+			}
+
+			.btn-filter {
+				padding: 0.5rem 1rem;
+				background: #667eea;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				font-size: 0.9rem;
+				transition: background 0.2s;
+			}
+
+			.btn-filter:hover {
+				background: #5568d3;
+			}
+
+			.table-container {
+				background: white;
+				border-radius: 8px;
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+				overflow: hidden;
+			}
+
+			.invoices-table {
+				width: 100%;
+				border-collapse: collapse;
+			}
+
+			.invoices-table thead {
+				background: #f8f9fa;
+				border-bottom: 2px solid #ddd;
+			}
+
+			.invoices-table th {
+				padding: 1rem;
+				text-align: left;
+				font-weight: 600;
+				color: #333;
+				font-size: 0.9rem;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+
+			.invoices-table td {
+				padding: 1rem;
+				border-bottom: 1px solid #eee;
+				color: #666;
+				font-size: 0.95rem;
+			}
+
+			.invoices-table tr:hover {
+				background: #f9f9f9;
+			}
+
+			.invoice-number {
+				font-weight: 600;
+				color: #333;
+			}
+
+			.badge {
+				display: inline-block;
+				padding: 0.25rem 0.75rem;
+				border-radius: 20px;
+				font-size: 0.85rem;
+				font-weight: 500;
+			}
+
+			.status-draft {
+				background: #e2e3e5;
+				color: #383d41;
+			}
+			.status-issued {
+				background: #cfe2ff;
+				color: #084298;
+			}
+			.status-sent {
+				background: #cff4fc;
+				color: #055160;
+			}
+			.status-paid {
+				background: #d1e7dd;
+				color: #0f5132;
+			}
+			.status-overdue {
+				background: #f8d7da;
+				color: #842029;
+			}
+			.status-cancelled {
+				background: #f5c2c7;
+				color: #842029;
+			}
+
+			.btn-small {
+				display: inline-block;
+				padding: 0.4rem 0.8rem;
+				background: #667eea;
+				color: white;
+				text-decoration: none;
+				border-radius: 4px;
+				font-size: 0.85rem;
+				transition: background 0.2s;
+				border: none;
+				cursor: pointer;
+			}
+
+			.btn-small:hover {
+				background: #5568d3;
+			}
+
+			.actions {
+				display: flex;
+				gap: 0.5rem;
+			}
+
+			.pagination {
+				display: flex;
+				gap: 0.5rem;
+				justify-content: center;
+				margin-top: 2rem;
+			}
+
+			.pagination a,
+			.pagination span {
+				padding: 0.5rem 0.75rem;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				text-decoration: none;
+				color: #667eea;
+				transition: all 0.2s;
+			}
+
+			.pagination a:hover {
+				background: #667eea;
+				color: white;
+			}
+
+			.pagination span.active {
+				background: #667eea;
+				color: white;
+				border-color: #667eea;
+			}
+
+			.pagination span.disabled {
+				color: #ccc;
+				cursor: not-allowed;
+			}
+
+			.empty-state {
+				padding: 3rem;
+				text-align: center;
+				color: #999;
+			}
+
+			.empty-state p {
+				margin-bottom: 1rem;
+				font-size: 1rem;
+			}
+
+			@media (max-width: 768px) {
+				.filters {
+					flex-direction: column;
+					align-items: stretch;
+				}
+
+				.filter-group {
+					flex-direction: column;
+				}
+
+				.filter-group input,
+				.filter-group select {
+					width: 100%;
+				}
+
+				.invoices-table {
+					font-size: 0.85rem;
+				}
+
+				.invoices-table th,
+				.invoices-table td {
+					padding: 0.75rem 0.5rem;
+				}
+
+				.actions {
+					flex-direction: column;
+				}
+
+				.btn-small {
+					width: 100%;
+					text-align: center;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="admin-container">
+			<!-- Sidebar -->
+			<aside class="sidebar">
+				<div class="sidebar-header">
+					<h2>E-Invoice</h2>
+					<p>Restu Production</p>
+				</div>
+
+				<nav class="sidebar-nav">
+					<a href="/admin/invoice/dashboard" class="nav-item">
+						<span class="icon">📊</span>
+						<span class="label">Dashboard</span>
+					</a>
+					<a href="/admin/invoice/create" class="nav-item">
+						<span class="icon">➕</span>
+						<span class="label">Buat Invoice</span>
+					</a>
+					<a href="/admin/invoice/history" class="nav-item active">
+						<span class="icon">📋</span>
+						<span class="label">Riwayat Invoice</span>
+					</a>
+				</nav>
+
+				<div class="sidebar-footer">
+					<a href="/auth/logout" class="logout-btn">
+						<span class="icon">🚪</span>
+						<span class="label">Logout</span>
+					</a>
+				</div>
+			</aside>
+
+			<!-- Main Content -->
+			<main class="main-content">
+				<div class="top-bar">
+					<h1>Riwayat Invoice</h1>
+				</div>
+
+				<!-- Filters -->
+				<div class="filters">
+					<div class="filter-group">
+						<input
+							type="text"
+							id="searchFilter"
+							placeholder="Cari nomor invoice atau penerima..."
+						/>
+					</div>
+					<button class="btn-filter" onclick="applyFilters()">Cari</button>
+				</div>
+
+				<!-- Table -->
+				<div class="table-container">
+					<% if (invoices && invoices.length > 0) { %>
+					<table class="invoices-table">
+						<thead>
+							<tr>
+								<th>No. Invoice</th>
+								<th>Penerima</th>
+								<th>Perusahaan</th>
+								<th>Tanggal</th>
+								<th>Total</th>
+								<th>Status</th>
+								<th>Aksi</th>
+							</tr>
+						</thead>
+						<tbody>
+							<% invoices.forEach(invoice => { %>
+							<tr>
+								<td>
+									<span class="invoice-number">
+										<%= invoice.invoice_number %>
+									</span>
+								</td>
+								<td><%= invoice.recipient_name %></td>
+								<td><%= invoice.company_name %></td>
+								<td>
+									<%= new Date(invoice.invoice_date).toLocaleDateString('id-ID')
+									%>
+								</td>
+								<td>
+									Rp <%= (invoice.total_amount || 0).toLocaleString('id-ID') %>
+								</td>
+								<td>
+									<span class="badge status-<%= invoice.status %>">
+										<%= invoice.status.toUpperCase() %>
+									</span>
+								</td>
+								<td>
+									<div class="actions">
+										<a
+											href="/admin/invoice/<%= invoice.id %>"
+											class="btn-small"
+										>
+											Lihat
+										</a>
+										<a
+											href="/admin/invoice/<%= invoice.id %>/pdf/normal"
+											class="btn-small"
+											download
+										>
+											PDF
+										</a>
+									</div>
+								</td>
+							</tr>
+							<% }); %>
+						</tbody>
+					</table>
+
+					<!-- Pagination -->
+					<% if (totalPages > 1) { %>
+					<div class="pagination">
+						<% if (currentPage > 1) { %>
+						<a href="?page=1">First</a>
+						<a href="?page=<%= currentPage - 1 %>">Previous</a>
+						<% } else { %>
+						<span class="disabled">First</span>
+						<span class="disabled">Previous</span>
+						<% } %> <% for (let i = Math.max(1, currentPage - 2); i <=
+						Math.min(totalPages, currentPage + 2); i++) { %> <% if (i ===
+						currentPage) { %>
+						<span class="active"><%= i %></span>
+						<% } else { %>
+						<a href="?page=<%= i %>"><%= i %></a>
+						<% } %> <% } %> <% if (currentPage < totalPages) { %>
+						<a href="?page=<%= currentPage + 1 %>">Next</a>
+						<a href="?page=<%= totalPages %>">Last</a>
+						<% } else { %>
+						<span class="disabled">Next</span>
+						<span class="disabled">Last</span>
+						<% } %>
+					</div>
+					<% } %> <% } else { %>
+					<div class="empty-state">
+						<p>📭 Belum ada invoice</p>
+						<a href="/admin/invoice/create" class="btn-small">
+							Buat Invoice Pertama
+						</a>
+					</div>
+					<% } %>
+				</div>
+			</main>
+		</div>
+
+		<script>
+			function applyFilters() {
+				const search = document.getElementById("searchFilter").value
+				if (search) {
+					window.location.href = `?page=1&search=${encodeURIComponent(search)}`
+				}
+			}
+
+			document
+				.getElementById("searchFilter")
+				.addEventListener("keypress", (e) => {
+					if (e.key === "Enter") {
+						applyFilters()
+					}
+				})
+		</script>
+	</body>
+</html>

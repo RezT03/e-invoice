@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Admin Login - E-Invoice Restu Production</title>
+		<link rel="stylesheet" href="/css/style.css" />
+		<style>
+			.login-container {
+				min-height: 100vh;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			}
+
+			.login-box {
+				background: white;
+				padding: 2rem;
+				border-radius: 8px;
+				box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+				width: 100%;
+				max-width: 400px;
+			}
+
+			.login-box h2 {
+				text-align: center;
+				color: #333;
+				margin-bottom: 1.5rem;
+				font-size: 1.8rem;
+			}
+
+			.form-group {
+				margin-bottom: 1.5rem;
+			}
+
+			.form-group label {
+				display: block;
+				margin-bottom: 0.5rem;
+				color: #555;
+				font-weight: 500;
+			}
+
+			.form-group input {
+				width: 100%;
+				padding: 0.75rem;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				font-size: 1rem;
+				transition: border-color 0.3s;
+			}
+
+			.form-group input:focus {
+				outline: none;
+				border-color: #667eea;
+				box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+			}
+
+			.login-btn {
+				width: 100%;
+				padding: 0.75rem;
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				color: white;
+				border: none;
+				border-radius: 4px;
+				font-size: 1rem;
+				font-weight: 600;
+				cursor: pointer;
+				transition: transform 0.2s;
+			}
+
+			.login-btn:hover {
+				transform: translateY(-2px);
+			}
+
+			.login-btn:active {
+				transform: translateY(0);
+			}
+
+			.error {
+				background-color: #f8d7da;
+				color: #721c24;
+				padding: 0.75rem;
+				border-radius: 4px;
+				margin-bottom: 1rem;
+				text-align: center;
+			}
+
+			.back-link {
+				text-align: center;
+				margin-top: 1rem;
+			}
+
+			.back-link a {
+				color: #667eea;
+				text-decoration: none;
+				font-size: 0.9rem;
+			}
+
+			.back-link a:hover {
+				text-decoration: underline;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="login-container">
+			<div class="login-box">
+				<h2>Admin Login</h2>
+
+				<% if (error) { %>
+				<div class="error"><%= error %></div>
+				<% } %>
+
+				<form action="/auth/login" method="POST">
+					<div class="form-group">
+						<label for="username">Username</label>
+						<input
+							type="text"
+							id="username"
+							name="username"
+							placeholder="Masukkan username"
+							required
+						/>
+					</div>
+
+					<div class="form-group">
+						<label for="password">Password</label>
+						<input
+							type="password"
+							id="password"
+							name="password"
+							placeholder="Masukkan password"
+							required
+						/>
+					</div>
+
+					<input type="hidden" name="return" value="<%= returnUrl %>" />
+
+					<button type="submit" class="login-btn">Login</button>
+				</form>
+
+				<div class="back-link">
+					<a href="/">← Kembali ke halaman utama</a>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
