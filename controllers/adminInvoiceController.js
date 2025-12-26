@@ -224,19 +224,47 @@ exports.getInvoiceHistory = async (req, res) => {
 		const limit = 20
 		const offset = (page - 1) * limit
 
+		// Get filter parameters
+		const search = req.query.search || ""
+		const date = req.query.date || ""
+		const status = req.query.status || ""
+
+		// Build WHERE clause dynamically
+		let whereClause = "WHERE 1=1"
+		const params = []
+
+		if (search) {
+			whereClause += " AND (i.invoice_number LIKE ? OR i.recipient_name LIKE ?)"
+			params.push(`%${search}%`, `%${search}%`)
+		}
+
+		if (date) {
+			whereClause += " AND DATE(i.invoice_date) = ?"
+			params.push(date)
+		}
+
+		if (status) {
+			whereClause += " AND i.status = ?"
+			params.push(status)
+		}
+
+		// Get filtered invoices with pagination
 		const [rows] = await db.execute(
 			`
       SELECT i.id, i.invoice_number, i.recipient_name, i.invoice_date, i.status, i.total_amount, c.name AS company_name
       FROM invoices i 
       JOIN companies c ON i.company_id = c.id 
+      ${whereClause}
       ORDER BY i.created_at DESC
       LIMIT ? OFFSET ?
     `,
-			[limit, offset],
+			[...params, limit, offset],
 		)
 
+		// Get total count with filters
 		const [countResult] = await db.execute(
-			"SELECT COUNT(*) as total FROM invoices",
+			`SELECT COUNT(*) as total FROM invoices i JOIN companies c ON i.company_id = c.id ${whereClause}`,
+			params,
 		)
 		const totalInvoices = countResult[0].total
 		const totalPages = Math.ceil(totalInvoices / limit)
@@ -246,6 +274,9 @@ exports.getInvoiceHistory = async (req, res) => {
 			currentPage: parseInt(page),
 			totalPages,
 			totalInvoices,
+			search,
+			date,
+			status,
 		})
 	} catch (error) {
 		console.error("History error:", error)

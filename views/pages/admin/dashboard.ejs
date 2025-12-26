@@ -5,11 +5,21 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Admin Dashboard - E-Invoice Restu Production</title>
 		<link rel="stylesheet" href="/css/admin-style.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+			integrity="sha512-iecdLmaskl7CVJkEzyD6lkDNlzVUbarSmtgQXxDcNqWoMg0do32T5D7mKontZWMNDL25AVyIu7G6CxSucVIurGQ=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		/>
 	</head>
 	<body>
 		<div class="admin-container">
+			<!-- Sidebar Overlay -->
+			<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
 			<!-- Sidebar -->
-			<aside class="sidebar">
+			<aside class="sidebar" id="sidebar">
 				<div class="sidebar-header">
 					<h2>E-Invoice</h2>
 					<p>Restu Production</p>
@@ -17,15 +27,15 @@
 
 				<nav class="sidebar-nav">
 					<a href="/admin/invoice/dashboard" class="nav-item active">
-						<span class="icon">📊</span>
+						<span class="icon"><i class="bi bi-clipboard2-fill"></i></span>
 						<span class="label">Dashboard</span>
 					</a>
 					<a href="/admin/invoice/create" class="nav-item">
-						<span class="icon">➕</span>
+						<span class="icon"><i class="fa-solid fa-plus"></i></span>
 						<span class="label">Buat Invoice</span>
 					</a>
 					<a href="/admin/invoice/history" class="nav-item">
-						<span class="icon">📋</span>
+						<span class="icon"><i class="fa-solid fa-file-invoice"></i></span>
 						<span class="label">Riwayat Invoice</span>
 					</a>
 				</nav>
@@ -41,7 +51,10 @@
 			<!-- Main Content -->
 			<main class="main-content">
 				<div class="top-bar">
-					<h1>Dashboard</h1>
+					<div class="top-bar-left">
+						<button class="hamburger-menu" id="hamburgerMenu">☰</button>
+						<h1>Dashboard</h1>
+					</div>
 					<div class="user-info">
 						<span>Admin User</span>
 						<div class="avatar">A</div>
@@ -172,6 +185,29 @@
 		</div>
 
 		<script>
+			// Hamburger Menu Toggle
+			const hamburger = document.getElementById("hamburgerMenu")
+			const sidebar = document.getElementById("sidebar")
+			const overlay = document.getElementById("sidebarOverlay")
+
+			function toggleSidebar() {
+				sidebar.classList.toggle("active")
+				overlay.classList.toggle("active")
+			}
+
+			function closeSidebar() {
+				sidebar.classList.remove("active")
+				overlay.classList.remove("active")
+			}
+
+			hamburger.addEventListener("click", toggleSidebar)
+			overlay.addEventListener("click", closeSidebar)
+
+			// Close sidebar when clicking nav items
+			document.querySelectorAll(".nav-item").forEach((item) => {
+				item.addEventListener("click", closeSidebar)
+			})
+
 			// Mark active menu
 			document.addEventListener("DOMContentLoaded", () => {
 				const currentPath = window.location.pathname

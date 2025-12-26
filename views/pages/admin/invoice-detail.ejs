@@ -278,8 +278,11 @@
 	</head>
 	<body>
 		<div class="admin-container">
+			<!-- Sidebar Overlay -->
+			<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
 			<!-- Sidebar -->
-			<aside class="sidebar">
+			<aside class="sidebar" id="sidebar">
 				<div class="sidebar-header">
 					<h2>E-Invoice</h2>
 					<p>Restu Production</p>
@@ -311,7 +314,10 @@
 			<!-- Main Content -->
 			<main class="main-content">
 				<div class="top-bar">
-					<h1>Detail Invoice</h1>
+					<div class="top-bar-left">
+						<button class="hamburger-menu" id="hamburgerMenu">☰</button>
+						<h1>Detail Invoice</h1>
+					</div>
 				</div>
 
 				<!-- Header dengan nomor invoice dan aksi -->
@@ -569,6 +575,29 @@
 		</div>
 
 		<script>
+			// Hamburger Menu Toggle
+			const hamburger = document.getElementById("hamburgerMenu")
+			const sidebar = document.getElementById("sidebar")
+			const overlay = document.getElementById("sidebarOverlay")
+
+			function toggleSidebar() {
+				sidebar.classList.toggle("active")
+				overlay.classList.toggle("active")
+			}
+
+			function closeSidebar() {
+				sidebar.classList.remove("active")
+				overlay.classList.remove("active")
+			}
+
+			hamburger.addEventListener("click", toggleSidebar)
+			overlay.addEventListener("click", closeSidebar)
+
+			// Close sidebar when clicking nav items
+			document.querySelectorAll(".nav-item").forEach((item) => {
+				item.addEventListener("click", closeSidebar)
+			})
+
 			// Check if share token exists
 			document.addEventListener("DOMContentLoaded", () => {
 				const shareToken = "<%= invoice.share_token %>"

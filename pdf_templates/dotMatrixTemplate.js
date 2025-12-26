@@ -63,7 +63,7 @@ module.exports = function (invoice) {
 			.font("Helvetica-Bold")
 			.text(formatTanggal(invoice.invoice_date), rightX + 50, yHeader)
 		yHeader += 13
-		doc.font("Helvetica-Bold").text("Tagihan Kepada", rightX, yHeader + 5)
+		doc.font("Helvetica-Bold").text("Kepada", rightX, yHeader + 5)
 		yHeader += 13
 		doc.font("Helvetica").text(invoice.recipient_name, rightX, yHeader + 5)
 		let yAfter = doc.text(invoice.recipient_name, rightX, yHeader + 5, {

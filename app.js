@@ -36,6 +36,10 @@ app.get("/", (req, res) => {
 	res.render("pages/user/check-invoice", { error: null, success: null })
 })
 
+// Admin dashboard
+app.get("/dashboard", checkAdminAuth, (req, res) => {
+	res.redirect("/admin/invoice/dashboard")
+})
 // Admin create route (accessible at /create)
 app.get("/create", checkAdminAuth, (req, res) => {
 	res.redirect("/admin/invoice/create")

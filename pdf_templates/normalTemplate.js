@@ -3,25 +3,19 @@ const path = require("path")
 const fs = require("fs")
 const {
 	generateInvoiceQRCode,
-	formatQRText,
-	formatDateForQR,
 } = require("../utils/qrCodeGenerator")
 
 module.exports = async function (invoice) {
 	return new Promise(async (resolve, reject) => {
 		try {
-			// Set default logo jika tidak ada
+			// 1. LOGIKA PATH GAMBAR
+			// Ambil nama file saja dari path database
 			let logoFile = null
-			// if (invoice.logo_path) {
-			// 	// Remove 'img/' prefix if present to avoid double path
-			// 	logoFile = invoice.logo_path
-			// 	if (logoFile.startsWith("img/")) {
-			// 		logoFile = logoFile.substring(4)
-			// 	}
-			// }
-			// Always use logo.png as default if no logo_path specified
-			if (!logoFile) logoFile = "logo.png"
+			if (invoice.logo_path) {
+				logoFile = path.basename(invoice.logo_path)
+			}
 
+			// Default Tanda Tangan
 			if (!invoice.ttd) invoice.ttd = "respro_ttd.png"
 
 			const doc = new PDFDocument({ size: "A4", margin: 50 })
@@ -29,322 +23,184 @@ module.exports = async function (invoice) {
 			doc.on("data", buffers.push.bind(buffers))
 			doc.on("end", () => resolve(Buffer.concat(buffers)))
 
-			// Header Section - Company Info & Logo
-			// Tambahkan garis horizontal di atas
-			doc.moveTo(50, 45).lineTo(545, 45).lineWidth(2).stroke()
-
-			// Logo kanan atas (jika ada)
+			// ======================= HEADER SECTION =======================
+			
+			const headerY = 45
+			const logoWidth = 60
+			
+			// Variable untuk posisi vertikal teks Company (default di atas)
+			let companyTextY = headerY 
+			
+			// A. LOGO (KIRI ATAS)
 			if (logoFile) {
-				const logoPath = path.join(__dirname, "../public/", logoFile)
-				try {
-					if (fs.existsSync(logoPath)) {
-						doc.image(logoPath, 440, 50, { width: 95 })
-					} else {
-						console.warn("Logo file not found:", logoPath)
-					}
-				} catch (logoError) {
-					console.warn("Error loading logo:", logoFile, logoError.message)
+				const logoPath = path.join(__dirname, "../public/img", logoFile)
+				if (fs.existsSync(logoPath)) {
+					// Render Logo di koordinat (50, 45)
+					doc.image(logoPath, 50, headerY, { width: logoWidth })
+					
+					// Karena ada logo, teks nama perusahaan turun ke bawah logo
+					// (headerY + tinggi logo + padding)
+					companyTextY = headerY + 70 
 				}
 			}
 
-			// Company Name & Address (Kiri)
-			doc.fontSize(20).font("Helvetica-Bold").text(invoice.company_name, 50, 55)
-
-			doc
-				.fontSize(10)
-				.font("Helvetica")
-				.text(invoice.company_address || "", 50, 85, {
-					width: 330,
-					align: "left",
+			// B. INFO PERUSAHAAN (DI BAWAH LOGO, RATA KIRI)
+			doc.fillColor("black")
+			doc.fontSize(14).font("Helvetica-Bold")
+				.text(invoice.company_name, 50, companyTextY)
+			
+			doc.fontSize(9).font("Helvetica").fillColor("#444444")
+				.text(invoice.company_address || "", 50, companyTextY + 20, {
+					width: 280, 
+					align: "left"
 				})
+				.text(invoice.company_phone || "", 50, doc.y)
 
-			doc.fontSize(10).text(invoice.company_phone || "", 50, 110)
+			// C. META DATA INVOICE (POJOK KANAN ATAS)
+			// Tetap di posisi atas (sejajar dengan posisi Logo)
+			const metaX = 400
+			const metaY = headerY 
+			
+			doc.fillColor("black")
+			
+			// No Invoice
+			doc.fontSize(10).font("Helvetica-Bold").text("No. Invoice:", metaX, metaY)
+			doc.font("Helvetica").text(invoice.invoice_number, metaX, metaY + 12)
 
-			// Invoice Title (Kanan)
-			doc
-				.fontSize(28)
-				.font("Helvetica-Bold")
-				.text("INVOICE", 350, 60, { align: "right" })
+			// Tanggal
+			doc.fontSize(10).font("Helvetica-Bold").text("Tanggal:", metaX, metaY + 30)
+			doc.font("Helvetica").text(formatTanggal(invoice.invoice_date), metaX, metaY + 42)
 
-			// Invoice Details (Kanan bawah)
-			doc
-				.fontSize(10)
-				.font("Helvetica-Bold")
-				.text("Invoice No", 350, 100, { align: "right", width: 195 })
-			doc
-				.fontSize(10)
-				.font("Helvetica")
-				.text(`: ${invoice.invoice_number}`, 400, 100)
+			// Garis Pembatas Header
+			// Hitung posisi Y terendah antara teks alamat atau metadata, lalu tambah jarak
+			const lineY = Math.max(doc.y, metaY + 60) + 60 
+			doc.moveTo(50, lineY).lineTo(545, lineY).lineWidth(1.5).stroke("#000000")
 
-			doc
-				.fontSize(10)
-				.font("Helvetica-Bold")
-				.text("Tanggal", 350, 115, { align: "right", width: 195 })
-			doc
-				.fontSize(10)
-				.font("Helvetica")
-				.text(`: ${formatTanggal(invoice.invoice_date)}`, 400, 115)
 
-			if (invoice.due_date) {
-				doc
-					.fontSize(10)
-					.font("Helvetica-Bold")
-					.text("Jatuh Tempo", 350, 130, { align: "right", width: 195 })
-				doc
-					.fontSize(10)
-					.font("Helvetica")
-					.text(`: ${formatTanggal(invoice.due_date)}`, 400, 130)
-			}
+			// ======================= INFO PENERIMA & JUDUL =======================
+			
+			let contentY = lineY + 15
 
-			// Garis pemisah
-			doc.moveTo(50, 150).lineTo(545, 150).lineWidth(0.5).stroke()
-
-			// Info Penerima
-			doc.fontSize(11).font("Helvetica-Bold").text("Kepada:", 50, 160)
-
-			doc
-				.fontSize(10)
-				.font("Helvetica-Bold")
-				.text(invoice.recipient_name, 50, 180)
-
+			// Judul "INVOICE" Besar
+			doc.fontSize(16).font("Helvetica-Bold").text("INVOICE", 50, contentY)
+			
+			contentY += 35
+			
+			// Info Kepada
+			doc.fontSize(10).font("Helvetica-Bold").text("Kepada:", 50, contentY)
+			doc.fontSize(11).text(invoice.recipient_name, 50, contentY + 15)
+			
 			if (invoice.recipient_address) {
-				doc
-					.fontSize(10)
-					.font("Helvetica")
-					.text(invoice.recipient_address, 50, 195, {
-						width: 250,
-					})
+				doc.fontSize(10).font("Helvetica").fillColor("#333333")
+					.text(invoice.recipient_address, 50, contentY + 30, { width: 300 })
 			}
 
-			// Invoice Details (Kolom Kanan) - Formatted properly
-			doc
-				.fontSize(10)
-				.font("Helvetica-Bold")
-				.text("Invoice No", 320, 160, { width: 70, align: "right" })
-			doc.font("Helvetica").text(`: ${invoice.invoice_number}`, 395, 160)
-
-			doc
-				.fontSize(10)
-				.font("Helvetica-Bold")
-				.text("Tanggal", 320, 180, { width: 70, align: "right" })
-			doc
-				.font("Helvetica")
-				.text(`: ${formatTanggal(invoice.invoice_date)}`, 395, 180)
-
-			if (invoice.recipient_npwp) {
-				doc
-					.fontSize(10)
-					.font("Helvetica-Bold")
-					.text("NPWP", 320, 200, { width: 70, align: "right" })
-				doc.font("Helvetica").text(`: ${invoice.recipient_npwp}`, 395, 200)
+			// Info Jatuh Tempo (Kanan, sejajar Kepada)
+			if (invoice.due_date) {
+				doc.fontSize(10).fillColor("black")
+					.font("Helvetica-Bold").text("Jatuh Tempo:", 400, contentY)
+					.font("Helvetica").text(formatTanggal(invoice.due_date), 400, contentY + 15)
 			}
 
-			// Garis pemisah sebelum tabel
-			doc.moveTo(50, 220).lineTo(545, 220).lineWidth(0.5).stroke()
 
-			// Tabel Barang
-			const tableTop = 235
+			// ======================= TABEL BARANG =======================
+			
+			const tableTop = contentY + 60
 			const col = {
-				no: 55,
-				desc: 90,
-				qty: 280,
-				unit: 345,
-				unit_price: 410,
-				total: 475,
-				right: 540,
+				no: 50,
+				desc: 85,
+				qty: 290,
+				unit: 340,
+				price: 400,
+				total: 480
 			}
 
-			// Table Header - dengan background
-			doc.save()
-			doc
-				.rect(col.no - 5, tableTop, col.right - col.no + 5, 22)
-				.fillColor("#cccccc")
-				.fill()
-			doc.restore()
+			// Header Tabel
+			doc.rect(50, tableTop, 495, 25).fill("#eeeeee")
+			
+			doc.fillColor("black").fontSize(9).font("Helvetica-Bold")
+			const headerTextY = tableTop + 8
+			
+			doc.text("NO", col.no, headerTextY, { width: 30, align: "center" })
+			doc.text("DESKRIPSI", col.desc, headerTextY)
+			doc.text("QTY", col.qty, headerTextY, { width: 40, align: "center" })
+			doc.text("SATUAN", col.unit, headerTextY, { width: 50, align: "center" })
+			doc.text("HARGA", col.price, headerTextY, { width: 75, align: "right" })
+			doc.text("TOTAL", col.total, headerTextY, { width: 65, align: "right" })
 
-			doc.font("Helvetica-Bold").fontSize(10).fillColor("black")
-			doc.text("No", col.no, tableTop + 6, {
-				width: col.desc - col.no - 10,
-				align: "center",
-			})
-			doc.text("Deskripsi", col.desc, tableTop + 6, {
-				width: col.qty - col.desc - 10,
-				align: "center",
-			})
-			doc.text("Qty", col.qty, tableTop + 6, {
-				width: col.unit - col.qty - 10,
-				align: "center",
-			})
-			doc.text("Satuan", col.unit, tableTop + 6, {
-				width: col.unit_price - col.unit - 10,
-				align: "center",
-			})
-			doc.text("Harga Satuan", col.unit_price, tableTop + 6, {
-				width: col.total - col.unit_price - 10,
-				align: "center",
-			})
-			doc.text("Total", col.total, tableTop + 6, {
-				width: col.right - col.total - 5,
-				align: "center",
-			})
+			// Isi Tabel
+			let y = tableTop + 25
+			doc.font("Helvetica").fontSize(9)
 
-			// Table Rows
-			let y = tableTop + 28
-			doc.font("Helvetica").fontSize(10)
 			;(invoice.items || []).forEach((item, i) => {
-				const rowHeight = 20
+				const itemDesc = item.description || item.name || ""
+				const descHeight = doc.heightOfString(itemDesc, { width: col.qty - col.desc - 10 })
+				const rowHeight = Math.max(descHeight + 10, 25)
 
-				// Warna latar selang-seling
-				if (i % 2 === 0) {
-					doc.save()
-					doc
-						.rect(col.no - 5, y, col.right - col.no + 5, rowHeight)
-						.fillColor("#f5f5f5")
-						.fill()
-					doc.restore()
-				}
-
-				// Border bawah tiap baris
-				doc
-					.moveTo(col.no - 5, y + rowHeight)
-					.lineTo(col.right, y + rowHeight)
-					.lineWidth(0.5)
-					.stroke()
-
-				// Teks isi baris
+				// Zebra Striping
+				if (i % 2 === 1) doc.rect(50, y, 495, rowHeight).fill("#fafafa")
+				
 				doc.fillColor("black")
-				doc.text(i + 1, col.no, y + 3, {
-					width: col.desc - col.no - 10,
-					align: "center",
-				})
-				doc.text(item.description || item.name || "", col.desc, y + 3, {
-					width: col.qty - col.desc - 10,
-					align: "left",
-				})
-				doc.text(item.quantity || item.qty || 0, col.qty, y + 3, {
-					width: col.unit - col.qty - 10,
-					align: "center",
-				})
-				doc.text(item.unit || "", col.unit, y + 3, {
-					width: col.unit_price - col.unit - 10,
-					align: "center",
-				})
-				doc.text(
-					formatRupiah(item.price || item.unit_price || 0),
-					col.unit_price,
-					y + 3,
-					{
-						width: col.total - col.unit_price - 10,
-						align: "right",
-					},
-				)
-				doc.text(
-					formatRupiah(
-						(item.quantity || item.qty || 0) *
-							(item.price || item.unit_price || 0),
-					),
-					col.total,
-					y + 3,
-					{
-						width: col.right - col.total - 5,
-						align: "right",
-					},
-				)
+
+				doc.text(i + 1, col.no, y + 6, { width: 30, align: "center" })
+				doc.text(itemDesc, col.desc, y + 6, { width: col.qty - col.desc - 10 })
+				doc.text(item.quantity || item.qty || 0, col.qty, y + 6, { width: 40, align: "center" })
+				doc.text(item.unit || "-", col.unit, y + 6, { width: 50, align: "center" })
+				doc.text(formatRupiah(item.price || item.unit_price), col.price, y + 6, { width: 75, align: "right" })
+				
+				const lineTotal = (item.quantity || item.qty || 0) * (item.price || item.unit_price || 0)
+				doc.text(formatRupiah(lineTotal), col.total, y + 6, { width: 65, align: "right" })
+
+				doc.moveTo(50, y + rowHeight).lineTo(545, y + rowHeight).lineWidth(0.5).stroke("#dddddd")
+				
 				y += rowHeight
 			})
 
-			// Summary Section - dengan spacing lebih baik
+
+			// ======================= SUMMARY & FOOTER =======================
+			
 			y += 15
-			let subtotal = (invoice.items || []).reduce(
-				(sum, item) =>
-					sum +
-					(item.quantity || item.qty || 0) *
-						(item.price || item.unit_price || 0),
-				0,
-			)
-			let discount = invoice.discount || 0
+			
+			// Hitung Total
+			const subtotal = (invoice.items || []).reduce((sum, item) => sum + ((item.quantity || item.qty || 0) * (item.price || item.unit_price || 0)), 0)
+			const discount = invoice.discount || 0
 			let total = subtotal - discount
 
-			// Garis pemisah
-			doc
-				.moveTo(col.total - 5, y)
-				.lineTo(col.right, y)
-				.lineWidth(1)
-				.stroke()
-
-			y += 10
-
-			// Summary items - dengan kolom terpisah untuk label dan nilai
-			const summaryLabelCol = 340
-			const summaryValueCol = 430
-
-			doc.fontSize(10)
-
-			// Subtotal
-			doc.font("Helvetica").text("Subtotal:", summaryLabelCol, y, {
-				align: "left",
-			})
-			doc.font("Helvetica").text(formatRupiah(subtotal), summaryValueCol, y, {
-				align: "right",
-				width: 110,
-			})
-			y += 16
-
-			if (discount > 0) {
-				doc.font("Helvetica").text("Diskon:", summaryLabelCol, y, {
-					align: "left",
-				})
-				doc.font("Helvetica").text(formatRupiah(discount), summaryValueCol, y, {
-					align: "right",
-					width: 110,
-				})
+			// Summary Box (Kanan)
+			const summaryXLabel = 350
+			const summaryXValue = 450
+			
+			const drawSummary = (label, value, isBold = false) => {
+				doc.font(isBold ? "Helvetica-Bold" : "Helvetica").fontSize(9)
+				doc.text(label, summaryXLabel, y, { width: 90, align: "right" })
+				doc.text(formatRupiah(value), summaryXValue, y, { width: 95, align: "right" })
 				y += 16
 			}
 
-			// Display taxes
-			;(invoice.taxes || []).forEach((tax) => {
-				const taxAmount = tax.amount || (subtotal * (tax.percentage || 0)) / 100
-				doc
-					.font("Helvetica")
-					.text(`${tax.name} (${tax.percentage || 0}%):`, summaryLabelCol, y, {
-						align: "left",
-					})
-				doc
-					.font("Helvetica")
-					.text(formatRupiah(taxAmount), summaryValueCol, y, {
-						align: "right",
-						width: 110,
-					})
+			drawSummary("Subtotal", subtotal)
+			if (discount > 0) drawSummary("Diskon", discount)
+
+			;(invoice.taxes || []).forEach(tax => {
+				const taxAmount = Math.round(tax.amount || (subtotal * (tax.percentage || 0)) / 100)
+				drawSummary(`${tax.name} (${tax.percentage}%)`, taxAmount)
 				total += taxAmount
-				y += 16
 			})
 
-			// Garis pemisah sebelum total
-			doc
-				.moveTo(col.total - 5, y + 2)
-				.lineTo(col.right, y + 2)
-				.lineWidth(1.5)
-				.stroke()
+			doc.moveTo(summaryXLabel, y).lineTo(545, y).lineWidth(1).stroke("black")
+			y += 5
+			drawSummary("Grand Total", total, true)
 
-			y += 10
 
-			// TOTAL - dengan highlight dan format sama dengan subtotal
-			doc.fontSize(10).font("Helvetica").text("Total:", summaryLabelCol, y, {
-				align: "left",
-			})
-			doc
-				.font("Helvetica-Bold")
-				.fontSize(10)
-				.text(formatRupiah(total), summaryValueCol, y, {
-					align: "right",
-					width: 110,
-				})
+			// TANDA TANGAN (KIRI BAWAH)
+			if (y > 700) {
+				doc.addPage()
+				y = 50
+			} else {
+				y = Math.max(y, y + 20)
+			}
 
-			// Footer Section
-			y += 30
-			doc.fontSize(10).font("Helvetica").text("Hormat Kami,", 70, y)
-
-			// Generate QR Code untuk signature
+			doc.fontSize(10).font("Helvetica").text("Hormat Kami,", 85, y)
+			
 			try {
 				const qrBuffer = await generateInvoiceQRCode({
 					company_name: invoice.company_name,
@@ -352,53 +208,41 @@ module.exports = async function (invoice) {
 					recipient_name: invoice.recipient_name,
 					invoice_date: invoice.invoice_date,
 				})
-
-				// Tampilkan QR Code sebagai pengganti signature
-				doc.image(qrBuffer, 60, y + 15, { width: 85 })
-			} catch (error) {
-				console.error("Error generating QR code:", error)
-				// Jika QR gagal, gunakan signature gambar jika ada
-				if (invoice.ttd) {
-					const ttdPath = path.join(__dirname, "../public/", invoice.ttd)
-					try {
-						doc.image(ttdPath, 60, y + 15, { width: 60 })
-					} catch (ttdError) {
-						console.warn("TTD image not found:", ttdError.message)
-					}
+				doc.image(qrBuffer, 75, y + 15, { width: 80 })
+			} catch (e) {
+				const ttdPath = path.join(__dirname, "../public/", invoice.ttd)
+				if (fs.existsSync(ttdPath)) {
+					doc.image(ttdPath, 50, y + 15, { width: 70 })
 				}
 			}
 
-			y += 110
-			doc.font("Helvetica-Bold").fontSize(10).text(invoice.company_name, 60, y)
+			doc.fontSize(10).font("Helvetica-Bold").text(invoice.company_name, 50, y + 100)
 
-			// Tanggal pembayaran (jika ada)
 			if (invoice.paid_date) {
-				y += 12
-				doc
-					.font("Helvetica-Oblique")
-					.fillColor("green")
-					.fontSize(9)
-					.text(`✓ Terbayar pada: ${formatTanggal(invoice.paid_date)}`, 50, y)
-				doc.fillColor("black")
+				doc.fontSize(10).font("Helvetica-Bold").fillColor("green")
+					.text("LUNAS", 150, y + 40)
+					.fontSize(8).font("Helvetica-Oblique")
+					.text(formatTanggal(invoice.paid_date), 150, y + 52)
 			}
 
 			doc.end()
+
 		} catch (error) {
-			console.error("PDF generation error:", error)
+			console.error("PDF Generate Error:", error)
 			reject(error)
 		}
 	})
 }
 
+// --- HELPER FUNCTIONS ---
+
 function formatRupiah(num) {
-	// Round to nearest integer to avoid .00 decimals
-	const rounded = Math.round(num || 0)
-	return "Rp " + rounded.toLocaleString("id-ID")
+	return "Rp " + Math.round(num || 0).toLocaleString("id-ID")
 }
+
 function formatTanggal(tgl) {
 	if (!tgl) return "-"
-	const d = new Date(tgl)
-	return d.toLocaleDateString("id-ID", {
+	return new Date(tgl).toLocaleDateString("id-ID", {
 		day: "2-digit",
 		month: "long",
 		year: "numeric",
