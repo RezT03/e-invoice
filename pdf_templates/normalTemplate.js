@@ -26,8 +26,12 @@ module.exports = async function (invoice) {
 			// ======================= HEADER SECTION =======================
 			
 			const headerY = 45
-			const logoWidth = 60
-			
+			let logoWidth
+			if (invoice.company_name != "Restu Production") {
+				logoWidth = 60
+			} else {
+				logoWidth = 150
+			}
 			// Variable untuk posisi vertikal teks Company (default di atas)
 			let companyTextY = headerY 
 			
@@ -199,7 +203,7 @@ module.exports = async function (invoice) {
 				y = Math.max(y, y + 20)
 			}
 
-			doc.fontSize(10).font("Helvetica").text("Hormat Kami,", 85, y)
+			doc.fontSize(10).font("Helvetica").text("Hormat Kami,", 55, y)
 			
 			try {
 				const qrBuffer = await generateInvoiceQRCode({
@@ -208,7 +212,7 @@ module.exports = async function (invoice) {
 					recipient_name: invoice.recipient_name,
 					invoice_date: invoice.invoice_date,
 				})
-				doc.image(qrBuffer, 75, y + 15, { width: 80 })
+				doc.image(qrBuffer, 50, y + 15, { width: 80 })
 			} catch (e) {
 				const ttdPath = path.join(__dirname, "../public/", invoice.ttd)
 				if (fs.existsSync(ttdPath)) {
@@ -220,9 +224,9 @@ module.exports = async function (invoice) {
 
 			if (invoice.paid_date) {
 				doc.fontSize(10).font("Helvetica-Bold").fillColor("green")
-					.text("LUNAS", 150, y + 40)
+					.text("LUNAS", 250, y + 40)
 					.fontSize(8).font("Helvetica-Oblique")
-					.text(formatTanggal(invoice.paid_date), 150, y + 52)
+					.text(formatTanggal(invoice.paid_date), 250, y + 52)
 			}
 
 			doc.end()

@@ -126,7 +126,7 @@ exports.viewSharedInvoice = async (req, res) => {
 		res.render("pages/user/invoice-view", {
 			invoice,
 			isAdmin: false,
-			verified: false,
+			verified: true,
 			shareToken,
 		})
 	} catch (error) {
@@ -184,6 +184,62 @@ exports.downloadPDF = async (req, res) => {
 		res.send(pdfBuffer)
 	} catch (error) {
 		console.error("PDF download error:", error)
+		res.status(500).send("Terjadi kesalahan saat mengunduh PDF")
+	}
+}
+
+// DOWNLOAD PDF INVOICE DARI CHECK INVOICE (tanpa share token)
+exports.downloadPDFFromCheck = async (req, res) => {
+	try {
+		const { invoice_number, recipient_phone, template } = req.body
+		const templateType = template || "normal"
+
+		// Validasi invoice dengan nomor dan nomor telepon
+		const [invoices] = await db.execute(
+			`
+      SELECT i.*, 
+             c.name AS company_name, 
+             c.address AS company_address, 
+             c.phone AS company_phone,
+             c.logo_path,
+             c.bank_account_name, 
+             c.bank_account_number, 
+             c.bank_name
+      FROM invoices i 
+      JOIN companies c ON i.company_id = c.id
+      WHERE i.invoice_number = ? AND i.recipient_phone = ?
+    `,
+			[invoice_number, recipient_phone],
+		)
+
+		if (invoices.length === 0) {
+			return res.status(404).send("Invoice tidak ditemukan")
+		}
+
+		const invoice = invoices[0]
+		try {
+			invoice.items =
+				typeof invoice.items === "string"
+					? JSON.parse(invoice.items)
+					: invoice.items || []
+			invoice.taxes =
+				typeof invoice.taxes === "string"
+					? JSON.parse(invoice.taxes)
+					: invoice.taxes || []
+		} catch (err) {
+			invoice.items = []
+			invoice.taxes = []
+		}
+
+		const pdfBuffer = await generatePDF(invoice, templateType)
+		res.setHeader("Content-Type", "application/pdf")
+		res.setHeader(
+			"Content-Disposition",
+			`attachment; filename=invoice-${invoice.invoice_number}.pdf`,
+		)
+		res.send(pdfBuffer)
+	} catch (error) {
+		console.error("PDF download from check error:", error)
 		res.status(500).send("Terjadi kesalahan saat mengunduh PDF")
 	}
 }

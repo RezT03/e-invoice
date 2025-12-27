@@ -370,6 +370,8 @@
 		<div
 			class="header"
 			data-invoice-id="<%= invoice.id %>"
+			data-invoice-number="<%= invoice.invoice_number %>"
+			data-recipient-phone="<%= invoice.recipient_phone %>"
 			data-share-token="<%= typeof shareToken !== 'undefined' ? shareToken : '' %>"
 			data-is-admin="<%= typeof isAdmin !== 'undefined' ? (isAdmin ? 'true' : 'false') : 'false' %>"
 		>
@@ -377,7 +379,6 @@
 				<h1>Invoice</h1>
 			</div>
 			<div class="header-right btn-print-area">
-				<% if (shareToken) { %>
 				<!-- Template Selector untuk Download -->
 				<select
 					id="templateSelect"
@@ -388,18 +389,7 @@
 					<option value="normal">Unduh PDF (Normal)</option>
 					<option value="dotmatrix">Unduh PDF (Dot Matrix)</option>
 				</select>
-				<% } else if (isAdmin) { %>
-				<!-- Admin: Template Selector untuk Download -->
-				<select
-					id="templateSelect"
-					class="btn btn-primary"
-					style="padding: 0.5rem 1rem; cursor: pointer"
-				>
-					<option value="">Download Invoice</option>
-					<option value="normal">Unduh PDF (Normal)</option>
-					<option value="dotmatrix">Unduh PDF (Dot Matrix)</option>
-				</select>
-				<% } %>
+
 				<a href="/" class="btn btn-secondary">Kembali</a>
 			</div>
 		</div>
@@ -557,13 +547,15 @@
 				<% } %>
 			</div>
 		</div>
-		
+
 		<%- include ('../../partials/footer') %>
-		
+
 		<script>
 			// Get invoice data from HTML attributes
 			const header = document.querySelector("[data-invoice-id]")
 			const invoiceId = header.dataset.invoiceId
+			const invoiceNumber = header.dataset.invoiceNumber
+			const recipientPhone = header.dataset.recipientPhone
 			const shareToken = header.dataset.shareToken
 			const isAdmin = header.dataset.isAdmin === "true"
 
@@ -581,8 +573,45 @@
 						} else if (isAdmin) {
 							// Admin accessing invoice
 							window.location.href = `/admin/invoice/${invoiceId}/pdf/${template}`
+						} else {
+							// User accessing via check invoice form - submit form to download
+							downloadInvoiceFromCheck(invoiceNumber, recipientPhone, template)
 						}
 					})
+			}
+
+			// Function untuk download invoice dari check invoice
+			function downloadInvoiceFromCheck(
+				invoiceNumber,
+				recipientPhone,
+				template,
+			) {
+				const form = document.createElement("form")
+				form.method = "POST"
+				form.action = "/invoice/check/pdf"
+
+				const invoiceField = document.createElement("input")
+				invoiceField.type = "hidden"
+				invoiceField.name = "invoice_number"
+				invoiceField.value = invoiceNumber
+
+				const phoneField = document.createElement("input")
+				phoneField.type = "hidden"
+				phoneField.name = "recipient_phone"
+				phoneField.value = recipientPhone
+
+				const templateField = document.createElement("input")
+				templateField.type = "hidden"
+				templateField.name = "template"
+				templateField.value = template
+
+				form.appendChild(invoiceField)
+				form.appendChild(phoneField)
+				form.appendChild(templateField)
+
+				document.body.appendChild(form)
+				form.submit()
+				document.body.removeChild(form)
 			}
 
 			// Print dengan template selector
