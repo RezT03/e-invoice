@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title><%= pageTitle %> - Admin Dashboard E-Invoice</title>
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+		/>
+		<link rel="stylesheet" href="/css/admin-layout.css" />
+		<% if (additionalStyles) { %> <% additionalStyles.forEach(style => { %>
+		<link rel="stylesheet" href="/css/<%= style %>.css" />
+		<% }); %> <% } %>
+	</head>
+	<body>
+		<div class="admin-container">
+			<!-- Sidebar Overlay -->
+			<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+			<!-- Sidebar -->
+			<%- include('../partials/admin/sidebar', { currentPage }) %>
+
+			<!-- Main Content -->
+			<main class="main-content">
+				<!-- Top Bar -->
+				<%- include('../partials/admin/topbar', { pageTitle, userName,
+				userInitial, showUserInfo }) %>
+
+				<!-- Page Content -->
+				<% if (contentFile) { %> <%- include('../pages/admin/' + contentFile,
+				locals) %> <% } else { %> <%- body %> <% } %>
+			</main>
+		</div>
+
+		<!-- Scripts -->
+		<script src="/js/admin-sidebar.js"></script>
+		<% if (additionalScripts) { %> <% additionalScripts.forEach(script => { %>
+		<script src="/js/<%= script %>.js"></script>
+		<% }); %> <% } %>
+	</body>
+</html>

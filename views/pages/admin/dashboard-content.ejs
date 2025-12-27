@@ -1,0 +1,95 @@
+<div class="dashboard-content">
+	<!-- Stats Grid -->
+	<div class="stats-grid">
+		<div class="stat-card">
+			<div class="stat-icon" style="background: #e3f2fd; color: #1976d2">D</div>
+			<div class="stat-info">
+				<p class="stat-label">Total Invoice</p>
+				<p class="stat-value"><%= stats.total_invoices || 0 %></p>
+			</div>
+		</div>
+
+		<div class="stat-card">
+			<div class="stat-icon" style="background: #e8f5e9; color: #388e3c">V</div>
+			<div class="stat-info">
+				<p class="stat-label">Sudah Dibayar</p>
+				<p class="stat-value"><%= stats.paid || 0 %></p>
+			</div>
+		</div>
+
+		<div class="stat-card">
+			<div class="stat-icon" style="background: #fff3e0; color: #f57c00">S</div>
+			<div class="stat-info">
+				<p class="stat-label">Diterbitkan</p>
+				<p class="stat-value"><%= stats.issued || 0 %></p>
+			</div>
+		</div>
+
+		<div class="stat-card">
+			<div class="stat-icon" style="background: #fcebee; color: #c2185b">W</div>
+			<div class="stat-info">
+				<p class="stat-label">Overdue</p>
+				<p class="stat-value"><%= stats.overdue || 0 %></p>
+			</div>
+		</div>
+	</div>
+
+	<!-- Total Value -->
+	<div class="value-card">
+		<h3>Total Nilai Invoice</h3>
+		<p class="value-amount">
+			Rp <%= (stats.total_value || 0).toLocaleString('id-ID') %>
+		</p>
+	</div>
+
+	<!-- Recent Invoices Table -->
+	<div class="recent-section">
+		<h3>Invoice Terbaru</h3>
+		<% if (recentInvoices && recentInvoices.length > 0) { %>
+		<div class="table-container">
+			<table class="invoices-table">
+				<thead>
+					<tr>
+						<th>No. Invoice</th>
+						<th>Penerima</th>
+						<th>Perusahaan</th>
+						<th>Tanggal</th>
+						<th>Total</th>
+						<th>Status</th>
+						<th>Aksi</th>
+					</tr>
+				</thead>
+				<tbody>
+					<% recentInvoices.forEach(invoice => { %>
+					<tr>
+						<td><strong><%= invoice.invoice_number %></strong></td>
+						<td><%= invoice.recipient_name %></td>
+						<td><%= invoice.company_name %></td>
+						<td>
+							<%= new Date(invoice.invoice_date).toLocaleDateString('id-ID') %>
+						</td>
+						<td>
+							Rp <%= (invoice.total_amount || 0).toLocaleString('id-ID') %>
+						</td>
+						<td>
+							<span class="badge status-<%= invoice.status %>">
+								<%= invoice.status.toUpperCase() %>
+							</span>
+						</td>
+						<td>
+							<a href="/admin/invoice/<%= invoice.id %>" class="btn-small">
+								Lihat
+							</a>
+						</td>
+					</tr>
+					<% }); %>
+				</tbody>
+			</table>
+		</div>
+		<% } else { %>
+		<div class="empty-state">
+			<p>Belum ada invoice</p>
+		</div>
+		<% } %>
+	</div>
+</div>

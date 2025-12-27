@@ -1,0 +1,107 @@
+<div class="history-container">
+	<!-- Filters -->
+	<div class="filters">
+		<div class="filter-group">
+			<label for="searchFilter">Cari Invoice</label>
+			<input
+				type="text"
+				id="searchFilter"
+				placeholder="Nomor invoice atau nama penerima..."
+			/>
+		</div>
+		<div class="filter-group">
+			<label for="dateFilter">Tanggal</label>
+			<input type="date" id="dateFilter" />
+		</div>
+		<div class="filter-group">
+			<label for="statusFilter">Status</label>
+			<select id="statusFilter">
+				<option value="">Semua Status</option>
+				<option value="draft">Draft</option>
+				<option value="issued">Diterbitkan</option>
+				<option value="sent">Terkirim</option>
+				<option value="paid">Dibayar</option>
+				<option value="overdue">Jatuh Tempo</option>
+				<option value="cancelled">Dibatalkan</option>
+			</select>
+		</div>
+		<div style="display: flex; gap: 0.5rem">
+			<button class="btn-filter" id="btnApplyFilters">Filter</button>
+			<button class="btn-filter btn-reset" id="btnResetFilters">Reset</button>
+		</div>
+	</div>
+
+	<!-- Table -->
+	<div class="table-container">
+		<% if (invoices && invoices.length > 0) { %>
+		<table class="invoices-table">
+			<thead>
+				<tr>
+					<th>No. Invoice</th>
+					<th>Penerima</th>
+					<th>Perusahaan</th>
+					<th>Tanggal</th>
+					<th>Total</th>
+					<th>Status</th>
+					<th>Aksi</th>
+				</tr>
+			</thead>
+			<tbody>
+				<% invoices.forEach(invoice => { %>
+				<tr>
+					<td class="invoice-number"><%= invoice.invoice_number %></td>
+					<td><%= invoice.recipient_name %></td>
+					<td><%= invoice.company_name %></td>
+					<td>
+						<%= new Date(invoice.invoice_date).toLocaleDateString('id-ID') %>
+					</td>
+					<td>Rp <%= (invoice.total_amount || 0).toLocaleString('id-ID') %></td>
+					<td>
+						<span class="badge status-<%= invoice.status %>">
+							<%= invoice.status.toUpperCase() %>
+						</span>
+					</td>
+					<td>
+						<div class="actions">
+							<a href="/admin/invoice/<%= invoice.id %>" class="btn-small">
+								Lihat
+							</a>
+						</div>
+					</td>
+				</tr>
+				<% }); %>
+			</tbody>
+		</table>
+
+		<!-- Pagination -->
+		<% if (totalPages > 1) { %>
+		<div class="pagination">
+			<% if (pageNum > 1) { %>
+			<a href="?page=1">First</a>
+			<a href="?page=<%= pageNum - 1 %>">Previous</a>
+			<% } else { %>
+			<span class="disabled">First</span>
+			<span class="disabled">Previous</span>
+			<% } %> <% for (let i = Math.max(1, pageNum - 2); i <=
+			Math.min(totalPages, pageNum + 2); i++) { %> <% if (i === pageNum) { %>
+			<span class="active"><%= i %></span>
+			<% } else { %>
+			<a href="?page=<%= i %>"><%= i %></a>
+			<% } %> <% } %> <% if (pageNum < totalPages) { %>
+			<a href="?page=<%= pageNum + 1 %>">Next</a>
+			<a href="?page=<%= totalPages %>">Last</a>
+			<% } else { %>
+			<span class="disabled">Next</span>
+			<span class="disabled">Last</span>
+			<% } %>
+		</div>
+		<% } %> <% } else { %>
+		<div class="empty-state">
+			<p>Belum ada invoice</p>
+			<a href="/admin/invoice/create" class="btn-small">Buat Invoice Baru</a>
+		</div>
+		<% } %>
+	</div>
+</div>
+
+<script src="/js/invoice-history.js"></script>

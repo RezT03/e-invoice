@@ -1,0 +1,37 @@
+<aside class="sidebar" id="sidebar">
+	<div class="sidebar-header">
+		<h2>E-Invoice</h2>
+		<p>Restu Production</p>
+	</div>
+
+	<nav class="sidebar-nav">
+		<a
+			href="/admin/invoice/dashboard"
+			class="nav-item <%= currentPage === 'dashboard' ? 'active' : '' %>"
+		>
+			<span class="icon">D</span>
+			<span class="label">Dashboard</span>
+		</a>
+		<a
+			href="/admin/invoice/create"
+			class="nav-item <%= currentPage === 'create' ? 'active' : '' %>"
+		>
+			<span class="icon">+</span>
+			<span class="label">Buat Invoice</span>
+		</a>
+		<a
+			href="/admin/invoice/history"
+			class="nav-item <%= currentPage === 'history' ? 'active' : '' %>"
+		>
+			<span class="icon">H</span>
+			<span class="label">Riwayat Invoice</span>
+		</a>
+	</nav>
+
+	<div class="sidebar-footer">
+		<a href="/auth/logout" class="logout-btn">
+			<span class="icon">L</span>
+			<span class="label">Logout</span>
+		</a>
+	</div>
+</aside>

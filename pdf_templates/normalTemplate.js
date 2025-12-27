@@ -125,8 +125,8 @@ module.exports = async function (invoice) {
 			doc.text("DESKRIPSI", col.desc, headerTextY)
 			doc.text("QTY", col.qty, headerTextY, { width: 40, align: "center" })
 			doc.text("SATUAN", col.unit, headerTextY, { width: 50, align: "center" })
-			doc.text("HARGA", col.price, headerTextY, { width: 75, align: "right" })
-			doc.text("TOTAL", col.total, headerTextY, { width: 65, align: "right" })
+			doc.text("HARGA", col.price, headerTextY, { width: 75, align: "center" })
+			doc.text("TOTAL", col.total, headerTextY, { width: 65, align: "center" })
 
 			// Isi Tabel
 			let y = tableTop + 25

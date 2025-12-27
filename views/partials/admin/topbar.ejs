@@ -1,0 +1,12 @@
+<div class="top-bar">
+	<div class="top-bar-left">
+		<button class="hamburger-menu" id="hamburgerMenu">≡</button>
+		<h1><%= pageTitle %></h1>
+	</div>
+	<% if (showUserInfo) { %>
+	<div class="user-info">
+		<span><%= userName || 'Admin User' %></span>
+		<div class="avatar"><%= userInitial || 'A' %></div>
+	</div>
+	<% } %>
+</div>

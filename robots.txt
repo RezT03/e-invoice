@@ -1,0 +1,15 @@
+# robots.txt for E-Invoice Restu Production
+# Allow search engines to crawl public pages
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /private/
+Disallow: /api/
+
+# Specific crawl delay for all bots
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://invoice.restuproduction.com/sitemap.xml

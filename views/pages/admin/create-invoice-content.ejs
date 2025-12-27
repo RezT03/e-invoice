@@ -1,0 +1,187 @@
+<div class="create-container">
+	<div class="form-container">
+		<form id="createInvoiceForm" action="/admin/invoice/create" method="POST">
+			<!-- Informasi Perusahaan -->
+			<div class="form-section">
+				<h3>Informasi Perusahaan</h3>
+				<div class="form-row">
+					<div class="form-group">
+						<label for="company_id">Perusahaan *</label>
+						<select id="company_id" name="company_id" required>
+							<option value="">-- Pilih Perusahaan --</option>
+							<% companies.forEach(company => { %>
+							<option value="<%= company.id %>"><%= company.name %></option>
+							<% }); %>
+						</select>
+					</div>
+				</div>
+			</div>
+
+			<!-- Informasi Invoice -->
+			<div class="form-section">
+				<h3>Informasi Invoice</h3>
+				<div class="form-row">
+					<div class="form-group">
+						<label for="invoice_number">Nomor Invoice *</label>
+						<input
+							type="text"
+							id="invoice_number"
+							name="invoice_number"
+							placeholder="INV-2025-001"
+							required
+						/>
+					</div>
+					<div class="form-group">
+						<label for="status">Status</label>
+						<select id="status" name="status">
+							<option value="draft">Draft</option>
+							<option value="issued">Diterbitkan</option>
+							<option value="sent">Terkirim</option>
+							<option value="paid">Dibayar</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="form-row">
+					<div class="form-group">
+						<label for="invoice_date">Tanggal Invoice *</label>
+						<input type="date" id="invoice_date" name="invoice_date" required />
+					</div>
+					<div class="form-group">
+						<label for="due_date">Tanggal Jatuh Tempo</label>
+						<input type="date" id="due_date" name="due_date" />
+					</div>
+				</div>
+			</div>
+
+			<!-- Data Penerima -->
+			<div class="form-section">
+				<h3>Data Penerima Invoice</h3>
+				<div class="form-row">
+					<div class="form-group">
+						<label for="recipient_name">Nama Penerima *</label>
+						<input
+							type="text"
+							id="recipient_name"
+							name="recipient_name"
+							placeholder="Nama lengkap"
+							required
+						/>
+					</div>
+					<div class="form-group">
+						<label for="recipient_phone">Nomor Telepon *</label>
+						<input
+							type="tel"
+							id="recipient_phone"
+							name="recipient_phone"
+							placeholder="08123456789"
+							required
+						/>
+					</div>
+				</div>
+
+				<div class="form-row">
+					<div class="form-group">
+						<label for="recipient_npwp">NPWP</label>
+						<input
+							type="text"
+							id="recipient_npwp"
+							name="recipient_npwp"
+							placeholder="12.345.678.9-012.000"
+						/>
+					</div>
+				</div>
+
+				<div class="form-row full">
+					<div class="form-group">
+						<label for="recipient_address">Alamat</label>
+						<textarea
+							id="recipient_address"
+							name="recipient_address"
+							placeholder="Alamat lengkap penerima"
+						></textarea>
+					</div>
+				</div>
+			</div>
+
+			<!-- Items/Daftar Barang -->
+			<div class="form-section">
+				<h3>Daftar Barang/Jasa</h3>
+				<div class="tip-text">
+					<strong>Tips:</strong>
+					Anda bisa copy-paste banyak baris dari Excel/Google Sheets langsung ke
+					kolom pertama (Deskripsi)
+				</div>
+
+				<div class="items-section">
+					<div id="itemsContainer"></div>
+					<button type="button" class="btn-add" onclick="addItem()">
+						+ Tambah Item
+					</button>
+				</div>
+
+				<input type="hidden" id="items" name="items" value="[]" />
+			</div>
+
+			<!-- Pajak -->
+			<div class="form-section">
+				<h3>Pajak & Biaya (Opsional)</h3>
+				<div class="items-section">
+					<div id="taxesContainer"></div>
+					<button type="button" class="btn-add" onclick="addTax()">
+						+ Tambah Pajak
+					</button>
+				</div>
+
+				<input type="hidden" id="taxes" name="taxes" value="[]" />
+			</div>
+
+			<!-- Diskon -->
+			<div class="form-section">
+				<h3>Diskon (Opsional)</h3>
+				<div class="discount-section">
+					<div class="discount-row">
+						<div class="form-group">
+							<label for="discount_type">Tipe Diskon:</label>
+							<select
+								id="discount_type"
+								name="discount_type"
+								onchange="updateDiscountLabel()"
+							>
+								<option value="none">Tanpa Diskon</option>
+								<option value="percentage">Persentase (%)</option>
+								<option value="nominal">Nominal (Rp)</option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label id="discountLabel" for="discount_value">Diskon (%):</label>
+							<input
+								type="number"
+								id="discount_value"
+								name="discount_value"
+								placeholder="Misal: 10 untuk 10%"
+								value="0"
+								min="0"
+								step="0.01"
+							/>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Form Actions -->
+			<div class="form-actions">
+				<button type="submit" class="btn-submit">Simpan Invoice</button>
+				<a
+					href="/admin/invoice/history"
+					class="btn-cancel"
+					style="text-align: center; text-decoration: none"
+				>
+					Batal
+				</a>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script src="/js/create-invoice.js"></script>

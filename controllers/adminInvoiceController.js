@@ -180,10 +180,12 @@ exports.viewInvoiceAdmin = async (req, res) => {
              c.bank_account_number, 
              c.bank_name,
              t.name as template_name,
-             t.template_type
+             t.template_type,
+             s.share_token
       FROM invoices i 
       JOIN companies c ON i.company_id = c.id
       LEFT JOIN invoice_templates t ON i.template_id = t.id
+      LEFT JOIN invoice_shares s ON i.id = s.invoice_id
       WHERE i.id = ?
     `,
 			[uuid],
