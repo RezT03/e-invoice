@@ -83,7 +83,7 @@ function copyShareLink() {
 	}
 }
 
-function openEditModal() {
+function openEditM() {
 	// Get current invoice data from page
 	const invoiceId = document.querySelector("[data-invoice-id]").dataset.invoiceId
 	
