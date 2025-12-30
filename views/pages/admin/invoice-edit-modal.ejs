@@ -1,0 +1,255 @@
+<!-- Modal untuk Edit Invoice -->
+<div id="editInvoiceModal" class="modal">
+	<div class="modal-content" style="max-width: 900px">
+		<div class="modal-header">
+			<h2>Edit Invoice</h2>
+			<span class="close" onclick="closeEditModal()">&times;</span>
+		</div>
+		<div class="modal-body">
+			<form id="editInvoiceForm">
+				<!-- Nomor & Tgl -->
+				 <div class="form-section">
+					<h3>Informasi Invoice</h3>
+					<div class="form-group">
+						<label for="invoice_no">No. Invoice*</label>
+						<input 
+						type="text" 
+						name="invoice_number" 
+						id="invoice_no"
+						required
+						/>
+					</div>
+					<div class="form-group">
+						<label for="inv_date">Tanggal</label>
+						<input 
+						type="date"
+						name="invoice_date"
+						id="inv_date"
+						/>
+					</div>
+				 </div>
+				<!-- Informasi Penerima -->
+				<div class="form-section">
+					<h3>Informasi Penerima</h3>
+					<div class="form-group">
+						<label for="edit_recipient_name">Nama Penerima *</label>
+						<input
+							type="text"
+							id="edit_recipient_name"
+							name="recipient_name"
+							required
+						/>
+					</div>
+					<div class="form-group">
+						<label for="edit_recipient_phone">Telepon *</label>
+						<input
+							type="text"
+							id="edit_recipient_phone"
+							name="recipient_phone"
+							required
+						/>
+					</div>
+					<div class="form-group">
+						<label for="edit_recipient_npwp">NPWP</label>
+						<input
+							type="text"
+							id="edit_recipient_npwp"
+							name="recipient_npwp"
+						/>
+					</div>
+					<div class="form-group">
+						<label for="edit_recipient_address">Alamat</label>
+						<textarea
+							id="edit_recipient_address"
+							name="recipient_address"
+							rows="3"
+						></textarea>
+					</div>
+				</div>
+
+				<!-- Daftar Item -->
+				<div class="form-section">
+					<h3>Daftar Item</h3>
+					<div id="itemsListEdit"></div>
+					<button type="button" class="btn btn-secondary" onclick="addEditItem()">
+						+ Tambah Item
+					</button>
+				</div>
+
+				<!-- Pajak -->
+				<div class="form-section">
+					<h3>Pajak & Biaya</h3>
+					<div id="taxesListEdit"></div>
+					<button type="button" class="btn btn-secondary" onclick="addEditTax()">
+						+ Tambah Pajak
+					</button>
+				</div>
+
+				<!-- Total -->
+				<div class="form-section">
+					<div class="total-display">
+						<h3>Total: Rp <span id="editTotalAmount">0</span></h3>
+					</div>
+				</div>
+
+				<div class="modal-actions">
+					<button type="button" class="btn btn-secondary" onclick="closeEditModal()">
+						Batal
+					</button>
+					<button type="submit" class="btn btn-primary">
+						Simpan Perubahan
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<style>
+.modal {
+	display: none;
+	position: fixed;
+	z-index: 1000;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+	background-color: #fefefe;
+	margin: 2% auto;
+	padding: 0;
+	border: 1px solid #888;
+	width: 90%;
+	max-width: 900px;
+	border-radius: 8px;
+	max-height: 90vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.modal-header {
+	padding: 20px;
+	background-color: #667eea;
+	color: white;
+	border-radius: 8px 8px 0 0;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.modal-header h2 {
+	margin: 0;
+}
+
+.close {
+	color: white;
+	font-size: 28px;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+	color: #ddd;
+}
+
+.modal-body {
+	padding: 20px;
+	overflow-y: auto;
+}
+
+.form-section {
+	margin-bottom: 2rem;
+	padding: 1.5rem;
+	background: #f8f9fa;
+	border-radius: 8px;
+}
+
+.form-section h3 {
+	margin-top: 0;
+	margin-bottom: 1rem;
+	color: #333;
+}
+
+.form-group {
+	margin-bottom: 1rem;
+}
+
+.form-group label {
+	display: block;
+	margin-bottom: 0.5rem;
+	font-weight: 500;
+	color: #555;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+	width: 100%;
+	padding: 0.75rem;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	font-size: 1rem;
+}
+
+.form-group textarea {
+	resize: vertical;
+}
+
+.item-row,
+.tax-row {
+	display: grid;
+	grid-template-columns: 2fr 1fr 1fr 1fr auto;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+	align-items: end;
+}
+
+.tax-row {
+	grid-template-columns: 2fr 1fr auto;
+}
+
+.item-row input,
+.tax-row input {
+	padding: 0.5rem;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+}
+
+.remove-btn {
+	background: #dc3545;
+	color: white;
+	border: none;
+	padding: 0.5rem 1rem;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.remove-btn:hover {
+	background: #c82333;
+}
+
+.total-display {
+	text-align: right;
+	padding: 1rem;
+	background: white;
+	border-radius: 8px;
+	border: 2px solid #667eea;
+}
+
+.total-display h3 {
+	margin: 0;
+	color: #667eea;
+}
+
+.modal-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 1rem;
+	margin-top: 1rem;
+}
+</style>

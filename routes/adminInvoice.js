@@ -1,3 +1,4 @@
+// adminInvoice.js
 const express = require("express")
 const router = express.Router()
 const adminInvoiceController = require("../controllers/adminInvoiceController")
@@ -9,21 +10,17 @@ router.get("/dashboard", adminInvoiceController.getDashboard)
 router.get("/create", adminInvoiceController.showCreateForm)
 router.post("/create", adminInvoiceController.createInvoice)
 router.get("/history", adminInvoiceController.getInvoiceHistory)
-router.get("/:uuid", adminInvoiceController.viewInvoiceAdmin)
+
+// AJAX untuk get templates by company - HARUS DI ATAS /:uuid
+router.get("/templates/:companyId", adminInvoiceController.getTemplatesByCompany)
+
+// Routes dengan UUID - urutan penting!
+router.get("/:uuid/data", adminInvoiceController.getInvoiceData) // TAMBAHKAN INI
+router.get("/:uuid/pdf/:type", adminInvoiceController.downloadPDF)
 router.post("/:uuid/update", adminInvoiceController.updateInvoice)
 router.post("/:uuid/status", adminInvoiceController.updateStatus)
-router.delete("/:uuid/delete", adminInvoiceController.deleteInvoice)
-
-// PDF download
-router.get("/:uuid/pdf/:type", adminInvoiceController.downloadPDF)
-
-// Share link generation
 router.post("/:uuid/generate-share", adminInvoiceController.generateShareLink)
-
-// AJAX untuk get templates by company
-router.get(
-	"/templates/:companyId",
-	adminInvoiceController.getTemplatesByCompany,
-)
+router.delete("/:uuid/delete", adminInvoiceController.deleteInvoice)
+router.get("/:uuid", adminInvoiceController.viewInvoiceAdmin) // HARUS PALING BAWAH
 
 module.exports = router

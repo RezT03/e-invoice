@@ -38,7 +38,7 @@
 	<div class="value-card">
 		<h3>Total Nilai Invoice</h3>
 		<p class="value-amount">
-			Rp <%= (stats.total_value || 0).toLocaleString('id-ID') %>
+			Rp <%= Math.round(stats.total_value || 0).toLocaleString('id-ID') %>
 		</p>
 	</div>
 
@@ -69,7 +69,7 @@
 							<%= new Date(invoice.invoice_date).toLocaleDateString('id-ID') %>
 						</td>
 						<td>
-							Rp <%= (invoice.total_amount || 0).toLocaleString('id-ID') %>
+							Rp <%= Math.round(invoice.total_amount || 0).toLocaleString('id-ID') %>
 						</td>
 						<td>
 							<span class="badge status-<%= invoice.status %>">

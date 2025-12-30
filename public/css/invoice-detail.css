@@ -256,6 +256,20 @@
 	background: #218838;
 }
 
+.btn-sm {
+	padding: 0.25rem 0.75rem;
+	font-size: 0.875rem;
+}
+
+.btn-warning {
+	background-color: #ffc107;
+	color: #000;
+}
+
+.btn-warning:hover {
+	background-color: #e0a800;
+}
+
 @media (max-width: 768px) {
 	.detail-container-main {
 		padding: 1rem;

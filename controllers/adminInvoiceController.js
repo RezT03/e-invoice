@@ -219,6 +219,53 @@ exports.viewInvoiceAdmin = async (req, res) => {
 	}
 }
 
+// GET INVOICE DATA (untuk edit modal) - ENDPOINT BARU
+exports.getInvoiceData = async (req, res) => {
+	try {
+		const { uuid } = req.params
+		console.log("Fetching invoice data for UUID:", uuid) // Debug log
+		
+		const [invoices] = await db.execute(
+			`
+      SELECT i.*, 
+             c.name AS company_name
+      FROM invoices i 
+      JOIN companies c ON i.company_id = c.id
+      WHERE i.id = ?
+    `,
+			[uuid],
+		)
+
+		console.log("Query result:", invoices.length, "rows") // Debug log
+
+		if (invoices.length === 0) {
+			return res.status(404).json({ success: false, error: "Invoice tidak ditemukan" })
+		}
+
+		const invoice = invoices[0]
+		try {
+			invoice.items =
+				typeof invoice.items === "string"
+					? JSON.parse(invoice.items)
+					: invoice.items || []
+			invoice.taxes =
+				typeof invoice.taxes === "string"
+					? JSON.parse(invoice.taxes)
+					: invoice.taxes || []
+		} catch (err) {
+			console.error("Error parsing items/taxes:", err) // Debug log
+			invoice.items = []
+			invoice.taxes = []
+		}
+
+		console.log("Sending invoice data:", invoice.invoice_number) // Debug log
+		res.json(invoice)
+	} catch (error) {
+		console.error("Get invoice data error:", error)
+		res.status(500).json({ success: false, error: error.message })
+	}
+}
+
 // HISTORY/LIST INVOICE
 exports.getInvoiceHistory = async (req, res) => {
 	try {
@@ -252,7 +299,7 @@ exports.getInvoiceHistory = async (req, res) => {
 
 		// Get filtered invoices with pagination
 		const [rows] = await db.query(
-    `
+			`
       SELECT i.id, i.invoice_number, i.recipient_name, i.invoice_date, i.status, i.total_amount, c.name AS company_name
       FROM invoices i 
       JOIN companies c ON i.company_id = c.id 
@@ -260,8 +307,8 @@ exports.getInvoiceHistory = async (req, res) => {
       ORDER BY i.created_at DESC
       LIMIT ? OFFSET ?
     `,
-    [...params, limit, offset], // Pastikan limit & offset di sini adalah Number
-);
+			[...params, limit, offset],
+		)
 
 		// Get total count with filters
 		const [countResult] = await db.execute(
@@ -286,29 +333,39 @@ exports.getInvoiceHistory = async (req, res) => {
 	}
 }
 
-// UPDATE INVOICE
+// UPDATE INVOICE - ENDPOINT YANG SUDAH ADA (DIPERBAIKI)
 exports.updateInvoice = async (req, res) => {
 	try {
 		const { uuid } = req.params
 		const {
+			invoice_number,
+			invoice_date,
 			recipient_name,
 			recipient_phone,
 			recipient_npwp,
 			recipient_address,
 			items,
 			taxes,
-			status,
-			paid_date,
 		} = req.body
 
-		let parsedItems = typeof items === "string" ? JSON.parse(items) : items
-		let parsedTaxes = typeof taxes === "string" ? JSON.parse(taxes) : taxes
-		let totalAmount = 0
+		// Parse items dan taxes jika masih string
+		let parsedItems = typeof items === "string" ? JSON.parse(items) : items || []
+		let parsedTaxes = typeof taxes === "string" ? JSON.parse(taxes) : taxes || []
 
+		// Hitung subtotal dari items
+		let subtotal = 0
 		parsedItems.forEach((item) => {
-			totalAmount += (item.quantity || 0) * (item.price || 0)
+			subtotal += (item.quantity || 0) * (item.price || 0)
 		})
 
+		// Hitung tax amount dari percentage dan update parsedTaxes
+		parsedTaxes = parsedTaxes.map((tax) => ({
+			...tax,
+			amount: (subtotal * (tax.percentage || 0)) / 100,
+		}))
+
+		// Hitung total amount
+		let totalAmount = subtotal
 		parsedTaxes.forEach((tax) => {
 			totalAmount += tax.amount || 0
 		})
@@ -316,26 +373,27 @@ exports.updateInvoice = async (req, res) => {
 		await db.execute(
 			`
       UPDATE invoices 
-      SET recipient_name=?, recipient_phone=?, recipient_npwp=?, recipient_address=?, 
-          items=?, taxes=?, status=?, paid_date=?, total_amount=?
+      SET invoice_number=?, invoice_date=?, recipient_name=?, recipient_phone=?, recipient_npwp=?, recipient_address=?,
+          items=?, taxes=?, total_amount=?, updated_at=NOW()
       WHERE id=?
     `,
 			[
+				invoice_number,
+				invoice_date,
 				recipient_name,
 				recipient_phone,
 				recipient_npwp || null,
 				recipient_address || null,
 				JSON.stringify(parsedItems),
 				JSON.stringify(parsedTaxes),
-				status || "draft",
-				paid_date || null,
 				totalAmount,
 				uuid,
 			],
 		)
 
-		res.json({ success: true })
+		res.json({ success: true, message: "Invoice berhasil diupdate" })
 	} catch (error) {
+		console.error("Update invoice error:", error)
 		res.status(500).json({ success: false, error: error.message })
 	}
 }

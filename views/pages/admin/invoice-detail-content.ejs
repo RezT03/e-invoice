@@ -10,6 +10,9 @@
 			</span>
 		</div>
 		<div class="action-buttons">
+			<button class="btn btn-warning" onclick="openEditModal()">
+				Edit Invoice
+			</button>
 			<a
 				href="/admin/invoice/<%= invoice.id %>/pdf/normal"
 				class="btn btn-primary"
@@ -61,7 +64,12 @@
 
 			<!-- Data Penerima -->
 			<div class="detail-card">
-				<h3>Data Penerima</h3>
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+					<h3 style="margin: 0;">Data Penerima</h3>
+					<!-- <a href="/invoice/admin/edit/<%= invoice.id %>" class="btn btn-sm btn-secondary">
+						Edit
+					</a> -->
+				</div>
 				<div class="detail-row">
 					<div class="detail-label">Nama:</div>
 					<div class="detail-value"><%= invoice.recipient_name %></div>
@@ -86,7 +94,12 @@
 
 			<!-- Daftar Item -->
 			<div class="detail-card">
-				<h3>Daftar Item</h3>
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+					<h3 style="margin: 0;">Daftar Item</h3>
+					<!-- <button class="btn btn-sm btn-secondary" onclick="openEditModal()">
+						Edit
+					</button> -->
+				</div>
 				<% if (invoice.items && invoice.items.length > 0) { %>
 				<table class="items-table">
 					<thead>
@@ -128,10 +141,15 @@
 			<!-- Pajak -->
 			<% if (invoice.taxes && invoice.taxes.length > 0) { %>
 			<div class="detail-card">
-				<h3>Pajak & Biaya</h3>
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+					<h3 style="margin: 0;">Pajak & Biaya</h3>
+					<button class="btn btn-sm btn-secondary" onclick="openEditModal()">
+						Edit
+					</button>
+				</div>
 				<% invoice.taxes.forEach(tax => { %>
 				<div class="detail-row">
-					<div class="detail-label"><%= tax.name %>:</div>
+					<div class="detail-label"><%= tax.name %> (<%= tax.percentage %>%):</div>
 					<div class="detail-value">
 						Rp <%= Math.round(tax.amount || 0).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) %>
 					</div>
@@ -254,5 +272,8 @@
 
 <div data-invoice-id="<%= invoice.id %>" style="display: none"></div>
 <div data-share-token="<%= invoice.share_token %>" style="display: none"></div>
+
+<!-- Include Modal -->
+<%- include('invoice-edit-modal') %>
 
 <script src="/js/invoice-detail.js"></script>
