@@ -93,7 +93,7 @@ exports.updateInvoice = async (req, res) => {
 		recipient_address,
 		items,
 		taxes,
-		paid_date, // <-- tambahkan ini jika ingin bisa update
+		paid_date,
 	} = req.body
 	await db.execute(
 		`UPDATE invoices SET recipient_name=?, recipient_phone=?, recipient_npwp=?, recipient_address=?, items=?, taxes=?, paid_date=? WHERE id=?`,

@@ -27,10 +27,12 @@ module.exports = async function (invoice) {
 			
 			const headerY = 45
 			let logoWidth
-			if (invoice.company_name != "Restu Production") {
-				logoWidth = 60
-			} else {
+			if (invoice.company_name == "Restu Production") {
 				logoWidth = 150
+			} else if (invoice.company_name == "CV Lingkar Utara Gemilang") {
+				logoWidth = 90
+			} else {
+				logoWidth = 60
 			}
 			// Variable untuk posisi vertikal teks Company (default di atas)
 			let companyTextY = headerY 

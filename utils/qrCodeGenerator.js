@@ -45,7 +45,7 @@ async function generateInvoiceQRCode(invoice) {
 function formatQRText(company, invoiceNumber, recipient, invoiceDate) {
 	const formattedDate = formatDateForQR(invoiceDate)
 
-	return `Faktur ini dikeluarkan oleh ${company} dengan nomor ${invoiceNumber} yang ditujukan kepada ${recipient} pada tanggal ${formattedDate}.`
+	return `A.n. Muhammad Restu Prayoga \nFaktur/nota belanja ini dikeluarkan oleh ${company} dengan nomor ${invoiceNumber} yang ditujukan kepada ${recipient} pada hari/tanggal: ${formattedDate}.`
 }
 
 /**
@@ -63,10 +63,10 @@ function formatDateForQR(dateString) {
 		day: "2-digit",
 		month: "long",
 		year: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-		second: "2-digit",
-		hour12: false,
+		// hour: "2-digit",
+		// minute: "2-digit",
+		// second: "2-digit",
+		// hour12: false,
 	}
 
 	return date.toLocaleDateString("id-ID", options)

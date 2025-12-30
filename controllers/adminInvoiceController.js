@@ -222,7 +222,7 @@ exports.viewInvoiceAdmin = async (req, res) => {
 // HISTORY/LIST INVOICE
 exports.getInvoiceHistory = async (req, res) => {
 	try {
-		const page = req.query.page || 1
+		const page = parseInt(req.query.page) || 1
 		const limit = 20
 		const offset = (page - 1) * limit
 
@@ -251,8 +251,8 @@ exports.getInvoiceHistory = async (req, res) => {
 		}
 
 		// Get filtered invoices with pagination
-		const [rows] = await db.execute(
-			`
+		const [rows] = await db.query(
+    `
       SELECT i.id, i.invoice_number, i.recipient_name, i.invoice_date, i.status, i.total_amount, c.name AS company_name
       FROM invoices i 
       JOIN companies c ON i.company_id = c.id 
@@ -260,8 +260,8 @@ exports.getInvoiceHistory = async (req, res) => {
       ORDER BY i.created_at DESC
       LIMIT ? OFFSET ?
     `,
-			[...params, limit, offset],
-		)
+    [...params, limit, offset], // Pastikan limit & offset di sini adalah Number
+);
 
 		// Get total count with filters
 		const [countResult] = await db.execute(

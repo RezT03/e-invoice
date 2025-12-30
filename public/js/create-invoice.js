@@ -41,9 +41,9 @@ function addItem() {
 	row.className = "item-row"
 	row.innerHTML = `
         <input type="text" placeholder="Deskripsi item" class="item-description" onpaste="handleItemPaste(event)">
-        <input type="text" placeholder="Satuan" class="item-unit">
-        <input type="number" placeholder="Qty" class="item-qty" value="" min="1" oninput="updateItemTotal(this)">
-        <input type="number" placeholder="Harga" class="item-price" value="" min="0" step="0.01" oninput="updateItemTotal(this)">
+        <input type="text" placeholder="Satuan" class="item-unit" onpaste="handleItemPaste(event)">
+        <input type="number" placeholder="Qty" class="item-qty" value="" min="0" step="0.01" oninput="updateItemTotal(this)" onpaste="handleItemPaste(event)">
+        <input type="number" placeholder="Harga" class="item-price" value="" min="0" step="0.01" oninput="updateItemTotal(this)" onpaste="handleItemPaste(event)">
         <div class="item-total">0</div>
         <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updateItems();">Hapus</button>
     `
@@ -55,21 +55,29 @@ function addItem() {
 
 // Handle paste event untuk multi-row items
 function handleItemPaste(event) {
-	// Only trigger on first input
-	if (event.target.classList.contains("item-qty")) return
-
 	event.preventDefault()
 	const clipboardData = event.clipboardData || window.clipboardData
 	const pastedText = clipboardData.getData("text")
 
 	if (!pastedText) return
 
-	// Split by newline
-	let rows = pastedText.trim().split("\n")
+	// Split by newline (handle both \n and \r\n)
+	let rows = pastedText.trim().split(/\r?\n/).filter(r => r.trim())
+
+	// If no rows, return
+	if (rows.length === 0) return
 
 	// Get current container
 	const container = document.getElementById("itemsContainer")
 	const currentRow = event.target.closest(".item-row")
+	
+	// Determine which column was pasted to
+	const targetClass = event.target.className
+	let columnIndex = 0
+	if (targetClass.includes("item-description")) columnIndex = 0
+	else if (targetClass.includes("item-unit")) columnIndex = 1
+	else if (targetClass.includes("item-qty")) columnIndex = 2
+	else if (targetClass.includes("item-price")) columnIndex = 3
 
 	// Remove current empty row if empty
 	if (currentRow) {
@@ -81,49 +89,51 @@ function handleItemPaste(event) {
 	}
 
 	// Parse each row
-	rows.forEach((rowText) => {
+	rows.forEach((rowText, idx) => {
 		rowText = rowText.trim()
 		if (!rowText) return
 
 		// Try to split by tab first
 		let cells = rowText.split("\t").map((c) => c.trim())
 
-		// Single cell - treat as item name
+		// If no tabs found, treat as single value for the target column
 		if (cells.length === 1) {
-			cells = [cells[0]]
+			cells = ["", "", "", ""]
+			cells[columnIndex] = rowText
 		}
 
-		if (cells[0]) {
-			const [name, unit, qty, price] = [
-				cells[0] || "",
-				cells[1] || "",
-				cells[2] || "",
-				cells[3] || "",
-			]
+		const name = cells[0] || ""
+		const unit = cells[1] || ""
+		const qty = cells[2] || ""
+		const price = cells[3] || ""
 
-			const row = document.createElement("div")
-			row.className = "item-row"
-			const numQty = qty ? parseInt(qty) : 0
-			const numPrice = price ? parseCurrency(price) : 0
-			const total = numQty * numPrice
-
-			row.innerHTML = `
-                <input type="text" value="${escapeHtml(
-									name,
-								)}" placeholder="Deskripsi item" class="item-description">
-                <input type="text" value="${escapeHtml(
-									unit,
-								)}" placeholder="Satuan" class="item-unit">
-                <input type="number" value="${numQty}" placeholder="Qty" class="item-qty" min="1" oninput="updateItemTotal(this)">
-                <input type="number" value="${numPrice}" placeholder="Harga" class="item-price" min="0" step="0.01" oninput="updateItemTotal(this)">
-                <div class="item-total">${total.toLocaleString("id-ID")}</div>
-                <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updateItems();">Hapus</button>
-            `
-
-			container.appendChild(row)
-			row.addEventListener("change", updateItems)
-			row.addEventListener("input", updateItems)
+		const row = document.createElement("div")
+		row.className = "item-row"
+		
+		// Parse qty - handle both plain numbers and formatted numbers (support decimal)
+		let numQty = 0
+		if (qty) {
+			// Remove non-numeric except dot and comma
+			const cleanQty = qty.replace(/[^\d.,]/g, "").replace(",", ".")
+			numQty = parseFloat(cleanQty) || 0
 		}
+		
+		// Parse price - handle currency format
+		const numPrice = price ? parseCurrency(price) : 0
+		const total = numQty * numPrice
+
+		row.innerHTML = `
+            <input type="text" value="${escapeHtml(name)}" placeholder="Deskripsi item" class="item-description">
+            <input type="text" value="${escapeHtml(unit)}" placeholder="Satuan" class="item-unit">
+            <input type="number" value="${numQty}" placeholder="Qty" class="item-qty" min="0" step="0.01" oninput="updateItemTotal(this)">
+            <input type="number" value="${numPrice}" placeholder="Harga" class="item-price" min="0" step="0.01" oninput="updateItemTotal(this)">
+            <div class="item-total">${total.toLocaleString("id-ID")}</div>
+            <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updateItems();">Hapus</button>
+        `
+
+		container.appendChild(row)
+		row.addEventListener("change", updateItems)
+		row.addEventListener("input", updateItems)
 	})
 
 	updateItems()
@@ -194,7 +204,7 @@ function addTax() {
 	row.className = "tax-row"
 	row.innerHTML = `
         <input type="text" placeholder="Nama pajak/biaya" class="tax-name">
-        <input type="number" placeholder="Persentase %" class="tax-percentage" value="0" min="0" max="100" step="0.01">
+        <input type="number" placeholder="Persentase %" class="tax-percentage" value="" min="0" max="100" step="0.01">
         <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updateTaxes();">Hapus</button>
     `
 
