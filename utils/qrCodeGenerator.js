@@ -1,23 +1,18 @@
 const QRCode = require("qrcode")
 
 /**
- * Generate QR Code dari informasi invoice
- * @param {Object} invoice - Data invoice
- * @param {String} invoice.company_name - Nama perusahaan
- * @param {String} invoice.invoice_number - Nomor invoice
- * @param {String} invoice.recipient_name - Nama penerima
- * @param {String} invoice.invoice_date - Tanggal invoice
+ * Generate QR Code dari share token invoice
+ * @param {String} shareToken - Share token untuk akses invoice
+ * @param {String} baseUrl - Base URL aplikasi (opsional, default: http://localhost:3000)
  * @returns {Promise<Buffer>} QR Code dalam format PNG buffer
  */
-async function generateInvoiceQRCode(invoice) {
+async function generateInvoiceQRCode(
+	shareToken,
+	baseUrl = "http://localhost:3000",
+) {
 	try {
-		// Buat teks QR Code sesuai format yang diminta
-		const qrText = formatQRText(
-			invoice.company_name,
-			invoice.invoice_number,
-			invoice.recipient_name,
-			invoice.invoice_date,
-		)
+		// QR Code menampilkan link share invoice
+		const qrText = formatQRText(shareToken, baseUrl)
 
 		// Generate QR Code
 		const qrBuffer = await QRCode.toBuffer(qrText, {
@@ -40,12 +35,39 @@ async function generateInvoiceQRCode(invoice) {
 
 /**
  * Format teks QR Code
- * Format: "Faktur ini dikeluarkan oleh {company} dengan nomor {inv.no} yang ditujukan kepada {recipient} pada tanggal {date}."
+ * Format: URL lengkap ke invoice share link
  */
-function formatQRText(company, invoiceNumber, recipient, invoiceDate) {
-	const formattedDate = formatDateForQR(invoiceDate)
+function formatQRText(share_token, baseUrl = "http://localhost:3000") {
+	// Debug log
+	console.log("🔍 formatQRText Debug:")
+	console.log("  - share_token:", share_token)
+	console.log("  - baseUrl:", baseUrl)
 
-	return `A.n. Muhammad Restu Prayoga \nFaktur/nota belanja ini dikeluarkan oleh ${company} dengan nomor ${invoiceNumber} yang ditujukan kepada ${recipient} pada hari/tanggal: ${formattedDate}.`
+	// Jika share_token tidak ada, kembalikan string kosong
+	if (!share_token) {
+		console.warn("⚠️  share_token kosong/null!")
+		return ""
+	}
+
+	const s = String(share_token).trim()
+	// Jika sudah berbentuk URL, kembalikan apa adanya
+	if (/^https?:\/\//i.test(s)) {
+		console.log("  - Detected full URL, returning as-is")
+		return s
+	}
+
+	// Jika token mengandung tanda '/', kemungkinan sudah path lengkap -> prepend origin if missing
+	if (s.includes("/") && !/^https?:\/\//i.test(s)) {
+		// treat as path
+		const url = s.startsWith("/") ? `${baseUrl}${s}` : `${baseUrl}/${s}`
+		console.log("  - Detected path token, generated URL:", url)
+		return url
+	}
+
+	// Default: treat as pure token
+	const qrUrl = `${baseUrl.replace(/\/$/, "")}/invoice/share/${s}`
+	console.log("  - Generated URL:", qrUrl)
+	return qrUrl
 }
 
 /**
@@ -74,10 +96,18 @@ function formatDateForQR(dateString) {
 
 /**
  * Generate QR Code dan simpan ke file
+ * @param {String} shareToken - Share token untuk akses invoice
+ * @param {String} outputPath - Path untuk menyimpan file QR code
+ * @param {String} baseUrl - Base URL aplikasi (opsional)
+ * @returns {Promise<String>} Path file QR code yang disimpan
  */
-async function generateInvoiceQRCodeAsFile(invoice, outputPath) {
+async function generateInvoiceQRCodeAsFile(
+	shareToken,
+	outputPath,
+	baseUrl = "http://localhost:3000",
+) {
 	try {
-		const qrBuffer = await generateInvoiceQRCode(invoice)
+		const qrBuffer = await generateInvoiceQRCode(shareToken, baseUrl)
 		const fs = require("fs")
 		fs.writeFileSync(outputPath, qrBuffer)
 		return outputPath

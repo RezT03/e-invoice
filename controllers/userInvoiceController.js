@@ -145,7 +145,8 @@ exports.downloadPDF = async (req, res) => {
 		const [shares] = await db.execute(
 			`
       SELECT i.*, c.name AS company_name, c.address AS company_address, c.phone AS company_phone,
-             c.logo_path, c.bank_account_name, c.bank_account_number, c.bank_name
+             c.logo_path, c.bank_account_name, c.bank_account_number, c.bank_name,
+             s.share_token
       FROM invoice_shares s
       JOIN invoices i ON s.invoice_id = i.id
       JOIN companies c ON i.company_id = c.id
@@ -204,9 +205,11 @@ exports.downloadPDFFromCheck = async (req, res) => {
              c.logo_path,
              c.bank_account_name, 
              c.bank_account_number, 
-             c.bank_name
+             c.bank_name,
+             s.share_token
       FROM invoices i 
       JOIN companies c ON i.company_id = c.id
+      LEFT JOIN invoice_shares s ON i.id = s.invoice_id
       WHERE i.invoice_number = ? AND i.recipient_phone = ?
     `,
 			[invoice_number, recipient_phone],

@@ -25,10 +25,14 @@
 			<!-- Main Content -->
 			<main class="main-content">
 				<!-- Top Bar -->
-				<%- include('../partials/admin/topbar', { pageTitle, userName: typeof
-				userName !== 'undefined' ? userName : 'Admin User', userInitial: typeof
-				userInitial !== 'undefined' ? userInitial : 'A', showUserInfo: typeof
-				showUserInfo !== 'undefined' ? showUserInfo : true }) %>
+				<%- include('../partials/admin/topbar', { 
+					pageTitle, 
+					userName: typeof userName !== 'undefined' ? displayName : 'Admin User', 
+					userInitial: typeof
+					userInitial !== 'undefined' ? generatedInitial : 'A', 
+					showUserInfo: typeof
+					showUserInfo !== 'undefined' ? showUserInfo : true 
+			}) %>
 
 				<!-- Page Content -->
 				<% if (contentFile) { %> <%- include('../pages/' + contentFile, locals)

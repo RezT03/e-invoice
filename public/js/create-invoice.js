@@ -9,6 +9,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
 	// Add first item by default
 	addItem()
+
+	// Add event listener untuk diskon
+	const discountTypeSelect = document.getElementById("discount_type")
+	if (discountTypeSelect) {
+		discountTypeSelect.addEventListener("change", updateDiscountLabel)
+	}
+
+	const discountValueInput = document.getElementById("discount_value")
+	if (discountValueInput) {
+		discountValueInput.addEventListener("input", updateSummary)
+	}
 })
 
 // Parse currency string to number (e.g., "Rp 50.000" -> 50000)
@@ -43,7 +54,13 @@ function addItem() {
         <input type="text" placeholder="Deskripsi item" class="item-description" onpaste="handleItemPaste(event)">
         <input type="text" placeholder="Satuan" class="item-unit" onpaste="handleItemPaste(event)">
         <input type="number" placeholder="Qty" class="item-qty" value="" min="0" step="0.01" oninput="updateItemTotal(this)" onpaste="handleItemPaste(event)">
-        <input type="number" placeholder="Harga" class="item-price" value="" min="0" step="0.01" oninput="updateItemTotal(this)" onpaste="handleItemPaste(event)">
+        <div class="item-price-container">
+        	<select class="item-price-type" onchange="togglePriceInput(this)">
+        		<option value="unit">Harga Satuan</option>
+        		<option value="total">Harga Total</option>
+        	</select>
+        	<input type="number" placeholder="Harga" class="item-price" value="" min="0" step="0.01" oninput="updateItemTotal(this)" onpaste="handleItemPaste(event)">
+        </div>
         <div class="item-total">0</div>
         <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updateItems();">Hapus</button>
     `
@@ -62,7 +79,10 @@ function handleItemPaste(event) {
 	if (!pastedText) return
 
 	// Split by newline (handle both \n and \r\n)
-	let rows = pastedText.trim().split(/\r?\n/).filter(r => r.trim())
+	let rows = pastedText
+		.trim()
+		.split(/\r?\n/)
+		.filter((r) => r.trim())
 
 	// If no rows, return
 	if (rows.length === 0) return
@@ -70,7 +90,7 @@ function handleItemPaste(event) {
 	// Get current container
 	const container = document.getElementById("itemsContainer")
 	const currentRow = event.target.closest(".item-row")
-	
+
 	// Determine which column was pasted to
 	const targetClass = event.target.className
 	let columnIndex = 0
@@ -109,7 +129,7 @@ function handleItemPaste(event) {
 
 		const row = document.createElement("div")
 		row.className = "item-row"
-		
+
 		// Parse qty - handle both plain numbers and formatted numbers (support decimal)
 		let numQty = 0
 		if (qty) {
@@ -117,7 +137,7 @@ function handleItemPaste(event) {
 			const cleanQty = qty.replace(/[^\d.,]/g, "").replace(",", ".")
 			numQty = parseFloat(cleanQty) || 0
 		}
-		
+
 		// Parse price - handle currency format
 		const numPrice = price ? parseCurrency(price) : 0
 		const total = numQty * numPrice
@@ -126,7 +146,13 @@ function handleItemPaste(event) {
             <input type="text" value="${escapeHtml(name)}" placeholder="Deskripsi item" class="item-description">
             <input type="text" value="${escapeHtml(unit)}" placeholder="Satuan" class="item-unit">
             <input type="number" value="${numQty}" placeholder="Qty" class="item-qty" min="0" step="0.01" oninput="updateItemTotal(this)">
-            <input type="number" value="${numPrice}" placeholder="Harga" class="item-price" min="0" step="0.01" oninput="updateItemTotal(this)">
+            <div class="item-price-container">
+                <select class="item-price-type" onchange="togglePriceInput(this)">
+                    <option value="unit" selected>Harga Satuan</option>
+                    <option value="total">Harga Total</option>
+                </select>
+                <input type="number" value="${numPrice}" placeholder="Harga" class="item-price" min="0" step="0.01" oninput="updateItemTotal(this)">
+            </div>
             <div class="item-total">${total.toLocaleString("id-ID")}</div>
             <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updateItems();">Hapus</button>
         `
@@ -144,14 +170,40 @@ function updateItemTotal(input) {
 	const row = input.closest(".item-row")
 	const qtyInput = row.querySelector(".item-qty")
 	const priceInput = row.querySelector(".item-price")
+	const priceTypeSelect = row.querySelector(".item-price-type")
 	const totalSpan = row.querySelector(".item-total")
 
 	const qty = parseFloat(qtyInput.value) || 0
 	const price = parseFloat(priceInput.value) || 0
-	const total = qty * price
+	const priceType = priceTypeSelect.value // "unit" atau "total"
+
+	let total = 0
+	if (priceType === "unit") {
+		// Harga satuan: total = qty * price
+		total = qty * price
+	} else {
+		// Harga total: yang diinput sudah total, qty akan dibagi nanti saat menyimpan
+		total = price
+	}
 
 	totalSpan.textContent = total.toLocaleString("id-ID")
 	updateItems()
+}
+
+// Toggle antara input harga satuan atau harga total
+function togglePriceInput(select) {
+	const row = select.closest(".item-row")
+	const priceInput = row.querySelector(".item-price")
+	const priceType = select.value
+
+	if (priceType === "unit") {
+		priceInput.placeholder = "Harga Satuan"
+	} else {
+		priceInput.placeholder = "Harga Total"
+	}
+
+	// Trigger update untuk refresh total
+	updateItemTotal(priceInput)
 }
 
 function updateItems() {
@@ -162,14 +214,23 @@ function updateItems() {
 		const description = row.querySelector(".item-description").value
 		const unit = row.querySelector(".item-unit").value
 		const quantity = parseFloat(row.querySelector(".item-qty").value) || 0
-		const price = parseFloat(row.querySelector(".item-price").value) || 0
+		const priceInput = parseFloat(row.querySelector(".item-price").value) || 0
+		const priceType = row.querySelector(".item-price-type").value
 
-		if (description && quantity && price) {
+		if (description && quantity && priceInput) {
+			let price = priceInput
+
+			// Jika input adalah harga total, hitung harga satuan
+			if (priceType === "total") {
+				price = priceInput / quantity
+			}
+
 			items.push({ description, unit, quantity, price })
 		}
 	})
 
 	document.getElementById("items").value = JSON.stringify(items)
+	updateSummary()
 }
 
 // Discount management
@@ -177,7 +238,6 @@ function updateDiscountLabel() {
 	const type = document.getElementById("discount_type").value
 	const label = document.getElementById("discountLabel")
 	const input = document.getElementById("discount_value")
-	const info = document.getElementById("discountInfo")
 
 	if (type === "percentage") {
 		label.textContent = "Diskon (%):"
@@ -191,7 +251,96 @@ function updateDiscountLabel() {
 
 	if (type === "none") {
 		input.value = 0
-		info.style.display = "none"
+	}
+
+	updateSummary()
+}
+
+// Hitung dan tampilkan ringkasan total
+function updateSummary() {
+	// Hitung subtotal dari items
+	const container = document.getElementById("itemsContainer")
+	let subtotal = 0
+
+	container.querySelectorAll(".item-row").forEach((row) => {
+		const quantity = parseFloat(row.querySelector(".item-qty").value) || 0
+		const priceInput = parseFloat(row.querySelector(".item-price").value) || 0
+		const priceType = row.querySelector(".item-price-type").value
+
+		let itemTotal = 0
+		if (priceType === "unit") {
+			itemTotal = quantity * priceInput
+		} else {
+			itemTotal = priceInput // Harga total yang diinput
+		}
+		subtotal += itemTotal
+	})
+
+	// Hitung diskon
+	const discountType = document.getElementById("discount_type").value
+	const discountValue =
+		parseFloat(document.getElementById("discount_value").value) || 0
+	let discountAmount = 0
+
+	if (discountType === "percentage") {
+		discountAmount = (subtotal * discountValue) / 100
+	} else if (discountType === "nominal") {
+		discountAmount = discountValue
+	}
+
+	// Subtotal setelah diskon
+	const subtotalAfterDiscount = subtotal - discountAmount
+
+	// Hitung total pajak
+	const taxContainer = document.getElementById("taxesContainer")
+	let totalTax = 0
+
+	taxContainer.querySelectorAll(".tax-row").forEach((row) => {
+		const percentage =
+			parseFloat(row.querySelector(".tax-percentage").value) || 0
+		totalTax += (subtotalAfterDiscount * percentage) / 100
+	})
+
+	// Total akhir
+	const totalFinal = subtotalAfterDiscount + totalTax
+
+	// Update display (jika ada elemen untuk menampilkan)
+	const summarySection = document.getElementById("summarySection")
+	if (summarySection) {
+		summarySection.innerHTML = `
+            <div class="summary-item">
+                <span>Subtotal:</span>
+                <strong>Rp ${subtotal.toLocaleString("id-ID")}</strong>
+            </div>
+            ${
+							discountAmount > 0
+								? `
+            <div class="summary-item">
+                <span>Diskon (${discountType === "percentage" ? discountValue + "%" : "Nominal"}):</span>
+                <strong style="color: green;">-Rp ${discountAmount.toLocaleString("id-ID")}</strong>
+            </div>
+            `
+								: ""
+						}
+            <div class="summary-item">
+                <span>Subtotal setelah diskon:</span>
+                <strong>Rp ${subtotalAfterDiscount.toLocaleString("id-ID")}</strong>
+            </div>
+            ${
+							totalTax > 0
+								? `
+            <div class="summary-item">
+                <span>Pajak/Biaya:</span>
+                <strong>Rp ${totalTax.toLocaleString("id-ID")}</strong>
+            </div>
+            `
+								: ""
+						}
+            <div class="summary-item" style="border-top: 2px solid #ccc; padding-top: 10px; margin-top: 10px;">
+                <span style="font-weight: bold;">Total:</span>
+                <strong style="font-size: 18px; color: #2c3e50;">Rp ${totalFinal.toLocaleString("id-ID")}</strong>
+            </div>
+        `
 	}
 }
 
@@ -228,6 +377,7 @@ function updateTaxes() {
 	})
 
 	document.getElementById("taxes").value = JSON.stringify(taxes)
+	updateSummary()
 }
 
 // Form submit

@@ -5,8 +5,18 @@
 	</div>
 	<% if (showUserInfo) { %>
 	<div class="user-info">
-		<span><%= userName || 'Admin User' %></span>
-		<div class="avatar"><%= userInitial || 'A' %></div>
+		<% 
+			let displayName = adminName || admins?.username || 'Admin User';
+			let generatedInitial = displayName
+				.trim()
+				.split(/\s+/)
+				.slice(0, 1)
+				.map(word => word[0])
+				.join("")
+				.toUpperCase();
+   		%>
+		<span><%= displayName %></span>
+		<div class="avatar"><%= generatedInitial || 'A' %></div>
 	</div>
 	<% } %>
 </div>

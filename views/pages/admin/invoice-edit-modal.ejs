@@ -8,26 +8,17 @@
 		<div class="modal-body">
 			<form id="editInvoiceForm">
 				<!-- Nomor & Tgl -->
-				 <div class="form-section">
+				<div class="form-section">
 					<h3>Informasi Invoice</h3>
 					<div class="form-group">
 						<label for="invoice_no">No. Invoice*</label>
-						<input 
-						type="text" 
-						name="invoice_number" 
-						id="invoice_no"
-						required
-						/>
+						<input type="text" name="invoice_number" id="invoice_no" required />
 					</div>
 					<div class="form-group">
 						<label for="inv_date">Tanggal</label>
-						<input 
-						type="date"
-						name="invoice_date"
-						id="inv_date"
-						/>
+						<input type="date" name="invoice_date" id="inv_date" />
 					</div>
-				 </div>
+				</div>
 				<!-- Informasi Penerima -->
 				<div class="form-section">
 					<h3>Informasi Penerima</h3>
@@ -51,11 +42,7 @@
 					</div>
 					<div class="form-group">
 						<label for="edit_recipient_npwp">NPWP</label>
-						<input
-							type="text"
-							id="edit_recipient_npwp"
-							name="recipient_npwp"
-						/>
+						<input type="text" id="edit_recipient_npwp" name="recipient_npwp" />
 					</div>
 					<div class="form-group">
 						<label for="edit_recipient_address">Alamat</label>
@@ -71,7 +58,11 @@
 				<div class="form-section">
 					<h3>Daftar Item</h3>
 					<div id="itemsListEdit"></div>
-					<button type="button" class="btn btn-secondary" onclick="addEditItem()">
+					<button
+						type="button"
+						class="btn btn-secondary"
+						onclick="addEditItem()"
+					>
 						+ Tambah Item
 					</button>
 				</div>
@@ -80,20 +71,66 @@
 				<div class="form-section">
 					<h3>Pajak & Biaya</h3>
 					<div id="taxesListEdit"></div>
-					<button type="button" class="btn btn-secondary" onclick="addEditTax()">
+					<button
+						type="button"
+						class="btn btn-secondary"
+						onclick="addEditTax()"
+					>
 						+ Tambah Pajak
 					</button>
+				</div>
+
+				<!-- Diskon -->
+				<div class="form-section">
+					<h3>Diskon (Opsional)</h3>
+					<div class="discount-section">
+						<div class="discount-row">
+							<div class="form-group">
+								<label for="edit_discount_type">Tipe Diskon:</label>
+								<select
+									id="edit_discount_type"
+									name="discount_type"
+									onchange="updateEditDiscountLabel()"
+								>
+									<option value="none">Tanpa Diskon</option>
+									<option value="percentage">Persentase (%)</option>
+									<option value="nominal">Nominal (Rp)</option>
+								</select>
+							</div>
+							<div class="form-group">
+								<label id="edit_discountLabel" for="edit_discount_value">
+									Diskon (%):
+								</label>
+								<input
+									type="number"
+									id="edit_discount_value"
+									name="discount_value"
+									placeholder="Misal: 10 untuk 10%"
+									value="0"
+									min="0"
+									step="0.01"
+									oninput="updateEditDiscountValue()"
+								/>
+							</div>
+						</div>
+					</div>
 				</div>
 
 				<!-- Total -->
 				<div class="form-section">
 					<div class="total-display">
-						<h3>Total: Rp <span id="editTotalAmount">0</span></h3>
+						<h3>
+							Total: Rp
+							<span id="editTotalAmount">0</span>
+						</h3>
 					</div>
 				</div>
-
 				<div class="modal-actions">
-					<button type="button" class="btn btn-secondary" onclick="closeEditModal()">
+					<button
+						type="button"
+						class="btn btn-secondary"
+						onclick="closeEditModal()"
+					>
 						Batal
 					</button>
 					<button type="submit" class="btn btn-primary">
@@ -106,150 +143,182 @@
 </div>
 
 <style>
-.modal {
-	display: none;
-	position: fixed;
-	z-index: 1000;
-	left: 0;
-	top: 0;
-	width: 100%;
-	height: 100%;
-	overflow: auto;
-	background-color: rgba(0, 0, 0, 0.5);
-}
+	.modal {
+		display: none;
+		position: fixed;
+		z-index: 1000;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		overflow: auto;
+		background-color: rgba(0, 0, 0, 0.5);
+	}
 
-.modal-content {
-	background-color: #fefefe;
-	margin: 2% auto;
-	padding: 0;
-	border: 1px solid #888;
-	width: 90%;
-	max-width: 900px;
-	border-radius: 8px;
-	max-height: 90vh;
-	display: flex;
-	flex-direction: column;
-}
+	.modal-content {
+		background-color: #fefefe;
+		margin: 2% auto;
+		padding: 0;
+		border: 1px solid #888;
+		width: 90%;
+		max-width: 900px;
+		border-radius: 8px;
+		max-height: 90vh;
+		display: flex;
+		flex-direction: column;
+	}
 
-.modal-header {
-	padding: 20px;
-	background-color: #667eea;
-	color: white;
-	border-radius: 8px 8px 0 0;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
+	.modal-header {
+		padding: 20px;
+		background-color: #667eea;
+		color: white;
+		border-radius: 8px 8px 0 0;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
 
-.modal-header h2 {
-	margin: 0;
-}
+	.modal-header h2 {
+		margin: 0;
+	}
 
-.close {
-	color: white;
-	font-size: 28px;
-	font-weight: bold;
-	cursor: pointer;
-}
+	.close {
+		color: white;
+		font-size: 28px;
+		font-weight: bold;
+		cursor: pointer;
+	}
 
-.close:hover,
-.close:focus {
-	color: #ddd;
-}
+	.close:hover,
+	.close:focus {
+		color: #ddd;
+	}
 
-.modal-body {
-	padding: 20px;
-	overflow-y: auto;
-}
+	.modal-body {
+		padding: 20px;
+		overflow-y: auto;
+	}
 
-.form-section {
-	margin-bottom: 2rem;
-	padding: 1.5rem;
-	background: #f8f9fa;
-	border-radius: 8px;
-}
+	.form-section {
+		margin-bottom: 2rem;
+		padding: 1.5rem;
+		background: #f8f9fa;
+		border-radius: 8px;
+	}
 
-.form-section h3 {
-	margin-top: 0;
-	margin-bottom: 1rem;
-	color: #333;
-}
+	.form-section h3 {
+		margin-top: 0;
+		margin-bottom: 1rem;
+		color: #333;
+	}
 
-.form-group {
-	margin-bottom: 1rem;
-}
+	.form-group {
+		margin-bottom: 1rem;
+	}
 
-.form-group label {
-	display: block;
-	margin-bottom: 0.5rem;
-	font-weight: 500;
-	color: #555;
-}
+	.form-group label {
+		display: block;
+		margin-bottom: 0.5rem;
+		font-weight: 500;
+		color: #555;
+	}
 
-.form-group input,
-.form-group textarea,
-.form-group select {
-	width: 100%;
-	padding: 0.75rem;
-	border: 1px solid #ddd;
-	border-radius: 4px;
-	font-size: 1rem;
-}
+	.form-group input,
+	.form-group textarea,
+	.form-group select {
+		width: 100%;
+		padding: 0.75rem;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		font-size: 1rem;
+	}
 
-.form-group textarea {
-	resize: vertical;
-}
+	.form-group textarea {
+		resize: vertical;
+	}
 
-.item-row,
-.tax-row {
-	display: grid;
-	grid-template-columns: 2fr 1fr 1fr 1fr auto;
-	gap: 0.5rem;
-	margin-bottom: 0.5rem;
-	align-items: end;
-}
+	.item-row,
+	.tax-row {
+		display: grid;
+		grid-template-columns: 2fr 1fr 0.75fr 1.5fr 1fr auto;
+		gap: 0.5rem;
+		margin-bottom: 0.5rem;
+		align-items: end;
+	}
 
-.tax-row {
-	grid-template-columns: 2fr 1fr auto;
-}
+	.tax-row {
+		grid-template-columns: 2fr 1fr auto;
+	}
 
-.item-row input,
-.tax-row input {
-	padding: 0.5rem;
-	border: 1px solid #ddd;
-	border-radius: 4px;
-}
+	.item-price-container-edit {
+		display: grid;
+		grid-template-columns: 1fr 1.2fr;
+		gap: 0.5rem;
+		align-items: flex-end;
+	}
 
-.remove-btn {
-	background: #dc3545;
-	color: white;
-	border: none;
-	padding: 0.5rem 1rem;
-	border-radius: 4px;
-	cursor: pointer;
-}
+	.item-price-type {
+		padding: 0.5rem;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		font-size: 0.8rem;
+		cursor: pointer;
+		background: white;
+	}
 
-.remove-btn:hover {
-	background: #c82333;
-}
+	.item-price-type:focus {
+		outline: none;
+		border-color: #667eea;
+		box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+	}
 
-.total-display {
-	text-align: right;
-	padding: 1rem;
-	background: white;
-	border-radius: 8px;
-	border: 2px solid #667eea;
-}
+	.item-row input,
+	.tax-row input {
+		padding: 0.5rem;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+	}
 
-.total-display h3 {
-	margin: 0;
-	color: #667eea;
-}
+	.remove-btn {
+		background: #dc3545;
+		color: white;
+		border: none;
+		padding: 0.5rem 1rem;
+		border-radius: 4px;
+		cursor: pointer;
+	}
 
-.modal-actions {
-	display: flex;
-	justify-content: flex-end;
-	gap: 1rem;
-	margin-top: 1rem;
-}
+	.remove-btn:hover {
+		background: #c82333;
+	}
+
+	.total-display {
+		text-align: right;
+		padding: 1rem;
+		background: white;
+		border-radius: 8px;
+		border: 2px solid #667eea;
+	}
+
+	.total-display h3 {
+		margin: 0;
+		color: #667eea;
+	}
+
+	.discount-section {
+		padding: 1rem;
+	}
+
+	.discount-row {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem;
+	}
+
+	.modal-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: 1rem;
+		margin-top: 1rem;
+	}
 </style>

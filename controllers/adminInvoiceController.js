@@ -95,6 +95,8 @@ exports.createInvoice = async (req, res) => {
 			template_id,
 			items,
 			taxes,
+			discount_type = "none",
+			discount_value = 0,
 			status = "draft",
 		} = req.body
 
@@ -121,14 +123,25 @@ exports.createInvoice = async (req, res) => {
 			subtotal += (item.quantity || 0) * (item.price || 0)
 		})
 
-		// Hitung tax amount dari percentage
+		// Hitung discount
+		let discountAmount = 0
+		if (discount_type === "percentage") {
+			discountAmount = (subtotal * (discount_value || 0)) / 100
+		} else if (discount_type === "nominal") {
+			discountAmount = discount_value || 0
+		}
+
+		// Subtotal setelah diskon
+		const subtotalAfterDiscount = subtotal - discountAmount
+
+		// Hitung tax amount dari percentage (berdasarkan subtotal setelah diskon)
 		const calculatedTaxes = parsedTaxes.map((tax) => ({
 			...tax,
-			amount: (subtotal * (tax.percentage || 0)) / 100,
+			amount: (subtotalAfterDiscount * (tax.percentage || 0)) / 100,
 		}))
 
 		// Hitung total amount
-		totalAmount = subtotal
+		totalAmount = subtotalAfterDiscount
 		calculatedTaxes.forEach((tax) => {
 			totalAmount += tax.amount || 0
 		})
@@ -137,8 +150,8 @@ exports.createInvoice = async (req, res) => {
 			`
       INSERT INTO invoices 
       (id, invoice_number, company_id, template_id, recipient_name, recipient_phone, recipient_npwp, 
-       recipient_address, invoice_date, due_date, items, taxes, total_amount, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       recipient_address, invoice_date, due_date, items, taxes, discount_type, discount_value, total_amount, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
 			[
 				id,
@@ -153,6 +166,8 @@ exports.createInvoice = async (req, res) => {
 				due_date || null,
 				JSON.stringify(parsedItems),
 				JSON.stringify(calculatedTaxes),
+				discount_type,
+				discountAmount,
 				totalAmount,
 				status,
 			],
@@ -224,7 +239,7 @@ exports.getInvoiceData = async (req, res) => {
 	try {
 		const { uuid } = req.params
 		console.log("Fetching invoice data for UUID:", uuid) // Debug log
-		
+
 		const [invoices] = await db.execute(
 			`
       SELECT i.*, 
@@ -239,7 +254,9 @@ exports.getInvoiceData = async (req, res) => {
 		console.log("Query result:", invoices.length, "rows") // Debug log
 
 		if (invoices.length === 0) {
-			return res.status(404).json({ success: false, error: "Invoice tidak ditemukan" })
+			return res
+				.status(404)
+				.json({ success: false, error: "Invoice tidak ditemukan" })
 		}
 
 		const invoice = invoices[0]
@@ -346,11 +363,15 @@ exports.updateInvoice = async (req, res) => {
 			recipient_address,
 			items,
 			taxes,
+			discount_type = "none",
+			discount_value = 0,
 		} = req.body
 
 		// Parse items dan taxes jika masih string
-		let parsedItems = typeof items === "string" ? JSON.parse(items) : items || []
-		let parsedTaxes = typeof taxes === "string" ? JSON.parse(taxes) : taxes || []
+		let parsedItems =
+			typeof items === "string" ? JSON.parse(items) : items || []
+		let parsedTaxes =
+			typeof taxes === "string" ? JSON.parse(taxes) : taxes || []
 
 		// Hitung subtotal dari items
 		let subtotal = 0
@@ -358,14 +379,25 @@ exports.updateInvoice = async (req, res) => {
 			subtotal += (item.quantity || 0) * (item.price || 0)
 		})
 
-		// Hitung tax amount dari percentage dan update parsedTaxes
+		// Hitung discount
+		let discountAmount = 0
+		if (discount_type === "percentage") {
+			discountAmount = (subtotal * (discount_value || 0)) / 100
+		} else if (discount_type === "nominal") {
+			discountAmount = discount_value || 0
+		}
+
+		// Subtotal setelah diskon
+		const subtotalAfterDiscount = subtotal - discountAmount
+
+		// Hitung tax amount dari percentage (berdasarkan subtotal setelah diskon)
 		parsedTaxes = parsedTaxes.map((tax) => ({
 			...tax,
-			amount: (subtotal * (tax.percentage || 0)) / 100,
+			amount: (subtotalAfterDiscount * (tax.percentage || 0)) / 100,
 		}))
 
 		// Hitung total amount
-		let totalAmount = subtotal
+		let totalAmount = subtotalAfterDiscount
 		parsedTaxes.forEach((tax) => {
 			totalAmount += tax.amount || 0
 		})
@@ -374,7 +406,7 @@ exports.updateInvoice = async (req, res) => {
 			`
       UPDATE invoices 
       SET invoice_number=?, invoice_date=?, recipient_name=?, recipient_phone=?, recipient_npwp=?, recipient_address=?,
-          items=?, taxes=?, total_amount=?, updated_at=NOW()
+          items=?, taxes=?, discount_type=?, discount_value=?, total_amount=?, updated_at=NOW()
       WHERE id=?
     `,
 			[
@@ -386,6 +418,8 @@ exports.updateInvoice = async (req, res) => {
 				recipient_address || null,
 				JSON.stringify(parsedItems),
 				JSON.stringify(parsedTaxes),
+				discount_type,
+				discountAmount,
 				totalAmount,
 				uuid,
 			],
@@ -474,6 +508,29 @@ exports.generateShareLink = async (req, res) => {
 exports.downloadPDF = async (req, res) => {
 	try {
 		const { uuid, type } = req.params
+
+		// Pastikan invoice punya share_token, jika tidak generate baru
+		const [checkShare] = await db.execute(
+			"SELECT share_token FROM invoice_shares WHERE invoice_id = ?",
+			[uuid],
+		)
+
+		let shareToken = checkShare.length > 0 ? checkShare[0].share_token : null
+
+		if (!shareToken) {
+			// Generate share token jika tidak ada
+			const crypto = require("crypto")
+			shareToken = crypto.randomBytes(16).toString("hex")
+			const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 hari
+
+			await db.execute(
+				`INSERT INTO invoice_shares (invoice_id, share_token, expires_at, created_at) 
+				 VALUES (?, ?, ?, NOW())`,
+				[uuid, shareToken, expiresAt],
+			)
+			console.log(`✅ Auto-generated share_token for invoice ${uuid}`)
+		}
+
 		const [rows] = await db.execute(
 			`
       SELECT i.*, 
@@ -483,12 +540,13 @@ exports.downloadPDF = async (req, res) => {
              c.logo_path,
              c.bank_account_name, 
              c.bank_account_number, 
-             c.bank_name
+             c.bank_name,
+             ? as share_token
       FROM invoices i 
       JOIN companies c ON i.company_id = c.id 
       WHERE i.id = ?
     `,
-			[uuid],
+			[shareToken, uuid],
 		)
 
 		if (!rows.length) {

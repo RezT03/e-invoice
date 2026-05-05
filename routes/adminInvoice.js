@@ -15,8 +15,9 @@ router.get("/history", adminInvoiceController.getInvoiceHistory)
 router.get("/templates/:companyId", adminInvoiceController.getTemplatesByCompany)
 
 // Routes dengan UUID - urutan penting!
-router.get("/:uuid/data", adminInvoiceController.getInvoiceData) // TAMBAHKAN INI
+router.get("/:uuid/data", adminInvoiceController.getInvoiceData)
 router.get("/:uuid/pdf/:type", adminInvoiceController.downloadPDF)
+router.get("/:uuid/edit", adminInvoiceController.getInvoiceData)
 router.post("/:uuid/update", adminInvoiceController.updateInvoice)
 router.post("/:uuid/status", adminInvoiceController.updateStatus)
 router.post("/:uuid/generate-share", adminInvoiceController.generateShareLink)

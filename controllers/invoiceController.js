@@ -128,8 +128,12 @@ exports.downloadPDF = async (req, res) => {
 	const { uuid, type } = req.params
 	const [rows] = await db.execute(
 		`SELECT i.*, c.name AS company_name, c.address AS company_address, c.phone AS company_phone,
-            c.bank_account_name, c.bank_account_number, c.bank_name
-     FROM invoices i JOIN companies c ON i.company_id = c.id WHERE i.id = ?`,
+            c.bank_account_name, c.bank_account_number, c.bank_name, c.logo_path,
+            s.share_token
+     FROM invoices i 
+     JOIN companies c ON i.company_id = c.id 
+     LEFT JOIN invoice_shares s ON i.id = s.invoice_id
+     WHERE i.id = ?`,
 		[uuid],
 	)
 
