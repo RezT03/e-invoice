@@ -1,8 +1,6 @@
 <%- include('../../layouts/admin', { 
     currentPage: 'history', 
-    pageTitle: 'Detail Invoice', 
+    pageTitle: (typeof invoice !== 'undefined' && invoice.document_type === 'quotation') ? 'Detail Penawaran' : 'Detail Invoice', 
     additionalStyles: ['invoice-detail'], 
     additionalScripts:['invoice-detail'], 
     contentFile: 'admin/invoice-detail-content', invoice }) %>
-	
-

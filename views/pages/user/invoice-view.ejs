@@ -1,13 +1,28 @@
+<% const isQuotation = invoice.document_type === 'quotation'; %>
 <!DOCTYPE html>
 <html lang="id">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>
-			Invoice <%= invoice.invoice_number %> - E-Invoice Restu Production
+			<%= isQuotation ? 'Penawaran' : 'Invoice' %> <%= invoice.invoice_number %> - <%= invoice.company_name %>
 		</title>
 		<link rel="stylesheet" href="/css/style.css" />
 		<style>
+			:root {
+				--primary: #0356fc;
+				--primary-dark: #0244cc;
+				--primary-light: #e8f0ff;
+				--secondary: #fc032d;
+				--secondary-light: #fff0f2;
+				--text: #1a1f36;
+				--text-muted: #6b7280;
+				--bg: #f4f6fb;
+				--white: #ffffff;
+				--border: #e5e7eb;
+				--border-light: #f0f2f5;
+			}
+
 			* {
 				margin: 0;
 				padding: 0;
@@ -15,73 +30,80 @@
 			}
 
 			body {
-				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-					"Helvetica Neue", Arial, sans-serif;
-				background-color: #f5f5f5;
-				color: #333;
+				font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+				background-color: var(--bg);
+				color: var(--text);
+				line-height: 1.6;
 			}
 
 			.header {
-				background: white;
-				padding: 1.5rem;
-				border-bottom: 1px solid #eee;
+				background: var(--white);
+				padding: 1.25rem 2rem;
+				border-bottom: 1px solid var(--border);
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
 				max-width: 100vw;
+				box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 			}
 
 			.header-left h1 {
-				font-size: 1.5rem;
-				color: #333;
+				font-size: 1.35rem;
+				font-weight: 700;
+				color: var(--text);
 			}
 
 			.header-right {
 				display: flex;
-				gap: 1rem;
-				/* margin-right: 2%; */
+				gap: 0.75rem;
+				align-items: center;
 			}
 
 			.btn {
-				padding: 0.5rem 1rem;
+				padding: 0.55rem 1.1rem;
 				border: none;
-				border-radius: 4px;
-				font-size: 0.9rem;
+				border-radius: 6px;
+				font-size: 0.88rem;
 				cursor: pointer;
-				transition: background-color 0.2s;
+				transition: all 0.2s;
 				text-decoration: none;
-				display: inline-block;
+				display: inline-flex;
+				align-items: center;
+				font-weight: 500;
 			}
 
 			.btn-primary {
-				background: #667eea;
+				background: var(--primary);
 				color: white;
 			}
 
 			.btn-primary:hover {
-				background: #5568d3;
+				background: var(--primary-dark);
 			}
 
 			.btn-secondary {
-				background: #6c757d;
-				color: white;
+				background: var(--white);
+				color: var(--text-muted);
+				border: 1px solid var(--border);
 			}
 
 			.btn-secondary:hover {
-				background: #5a6268;
+				background: var(--bg);
+				color: var(--text);
 			}
 
 			.container {
-				max-width: 900px;
+				max-width: 920px;
 				margin: 2rem auto;
 				padding: 0 1rem;
 			}
 
 			.invoice-box {
-				background: white;
-				padding: 2rem;
-				border-radius: 8px;
-				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+				background: var(--white);
+				padding: 2.5rem;
+				border-radius: 10px;
+				box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+				border: 1px solid var(--border);
 				margin-bottom: 2rem;
 			}
 
@@ -90,20 +112,21 @@
 				grid-template-columns: 1fr 1fr;
 				margin-bottom: 2rem;
 				padding-bottom: 2rem;
-				border-bottom: 2px solid #eee;
+				border-bottom: 2px solid var(--border);
 				gap: 2rem;
 			}
 
 			.company-info h3 {
-				color: #667eea;
-				margin-bottom: 0.5rem;
-				font-size: 1.2rem;
+				color: var(--primary);
+				margin-bottom: 0.35rem;
+				font-size: 1.25rem;
+				font-weight: 700;
 			}
 
 			.company-info p {
-				font-size: 0.9rem;
-				color: #666;
-				line-height: 1.6;
+				font-size: 0.88rem;
+				color: var(--text-muted);
+				line-height: 1.5;
 			}
 
 			.invoice-info {
@@ -111,258 +134,176 @@
 			}
 
 			.invoice-info h4 {
-				margin-top: 0.5rem;
-				font-size: 1rem;
-				color: #555;
+				margin-top: 0.6rem;
+				font-size: 0.8rem;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+				color: var(--text-muted);
 			}
 
 			.invoice-info p {
-				font-size: 0.9rem;
-				color: #666;
+				font-size: 0.95rem;
+				color: var(--text);
+				font-weight: 500;
 			}
 
 			.invoice-number {
 				font-size: 1.5rem;
-				font-weight: bold;
-				color: #333;
-				margin-bottom: 0.5rem;
+				font-weight: 800;
+				color: var(--text);
+				margin-bottom: 0.35rem;
+				letter-spacing: -0.5px;
 			}
 
 			.invoice-status {
 				display: inline-block;
 				padding: 0.25rem 0.75rem;
 				border-radius: 20px;
-				font-size: 0.85rem;
-				font-weight: 500;
+				font-size: 0.78rem;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.4px;
 			}
 
-			.status-draft {
-				background: #e2e3e5;
-				color: #383d41;
-			}
-			.status-issued {
-				background: #cfe2ff;
-				color: #084298;
-			}
-			.status-sent {
-				background: #cff4fc;
-				color: #055160;
-			}
-			.status-paid {
-				background: #d1e7dd;
-				color: #0f5132;
-			}
-			.status-overdue {
-				background: #f8d7da;
-				color: #842029;
-			}
-			.status-cancelled {
-				background: #f5c2c7;
-				color: #842029;
-			}
+			.status-draft { background: #f1f3f5; color: #495057; }
+			.status-issued { background: var(--primary-light); color: var(--primary); }
+			.status-sent { background: #e3fafc; color: #0c8599; }
+			.status-paid { background: #e6f9f0; color: #15803d; }
+			.status-overdue { background: var(--secondary-light); color: var(--secondary); }
+			.status-cancelled { background: #f8f9fa; color: #868e96; }
+			.status-accepted { background: #e6f9f0; color: #15803d; }
+			.status-rejected { background: var(--secondary-light); color: var(--secondary); }
 
 			.recipient-details {
-				margin-top: 2rem;
-				padding: 1.5rem;
-				background: #f8f9fa;
-				border-radius: 4px;
+				margin-bottom: 2rem;
+				padding: 1.25rem 1.5rem;
+				background: var(--bg);
+				border-radius: 8px;
+				border: 1px solid var(--border);
 			}
 
 			.recipient-details h4 {
-				margin-bottom: 1rem;
-				color: #333;
+				margin-bottom: 0.75rem;
+				font-size: 0.8rem;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+				color: var(--text-muted);
 			}
 
 			.recipient-details p {
-				margin: 0.5rem 0;
-				font-size: 0.95rem;
-				color: #666;
+				margin: 0.3rem 0;
+				font-size: 0.92rem;
+				color: var(--text);
 			}
 
 			.items-table {
 				width: 100%;
-				margin-top: 2rem;
+				margin-top: 1.5rem;
 				border-collapse: collapse;
 			}
 
 			.items-table thead {
-				background: #f8f9fa;
+				background: var(--bg);
 			}
 
 			.items-table th {
-				padding: 0.75rem;
+				padding: 0.75rem 1rem;
 				text-align: left;
 				font-weight: 600;
-				color: #333;
-				border-bottom: 2px solid #ddd;
+				color: var(--text-muted);
+				font-size: 0.8rem;
+				text-transform: uppercase;
+				letter-spacing: 0.4px;
+				border-bottom: 2px solid var(--border);
 			}
 
 			.items-table td {
-				padding: 0.75rem;
-				border-bottom: 1px solid #eee;
-				color: #666;
+				padding: 0.75rem 1rem;
+				border-bottom: 1px solid var(--border-light);
+				color: var(--text);
+				font-size: 0.9rem;
 			}
 
-			.items-table tr:hover {
-				background: #f9f9f9;
+			.items-table .group-header-row td {
+				background: var(--primary);
+				color: white;
+				font-weight: 700;
+				font-size: 0.88rem;
+				padding: 0.5rem 1rem;
+			}
+
+			.items-table .group-subtotal-row td {
+				background: var(--primary-light);
+				color: var(--primary);
+				font-weight: 600;
+				font-size: 0.88rem;
+				border-top: 1px solid #bfdbfe;
 			}
 
 			.total-section {
 				margin-top: 2rem;
-				text-align: right;
+				display: flex;
+				justify-content: flex-end;
 			}
 
-			.total-row {
-				display: grid;
-				grid-template-columns: auto auto;
-				/* gap: 1.2rem; */
-				max-width: 300px;
-				margin-left: auto;
+			.total-box {
+				min-width: 320px;
 			}
 
-			.total-row-item {
-				display: contents;
+			.total-line {
+				display: flex;
+				justify-content: space-between;
+				padding: 0.45rem 0;
+				font-size: 0.92rem;
+				color: var(--text-muted);
 			}
 
-			.total-row-label {
-				text-align: right;
-				font-weight: 500;
-				color: #666;
-				padding: 0.5rem 0;
+			.total-line strong {
+				color: var(--text);
 			}
 
-			.total-row-value {
-				text-align: right;
-				color: #333;
-				padding: 0.5rem 0;
+			.total-line.grand {
+				border-top: 2px solid var(--border);
+				margin-top: 0.5rem;
+				padding-top: 0.75rem;
+				font-size: 1.15rem;
+				font-weight: 800;
+				color: var(--primary);
 			}
 
-			.total-row-value.grand-total {
-				font-size: 1.2rem;
-				font-weight: bold;
-				color: #2a51ff;
-				border-top: 2px solid #ddd;
-				padding-top: 1rem;
-				padding-bottom: 1rem;
+			.total-line.grand strong {
+				color: var(--primary);
+				font-size: 1.25rem;
 			}
 
 			.bank-details {
 				margin-top: 2rem;
-				padding: 1.5rem;
-				background: #f8f9fa;
-				border-radius: 4px;
-				border-left: 4px solid #fa5764;
+				padding: 1.25rem 1.5rem;
+				background: var(--primary-light);
+				border-radius: 8px;
+				border-left: 4px solid var(--primary);
 			}
 
 			.bank-details h4 {
-				margin-bottom: 1rem;
-				color: #333;
+				margin-bottom: 0.75rem;
+				color: var(--primary);
+				font-size: 0.95rem;
+				font-weight: 700;
 			}
 
 			.bank-details p {
-				margin: 0.5rem 0;
-				font-size: 0.95rem;
-				color: #666;
-			}
-
-			@media print {
-				.header,
-				.btn-print-area {
-					display: none;
-				}
-				body {
-					background: white;
-				}
-				.invoice-box {
-					box-shadow: none;
-					margin: 0;
-				}
+				margin: 0.3rem 0;
+				font-size: 0.92rem;
+				color: var(--text);
 			}
 
 			@media (max-width: 768px) {
-				.invoice-header {
-					grid-template-columns: 1fr;
-				}
-
-				.invoice-info {
-					text-align: left;
-				}
-
-				.header {
-					flex-direction: column;
-					gap: 1rem;
-				}
-
-				.header-right {
-					flex-direction: column;
-					width: 100%;
-				}
-
-				.btn {
-					width: 100%;
-					text-align: center;
-				}
-
-				/* Mobile responsive table - card layout */
-				.items-table {
-					display: block;
-					border: none;
-				}
-
-				.items-table thead {
-					display: none;
-				}
-
-				.items-table tbody {
-					display: block;
-				}
-
-				.items-table tr {
-					display: block;
-					border: 1px solid #ddd;
-					border-radius: 4px;
-					margin-bottom: 1rem;
-					padding: 1rem;
-					background: white;
-				}
-
-				.items-table td {
-					display: block;
-					padding: 0.5rem 0;
-					border: none;
-					text-align: right;
-					position: relative;
-					padding-left: 50%;
-					min-height: 1.75rem;
-				}
-
-				.items-table td:before {
-					content: attr(data-label);
-					position: absolute;
-					left: 0;
-					font-weight: 600;
-					color: #667eea;
-					text-align: left;
-					width: 45%;
-					font-size: 0.85rem;
-				}
-
-				.items-table td:first-child {
-					padding-left: 0;
-					padding-top: 0;
-					padding-bottom: 0.75rem;
-					font-weight: 600;
-					color: #333;
-					font-size: 1rem;
-					border-bottom: 2px solid #ddd;
-					margin-bottom: 0.75rem;
-					text-align: left;
-				}
-
-				.items-table td:first-child:before {
-					content: "";
-					display: none;
-				}
+				.invoice-header { grid-template-columns: 1fr; }
+				.invoice-info { text-align: left; }
+				.header { flex-direction: column; gap: 1rem; }
+				.header-right { flex-direction: column; width: 100%; }
+				.btn { width: 100%; justify-content: center; }
+				.total-box { width: 100%; }
 			}
 		</style>
 	</head>
@@ -376,18 +317,17 @@
 			data-is-admin="<%= typeof isAdmin !== 'undefined' ? (isAdmin ? 'true' : 'false') : 'false' %>"
 		>
 			<div class="header-left">
-				<h1>Invoice</h1>
+				<h1><%= isQuotation ? '📋 Penawaran Harga' : '🧾 Invoice' %></h1>
 			</div>
 			<div class="header-right btn-print-area">
-				<!-- Template Selector untuk Download -->
 				<select
 					id="templateSelect"
 					class="btn btn-primary"
-					style="padding: 0.5rem 1rem; cursor: pointer"
+					style="padding: 0.55rem 1rem; cursor: pointer"
 				>
-					<option value="">Download Invoice</option>
-					<option value="normal">Unduh PDF (Normal)</option>
-					<option value="dotmatrix">Unduh PDF (Dot Matrix)</option>
+					<option value="">Download PDF</option>
+					<option value="normal">PDF Standar</option>
+					<option value="dotmatrix">PDF Dot Matrix</option>
 				</select>
 
 				<a href="/" class="btn btn-secondary">Kembali</a>
@@ -403,7 +343,7 @@
 						<img
 							src="<%= invoice.logo_path %>"
 							alt="Logo"
-							style="height: 60px; margin-bottom: 1rem"
+							style="height: 55px; margin-bottom: 1rem; object-fit: contain;"
 						/>
 						<% } %>
 						<h3><%= invoice.company_name %></h3>
@@ -415,39 +355,29 @@
 						<span class="invoice-status status-<%= invoice.status %>">
 							<%= invoice.status.toUpperCase() %>
 						</span>
-						<h4>Tanggal Invoice</h4>
+						<h4>Tanggal <%= isQuotation ? 'Penawaran' : 'Invoice' %></h4>
 						<p>
-							<%= new Date(invoice.invoice_date).toLocaleDateString('id-ID') %>
+							<%= new Date(invoice.invoice_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) %>
 						</p>
 						<% if (invoice.due_date) { %>
-						<h4>Tanggal Jatuh Tempo</h4>
-						<p><%= new Date(invoice.due_date).toLocaleDateString('id-ID') %></p>
+						<h4><%= isQuotation ? 'Berlaku Hingga' : 'Tanggal Jatuh Tempo' %></h4>
+						<p><%= new Date(invoice.due_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) %></p>
 						<% } %>
 					</div>
 				</div>
 
 				<!-- Detail Penerima -->
 				<div class="recipient-details">
-					<h4>Detail Penerima</h4>
-					<p>
-						<strong>Nama:</strong>
-						<%= invoice.recipient_name %>
-					</p>
-					<p>
-						<strong>Nomor Telepon:</strong>
-						<%= invoice.recipient_phone %>
-					</p>
+					<h4>Kepada:</h4>
+					<p style="font-weight: 700; font-size: 1.05rem;"><%= invoice.recipient_name %></p>
+					<% if (invoice.recipient_phone) { %>
+					<p>📞 <%= invoice.recipient_phone %></p>
+					<% } %>
 					<% if (invoice.recipient_npwp) { %>
-					<p>
-						<strong>NPWP:</strong>
-						<%= invoice.recipient_npwp %>
-					</p>
-					<% } %> <% if (invoice.recipient_address) { %>
-					<p>
-						<strong>Alamat:</strong>
-						<br />
-						<%= invoice.recipient_address %>
-					</p>
+					<p>NPWP: <%= invoice.recipient_npwp %></p>
+					<% } %>
+					<% if (invoice.recipient_address) { %>
+					<p><%= invoice.recipient_address %></p>
 					<% } %>
 				</div>
 
@@ -455,94 +385,114 @@
 				<table class="items-table">
 					<thead>
 						<tr>
-							<th style="text-align: center">Barang/Jasa</th>
-							<th style="text-align: center">Satuan</th>
-							<th style="text-align: center">Qty</th>
-							<th style="text-align: right">Harga Satuan</th>
-							<th style="text-align: right">Total</th>
+							<th style="width: 40px; text-align: center;">No</th>
+							<th>Barang / Jasa</th>
+							<th style="text-align: center;">Satuan</th>
+							<th style="text-align: center;">Qty</th>
+							<th style="text-align: right;">Harga Satuan</th>
+							<th style="text-align: right;">Total</th>
 						</tr>
 					</thead>
 					<tbody>
-						<% invoice.items.forEach(item => { %>
-						<tr>
-							<td><%= item.description || item.name %></td>
-							<td data-label="Satuan" style="text-align: center">
-								<%= item.unit || "-" %>
-							</td>
-							<td data-label="Qty" style="text-align: center">
-								<%= item.quantity || item.qty %>
-							</td>
-							<td data-label="Harga Satuan" style="text-align: right">
-								Rp <%= Math.round(item.price || item.unit_price ||
-								0).toLocaleString('id-ID', { minimumFractionDigits: 0,
-								maximumFractionDigits: 0 }) %>
-							</td>
-							<td data-label="Total" style="text-align: right">
-								Rp <%= Math.round((item.quantity || item.qty || 0) * (item.price
-								|| item.unit_price || 0)).toLocaleString('id-ID', {
-								minimumFractionDigits: 0, maximumFractionDigits: 0 }) %>
-							</td>
-						</tr>
-						<% }); %>
+						<% 
+						let globalIdx = 0;
+						let calculatedSubtotal = 0;
+
+						(invoice.items || []).forEach(item => { 
+							if (item.is_group) {
+								let groupSubtotal = 0;
+						%>
+							<!-- Group Header Row -->
+							<tr class="group-header-row">
+								<td colspan="6"><%= item.group_name || 'Grup' %></td>
+							</tr>
+							<% (item.items || []).forEach(sub => { 
+								globalIdx++;
+								const lineTotal = (sub.quantity || sub.qty || 0) * (sub.price || sub.unit_price || 0);
+								groupSubtotal += lineTotal;
+								calculatedSubtotal += lineTotal;
+							%>
+							<tr>
+								<td style="text-align: center; color: var(--text-muted);"><%= globalIdx %></td>
+								<td><%= sub.description || sub.name %></td>
+								<td style="text-align: center;"><%= sub.unit || '-' %></td>
+								<td style="text-align: center;"><%= sub.quantity || sub.qty %></td>
+								<td style="text-align: right;">
+									Rp <%= Math.round(sub.price || sub.unit_price || 0).toLocaleString('id-ID') %>
+								</td>
+								<td style="text-align: right; font-weight: 500;">
+									Rp <%= Math.round(lineTotal).toLocaleString('id-ID') %>
+								</td>
+							</tr>
+							<% }); %>
+							<!-- Group Subtotal Row -->
+							<tr class="group-subtotal-row">
+								<td colspan="5" style="text-align: right;">Subtotal <%= item.group_name %>:</td>
+								<td style="text-align: right; font-weight: 700;">
+									Rp <%= Math.round(groupSubtotal).toLocaleString('id-ID') %>
+								</td>
+							</tr>
+						<% 
+							} else {
+								globalIdx++;
+								const lineTotal = (item.quantity || item.qty || 0) * (item.price || item.unit_price || 0);
+								calculatedSubtotal += lineTotal;
+						%>
+							<tr>
+								<td style="text-align: center; color: var(--text-muted);"><%= globalIdx %></td>
+								<td><%= item.description || item.name %></td>
+								<td style="text-align: center;"><%= item.unit || '-' %></td>
+								<td style="text-align: center;"><%= item.quantity || item.qty %></td>
+								<td style="text-align: right;">
+									Rp <%= Math.round(item.price || item.unit_price || 0).toLocaleString('id-ID') %>
+								</td>
+								<td style="text-align: right; font-weight: 500;">
+									Rp <%= Math.round(lineTotal).toLocaleString('id-ID') %>
+								</td>
+							</tr>
+						<% 
+							}
+						}); 
+						%>
 					</tbody>
 				</table>
 
 				<!-- Total Section -->
 				<div class="total-section">
-					<div class="total-row">
-						<% let subtotal = 0; invoice.items.forEach(item => { subtotal +=
-						(item.quantity || item.qty || 0) * (item.price || item.unit_price ||
-						0); }); %>
-						<div class="total-row-item">
-							<div class="total-row-label">Subtotal:</div>
-							<div class="total-row-value">
-								Rp <%= Math.round(subtotal).toLocaleString('id-ID', {
-								minimumFractionDigits: 0, maximumFractionDigits: 0 }) %>
-							</div>
+					<div class="total-box">
+						<div class="total-line">
+							<span>Subtotal:</span>
+							<strong>Rp <%= Math.round(calculatedSubtotal).toLocaleString('id-ID') %></strong>
 						</div>
 
-						<% invoice.taxes.forEach(tax => { const taxAmount = tax.amount !==
-						undefined ? tax.amount : (subtotal * (tax.percentage || 0) / 100);
-						%>
-						<div class="total-row-item">
-							<div class="total-row-label">
-								<%= tax.name %> (<%= tax.percentage || 0 %>%):
-							</div>
-							<div class="total-row-value">
-								Rp <%= Math.round(taxAmount).toLocaleString('id-ID', {
-								minimumFractionDigits: 0, maximumFractionDigits: 0 }) %>
-							</div>
+						<% if (invoice.discount_value > 0) { %>
+						<div class="total-line" style="color: #15803d;">
+							<span>Diskon:</span>
+							<strong>− Rp <%= Math.round(invoice.discount_value || 0).toLocaleString('id-ID') %></strong>
+						</div>
+						<% } %>
+
+						<% (invoice.taxes || []).forEach(tax => { %>
+						<div class="total-line">
+							<span><%= tax.name %> (<%= tax.percentage %>%):</span>
+							<strong>Rp <%= Math.round(tax.amount || 0).toLocaleString('id-ID') %></strong>
 						</div>
 						<% }); %>
 
-						<div class="total-row-item">
-							<div class="total-row-label">Total:</div>
-							<div class="total-row-value grand-total">
-								Rp <%= Math.round(invoice.total_amount ||
-								0).toLocaleString('id-ID', { minimumFractionDigits: 0,
-								maximumFractionDigits: 0 }) %>
-							</div>
+						<div class="total-line grand">
+							<span>Total:</span>
+							<strong>Rp <%= Math.round(invoice.total_amount || 0).toLocaleString('id-ID') %></strong>
 						</div>
 					</div>
 				</div>
 
-				<!-- Bank Details -->
-				<% if (invoice.status != 'paid' && invoice.status != 'cancelled' &&
-				invoice.bank_name) { %>
+				<!-- Bank Details (Hanya untuk Invoice, TIDAK untuk Penawaran Harga) -->
+				<% if (!isQuotation && invoice.status != 'paid' && invoice.status != 'cancelled' && invoice.bank_name) { %>
 				<div class="bank-details">
 					<h4>Informasi Pembayaran</h4>
-					<p>
-						<strong>Nama Bank:</strong>
-						<%= invoice.bank_name %>
-					</p>
-					<p>
-						<strong>Nomor Rekening:</strong>
-						<%= invoice.bank_account_number %>
-					</p>
-					<p>
-						<strong>Atas Nama:</strong>
-						<%= invoice.bank_account_name %>
-					</p>
+					<p><strong>Nama Bank:</strong> <%= invoice.bank_name %></p>
+					<p><strong>Nomor Rekening:</strong> <%= invoice.bank_account_number %></p>
+					<p><strong>Atas Nama:</strong> <%= invoice.bank_account_name %></p>
 				</div>
 				<% } %>
 			</div>
@@ -551,7 +501,6 @@
 		<%- include ('../../partials/footer') %>
 
 		<script>
-			// Get invoice data from HTML attributes
 			const header = document.querySelector("[data-invoice-id]")
 			const invoiceId = header.dataset.invoiceId
 			const invoiceNumber = header.dataset.invoiceNumber
@@ -559,197 +508,38 @@
 			const shareToken = header.dataset.shareToken
 			const isAdmin = header.dataset.isAdmin === "true"
 
-			// Template selector handler untuk download PDF
 			if (document.getElementById("templateSelect")) {
-				document
-					.getElementById("templateSelect")
-					.addEventListener("change", function (e) {
-						const template = e.target.value
-						if (!template) return
+				document.getElementById("templateSelect").addEventListener("change", function (e) {
+					const template = e.target.value
+					if (!template) return
 
-						if (shareToken) {
-							// User accessing via shared link
-							window.location.href = `/invoice/share/${shareToken}/pdf?template=${template}`
-						} else if (isAdmin) {
-							// Admin accessing invoice
-							window.location.href = `/admin/invoice/${invoiceId}/pdf/${template}`
-						} else {
-							// User accessing via check invoice form - submit form to download
-							downloadInvoiceFromCheck(invoiceNumber, recipientPhone, template)
-						}
-					})
+					if (shareToken) {
+						window.location.href = `/invoice/share/${shareToken}/pdf?template=${template}`
+					} else if (isAdmin) {
+						window.location.href = `/admin/invoice/${invoiceId}/pdf/${template}`
+					} else {
+						downloadInvoiceFromCheck(invoiceNumber, recipientPhone, template)
+					}
+				})
 			}
 
-			// Function untuk download invoice dari check invoice
-			function downloadInvoiceFromCheck(
-				invoiceNumber,
-				recipientPhone,
-				template,
-			) {
+			function downloadInvoiceFromCheck(invoiceNumber, recipientPhone, template) {
 				const form = document.createElement("form")
 				form.method = "POST"
 				form.action = "/invoice/check/pdf"
 
-				const invoiceField = document.createElement("input")
-				invoiceField.type = "hidden"
-				invoiceField.name = "invoice_number"
-				invoiceField.value = invoiceNumber
+				const f1 = document.createElement("input")
+				f1.type = "hidden"; f1.name = "invoice_number"; f1.value = invoiceNumber
+				const f2 = document.createElement("input")
+				f2.type = "hidden"; f2.name = "recipient_phone"; f2.value = recipientPhone
+				const f3 = document.createElement("input")
+				f3.type = "hidden"; f3.name = "template"; f3.value = template
 
-				const phoneField = document.createElement("input")
-				phoneField.type = "hidden"
-				phoneField.name = "recipient_phone"
-				phoneField.value = recipientPhone
-
-				const templateField = document.createElement("input")
-				templateField.type = "hidden"
-				templateField.name = "template"
-				templateField.value = template
-
-				form.appendChild(invoiceField)
-				form.appendChild(phoneField)
-				form.appendChild(templateField)
-
+				form.appendChild(f1); form.appendChild(f2); form.appendChild(f3)
 				document.body.appendChild(form)
 				form.submit()
 				document.body.removeChild(form)
 			}
-
-			// Print dengan template selector
-			function handlePrintWithTemplate() {
-				const selectElement = document.getElementById("printTemplateSelect")
-				const selectedTemplate = selectElement.value
-
-				if (!selectedTemplate) {
-					selectElement.value = ""
-					return
-				}
-
-				// Store selected template di session storage untuk print preview
-				sessionStorage.setItem("printTemplate", selectedTemplate)
-
-				// Trigger print dialog
-				setTimeout(() => {
-					window.print()
-				}, 100)
-
-				// Reset dropdown setelah print dialog ditutup
-				setTimeout(() => {
-					selectElement.value = ""
-					sessionStorage.removeItem("printTemplate")
-				}, 500)
-			}
-
-			// Prevent some common print issues
-			window.addEventListener("beforeprint", () => {
-				document.body.style.padding = "0"
-				document.body.style.margin = "0"
-			})
 		</script>
-
-		<!-- Print CSS untuk template berbeda -->
-		<style media="print">
-			@page {
-				size: A4;
-				margin: 0.5cm;
-			}
-
-			body {
-				background: white;
-				margin: 0;
-				padding: 0;
-			}
-
-			.header,
-			.btn-print-area {
-				display: none !important;
-			}
-
-			.container {
-				margin: 0;
-				max-width: 100%;
-			}
-
-			.invoice-box {
-				box-shadow: none;
-				border: none;
-				margin: 0;
-				padding: 0;
-				page-break-inside: avoid;
-			}
-
-			.invoice-header {
-				margin-bottom: 20pt;
-				padding-bottom: 10pt;
-				border-bottom: 2pt solid #000;
-				page-break-inside: avoid;
-			}
-
-			.recipient-details {
-				margin: 15pt 0;
-				padding: 10pt;
-				border: 1pt solid #ccc;
-				page-break-inside: avoid;
-			}
-
-			.items-table {
-				width: 100%;
-				border-collapse: collapse;
-				margin: 15pt 0;
-				page-break-inside: avoid;
-			}
-
-			.items-table th,
-			.items-table td {
-				border: 1pt solid #000;
-				padding: 5pt;
-				text-align: left;
-				font-size: 10pt;
-			}
-
-			.items-table th {
-				background: #e0e0e0;
-				font-weight: bold;
-			}
-
-			.items-table td:nth-child(3),
-			.items-table td:nth-child(4),
-			.items-table td:nth-child(5),
-			.items-table td:nth-child(6) {
-				text-align: right;
-			}
-
-			.summary-section {
-				margin: 20pt 0;
-				text-align: right;
-				page-break-inside: avoid;
-			}
-
-			.summary-line {
-				margin: 3pt 0;
-				padding: 2pt 0;
-				font-size: 10pt;
-			}
-
-			.total-line {
-				font-weight: bold;
-				font-size: 12pt;
-				border-top: 2pt solid #000;
-				border-bottom: 2pt solid #000;
-				padding: 5pt 0;
-				margin-top: 10pt;
-			}
-
-			.qr-code-info {
-				display: none !important;
-			}
-
-			table {
-				page-break-inside: avoid;
-			}
-
-			.page-break {
-				page-break-before: always;
-			}
-		</style>
 	</body>
 </html>

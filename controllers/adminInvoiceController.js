@@ -3,6 +3,21 @@ const { v4: uuidv4 } = require("uuid")
 const generatePDF = require("../utils/pdfGenerator")
 const crypto = require("crypto")
 
+// Helper: hitung subtotal dari flat array maupun grouped array (backward compatible)
+function calculateSubtotal(items) {
+  let total = 0
+  for (const item of items) {
+    if (item.is_group) {
+      for (const sub of item.items || []) {
+        total += (sub.quantity || 0) * (sub.price || 0)
+      }
+    } else {
+      total += (item.quantity || 0) * (item.price || 0)
+    }
+  }
+  return total
+}
+
 // ADMIN DASHBOARD
 exports.getDashboard = async (req, res) => {
 	try {
@@ -19,7 +34,7 @@ exports.getDashboard = async (req, res) => {
 
 		// Recent invoices
 		const [recentInvoices] = await db.execute(`
-      SELECT i.id, i.invoice_number, i.recipient_name, i.status, i.total_amount, i.invoice_date, c.name as company_name
+      SELECT i.id, i.invoice_number, i.recipient_name, i.status, i.document_type, i.total_amount, i.invoice_date, c.name as company_name
       FROM invoices i
       JOIN companies c ON i.company_id = c.id
       ORDER BY i.created_at DESC
@@ -98,6 +113,7 @@ exports.createInvoice = async (req, res) => {
 			discount_type = "none",
 			discount_value = 0,
 			status = "draft",
+			document_type = "invoice",
 		} = req.body
 
 		// Parse items dan taxes
@@ -117,11 +133,8 @@ exports.createInvoice = async (req, res) => {
 			parsedTaxes = taxes || []
 		}
 
-		// Hitung subtotal dari items
-		let subtotal = 0
-		parsedItems.forEach((item) => {
-			subtotal += (item.quantity || 0) * (item.price || 0)
-		})
+		// Hitung subtotal dari items (mendukung flat array dan grouped array)
+		let subtotal = calculateSubtotal(parsedItems)
 
 		// Hitung discount
 		let discountAmount = 0
@@ -150,8 +163,8 @@ exports.createInvoice = async (req, res) => {
 			`
       INSERT INTO invoices 
       (id, invoice_number, company_id, template_id, recipient_name, recipient_phone, recipient_npwp, 
-       recipient_address, invoice_date, due_date, items, taxes, discount_type, discount_value, total_amount, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       recipient_address, invoice_date, due_date, items, taxes, discount_type, discount_value, total_amount, status, document_type)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
 			[
 				id,
@@ -170,6 +183,7 @@ exports.createInvoice = async (req, res) => {
 				discountAmount,
 				totalAmount,
 				status,
+				document_type,
 			],
 		)
 
@@ -294,6 +308,7 @@ exports.getInvoiceHistory = async (req, res) => {
 		const search = req.query.search || ""
 		const date = req.query.date || ""
 		const status = req.query.status || ""
+		const document_type = req.query.document_type || ""
 
 		// Build WHERE clause dynamically
 		let whereClause = "WHERE 1=1"
@@ -314,10 +329,15 @@ exports.getInvoiceHistory = async (req, res) => {
 			params.push(status)
 		}
 
+		if (document_type) {
+			whereClause += " AND i.document_type = ?"
+			params.push(document_type)
+		}
+
 		// Get filtered invoices with pagination
 		const [rows] = await db.query(
 			`
-      SELECT i.id, i.invoice_number, i.recipient_name, i.invoice_date, i.status, i.total_amount, c.name AS company_name
+      SELECT i.id, i.invoice_number, i.recipient_name, i.invoice_date, i.status, i.document_type, i.total_amount, c.name AS company_name
       FROM invoices i 
       JOIN companies c ON i.company_id = c.id 
       ${whereClause}
@@ -343,6 +363,7 @@ exports.getInvoiceHistory = async (req, res) => {
 			search,
 			date,
 			status,
+			document_type,
 		})
 	} catch (error) {
 		console.error("History error:", error)
@@ -365,6 +386,7 @@ exports.updateInvoice = async (req, res) => {
 			taxes,
 			discount_type = "none",
 			discount_value = 0,
+			document_type,
 		} = req.body
 
 		// Parse items dan taxes jika masih string
@@ -373,11 +395,8 @@ exports.updateInvoice = async (req, res) => {
 		let parsedTaxes =
 			typeof taxes === "string" ? JSON.parse(taxes) : taxes || []
 
-		// Hitung subtotal dari items
-		let subtotal = 0
-		parsedItems.forEach((item) => {
-			subtotal += (item.quantity || 0) * (item.price || 0)
-		})
+		// Hitung subtotal dari items (mendukung flat array dan grouped array)
+		let subtotal = calculateSubtotal(parsedItems)
 
 		// Hitung discount
 		let discountAmount = 0
@@ -406,7 +425,7 @@ exports.updateInvoice = async (req, res) => {
 			`
       UPDATE invoices 
       SET invoice_number=?, invoice_date=?, recipient_name=?, recipient_phone=?, recipient_npwp=?, recipient_address=?,
-          items=?, taxes=?, discount_type=?, discount_value=?, total_amount=?, updated_at=NOW()
+          items=?, taxes=?, discount_type=?, discount_value=?, total_amount=?, document_type=?, updated_at=NOW()
       WHERE id=?
     `,
 			[
@@ -421,6 +440,7 @@ exports.updateInvoice = async (req, res) => {
 				discount_type,
 				discountAmount,
 				totalAmount,
+				document_type || null,
 				uuid,
 			],
 		)
@@ -578,5 +598,19 @@ exports.downloadPDF = async (req, res) => {
 	} catch (error) {
 		console.error("PDF error:", error)
 		res.status(500).send("Terjadi kesalahan: " + error.message)
+	}
+}
+// CONVERT PENAWARAN KE INVOICE
+exports.convertToInvoice = async (req, res) => {
+	try {
+		const { uuid } = req.params
+		await db.execute(
+			"UPDATE invoices SET document_type='invoice', status='issued' WHERE id=? AND document_type='quotation'",
+			[uuid]
+		)
+		res.json({ success: true, message: 'Penawaran berhasil dikonversi ke Invoice' })
+	} catch (error) {
+		console.error('Convert to invoice error:', error)
+		res.status(500).json({ success: false, error: error.message })
 	}
 }

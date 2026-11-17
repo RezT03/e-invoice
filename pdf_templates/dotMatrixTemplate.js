@@ -2,6 +2,7 @@ const PDFDocument = require("pdfkit")
 
 module.exports = function (invoice) {
 	return new Promise((resolve) => {
+		const isQuotation = invoice.document_type === "quotation"
 		const doc = new PDFDocument({ size: "A5", layout: "landscape", margin: 20 })
 		const buffers = []
 
@@ -9,194 +10,195 @@ module.exports = function (invoice) {
 		doc.on("end", () => resolve(Buffer.concat(buffers)))
 
 		// Layout & posisi
-		const leftX = 60
-		const rightX = 375
+		const leftX = 50
+		const rightX = 350
 		const tableStartX = leftX
 		const col = {
 			produk: tableStartX,
-			qty: tableStartX + 170,
-			harga: tableStartX + 230,
-			diskon: tableStartX + 300,
-			pajak: tableStartX + 350,
-			jumlah: tableStartX + 410,
+			qty: tableStartX + 190,
+			harga: tableStartX + 250,
+			satuan: tableStartX + 330,
+			jumlah: tableStartX + 390,
 		}
-		const tableWidth = col.jumlah + 70 - tableStartX // 480
+		const tableWidth = col.jumlah + 100 - tableStartX // 490
 
 		// Header kiri (pengirim)
-		const headerYOffset = 30
+		const headerYOffset = 25
 		doc
-			.fontSize(12)
+			.fontSize(11)
 			.font("Helvetica-Bold")
-			.text(invoice.company_name, leftX, 20 + headerYOffset)
+			.text(invoice.company_name, leftX, headerYOffset)
 		doc
-			.fontSize(9)
+			.fontSize(8.5)
 			.font("Helvetica")
-			.text(invoice.company_address || "", leftX, 38 + headerYOffset)
-			.text(
-				`No. Telepon: ${invoice.company_phone || "-"}`,
+			.text(invoice.company_address || "", leftX, headerYOffset + 16, { width: 220 })
+			.text(`Tel: ${invoice.company_phone || "-"}`, leftX, doc.y + 2)
+
+		if (!isQuotation && invoice.bank_name) {
+			doc.text(
+				`Bank: ${invoice.bank_name} | Rek: ${invoice.bank_account_number || "-"} a.n ${invoice.bank_account_name || "-"}`,
 				leftX,
-				52 + headerYOffset,
+				doc.y + 2,
+				{ width: 260 }
 			)
-			.text(
-				`Rek: ${invoice.bank_account_number || "-"}\na.n ${
-					invoice.bank_account_name || "-"
-				} \n(${invoice.bank_name || "-"})`,
-				leftX,
-				66 + headerYOffset,
-			)
+		}
 
 		// Header tengah
 		doc
-			.fontSize(14)
+			.fontSize(13)
 			.font("Helvetica-Bold")
-			.text("INVOICE", 0, 20, { align: "center" })
+			.text(isQuotation ? "PENAWARAN HARGA" : "INVOICE", 0, 15, { align: "center" })
 
-		// Header kanan (rapi, tidak menumpuk)
-		let yHeader = 50
-		doc.fontSize(9).font("Helvetica").text("Invoice No.", rightX, yHeader)
-		doc
-			.font("Helvetica-Bold")
-			.text(invoice.invoice_number, rightX + 50, yHeader)
+		// Header kanan
+		let yHeader = 35
+		doc.fontSize(8.5).font("Helvetica").text("No. Dokumen:", rightX, yHeader)
+		doc.font("Helvetica-Bold").text(invoice.invoice_number, rightX + 65, yHeader)
 		yHeader += 13
-		doc.font("Helvetica").text("Tanggal", rightX, yHeader)
-		doc
-			.font("Helvetica-Bold")
-			.text(formatTanggal(invoice.invoice_date), rightX + 50, yHeader)
+		doc.font("Helvetica").text("Tanggal:", rightX, yHeader)
+		doc.font("Helvetica-Bold").text(formatTanggal(invoice.invoice_date), rightX + 65, yHeader)
 		yHeader += 13
-		doc.font("Helvetica-Bold").text("Kepada", rightX, yHeader + 5)
-		yHeader += 13
-		doc.font("Helvetica").text(invoice.recipient_name, rightX, yHeader + 5)
-		let yAfter = doc.text(invoice.recipient_name, rightX, yHeader + 5, {
-			width: 200,
-		}).y
-		yAfter = doc.text(invoice.recipient_address, rightX, yAfter + 2, {
-			width: 200,
-		}).y
-		if (invoice.recipient_npwp) {
-			yAfter = doc.text(`NPWP: ${invoice.recipient_npwp}`, rightX, yAfter + 2, {
-				width: 200,
-			}).y
-			yHeader = yAfter + 13
+
+		if (invoice.due_date) {
+			doc.font("Helvetica").text(isQuotation ? "Berlaku s/d:" : "Jatuh Tempo:", rightX, yHeader)
+			doc.font("Helvetica-Bold").text(formatTanggal(invoice.due_date), rightX + 65, yHeader)
+			yHeader += 13
+		}
+
+		doc.font("Helvetica-Bold").text("Kepada:", rightX, yHeader)
+		doc.font("Helvetica").text(invoice.recipient_name, rightX + 45, yHeader)
+		if (invoice.recipient_phone) {
+			yHeader += 11
+			doc.text(`Tel: ${invoice.recipient_phone}`, rightX + 45, yHeader)
 		}
 
 		// Table Header
-		const tableTop = 160
+		const tableTop = Math.max(doc.y + 15, 120)
 		doc
-			.moveTo(tableStartX, tableTop - 5)
-			.lineTo(tableStartX + tableWidth, tableTop - 5)
-			.lineWidth(2)
-			.stroke() // garis tebal atas
-		doc.font("Helvetica-Bold").fontSize(9)
-		doc.text("Produk", col.produk +5, tableTop, { width: 170 })
-		doc.text("Kuantitas", col.qty, tableTop, { width: 60, align: "center" })
-		doc.text("Harga", col.harga, tableTop, { width: 70, align: "center" })
-		doc.text("Diskon", col.diskon, tableTop, { width: 50, align: "center" })
-		doc.text("Pajak", col.pajak, tableTop, { width: 60, align: "center" })
-		doc.text("Jumlah", col.jumlah, tableTop, { width: 70, align: "center" })
+			.moveTo(tableStartX, tableTop - 3)
+			.lineTo(tableStartX + tableWidth, tableTop - 3)
+			.lineWidth(1.5)
+			.stroke()
+
+		doc.font("Helvetica-Bold").fontSize(8.5)
+		doc.text("Deskripsi Barang / Jasa", col.produk + 4, tableTop, { width: 180 })
+		doc.text("Qty", col.qty, tableTop, { width: 50, align: "center" })
+		doc.text("Harga Satuan", col.harga, tableTop, { width: 75, align: "right" })
+		doc.text("Satuan", col.satuan, tableTop, { width: 50, align: "center" })
+		doc.text("Jumlah", col.jumlah, tableTop, { width: 90, align: "right" })
+
 		doc
-			.moveTo(tableStartX, tableTop + 13)
-			.lineTo(tableStartX + tableWidth, tableTop + 13)
-			.lineWidth(2)
-			.stroke() // garis tebal bawah header
+			.moveTo(tableStartX, tableTop + 14)
+			.lineTo(tableStartX + tableWidth, tableTop + 14)
+			.lineWidth(1.5)
+			.stroke()
 
 		// Table Rows
 		let y = tableTop + 18
 		let subtotal = 0
-		;(invoice.items || []).forEach((item) => {
-			const itemTotal = item.qty * item.unit_price
-			subtotal += itemTotal
-			doc.font("Helvetica").fontSize(9)
-			doc.text(item.name, col.produk + 5, y, { width: 170 })
-			doc.text(item.qty, col.qty, y, { width: 60, align: "center" })
-			doc.text(formatRupiah(item.unit_price), col.harga -10, y, {
-				width: 70,
-				align: "right",
-			})
-			doc.text(item.discount ? `${item.discount}%` : "0%", col.diskon, y, {
-				width: 50,
-				align: "center",
-			})
-			doc.text(
-				item.tax_name ? `${item.tax_name} ${item.tax_percent || ""}%` : "-",
-				col.pajak,
-				y,
-				{ width: 60, align: "center" },
-			)
-			doc.text(formatRupiah(itemTotal), col.jumlah - 5, y, {
-				width: 70,
-				align: "right",
-			})
-			// garis tipis antar item
+
+		function renderItemRow(name, qty, unit, price, total) {
+			doc.font("Helvetica").fontSize(8)
+			doc.text(name, col.produk + 4, y, { width: 180 })
+			doc.text(String(qty), col.qty, y, { width: 50, align: "center" })
+			doc.text(formatRupiah(price), col.harga, y, { width: 75, align: "right" })
+			doc.text(unit || "-", col.satuan, y, { width: 50, align: "center" })
+			doc.text(formatRupiah(total), col.jumlah, y, { width: 90, align: "right" })
+
 			doc
-				.moveTo(tableStartX, y + 13)
-				.lineTo(tableStartX + tableWidth, y + 13)
-				.lineWidth(0.5)
-				.stroke() // garis tipis antar item
-			y += 15
+				.moveTo(tableStartX, y + 12)
+				.lineTo(tableStartX + tableWidth, y + 12)
+				.lineWidth(0.4)
+				.stroke("#ccc")
+			y += 14
+		}
+
+		;(invoice.items || []).forEach((item) => {
+			if (item.is_group) {
+				// Group header line
+				doc.font("Helvetica-Bold").fontSize(8.5).fillColor("#0356fc")
+				doc.text(`[ ${item.group_name || "Grup"} ]`, col.produk + 4, y)
+				doc.fillColor("black")
+				y += 12
+
+				let grpSub = 0
+				;(item.items || []).forEach((sub) => {
+					const q = sub.quantity || sub.qty || 0
+					const p = sub.price || sub.unit_price || 0
+					const t = q * p
+					grpSub += t
+					subtotal += t
+					renderItemRow(sub.description || sub.name || "", q, sub.unit, p, t)
+				})
+
+				// Subtotal group line
+				doc.font("Helvetica-Bold").fontSize(7.5).fillColor("#666")
+				doc.text(`Subtotal ${item.group_name}: ${formatRupiah(grpSub)}`, col.produk + 4, y, {
+					width: tableWidth,
+					align: "right",
+				})
+				doc.fillColor("black")
+				y += 12
+			} else {
+				const q = item.quantity || item.qty || 0
+				const p = item.price || item.unit_price || 0
+				const t = q * p
+				subtotal += t
+				renderItemRow(item.description || item.name || "", q, item.unit, p, t)
+			}
 		})
 
 		// Summary
-		let taxTotal = 0
+		y += 6
+		doc.font("Helvetica").fontSize(8.5)
+		doc.text("Subtotal:", col.satuan - 20, y, { width: 70, align: "right" })
+		doc.text(formatRupiah(subtotal), col.jumlah, y, { width: 90, align: "right" })
+		y += 13
+
+		const discount = invoice.discount_value || 0
+		if (discount > 0) {
+			doc.text("Diskon:", col.satuan - 20, y, { width: 70, align: "right" })
+			doc.text(`-${formatRupiah(discount)}`, col.jumlah, y, { width: 90, align: "right" })
+			y += 13
+		}
+
 		;(invoice.taxes || []).forEach((tax) => {
-			const t = (tax.percent / 100) * subtotal
-			taxTotal += t
+			const t = tax.amount !== undefined ? tax.amount : ((subtotal - discount) * (tax.percentage || 0)) / 100
+			doc.text(`${tax.name} (${tax.percentage}%):`, col.satuan - 40, y, { width: 90, align: "right" })
+			doc.text(formatRupiah(t), col.jumlah, y, { width: 90, align: "right" })
+			y += 13
 		})
 
-		y += 10
-		doc
-			.font("Helvetica-Bold")
-			.text("Subtotal", col.pajak, y, { width: 60, align: "center" })
-		doc.text(formatRupiah(subtotal), col.jumlah - 5, y, {
-			width: 70,
-			align: "right",
-		})
-		y += 15
-		;(invoice.taxes || []).forEach((tax) => {
-			const t = (tax.percent / 100) * subtotal
-			doc
-				.font("Helvetica-Bold")
-				.text(tax.name, col.pajak, y, { width: 60, align: "center" })
-			doc.text(formatRupiah(t), col.jumlah - 5, y, { width: 70, align: "right" })
-			y += 15
-		})
-		doc
-			.font("Helvetica-Bold")
-			.text("Total", col.pajak, y, { width: 60, align: "center" })
-		doc.text(formatRupiah(subtotal + taxTotal), col.jumlah - 5, y, {
-			width: 70,
-			align: "right",
-		})
+		doc.font("Helvetica-Bold").fontSize(9)
+		doc.text("Total:", col.satuan - 20, y, { width: 70, align: "right" })
+		doc.text(formatRupiah(invoice.total_amount || subtotal), col.jumlah, y, { width: 90, align: "right" })
 
-		// garis tebal bawah summary
 		doc
-			.moveTo(tableStartX, y + 13)
-			.lineTo(tableStartX + tableWidth, y + 13)
-			.lineWidth(2)
-			.stroke() // garis tebal bawah summary
+			.moveTo(tableStartX, y + 14)
+			.lineTo(tableStartX + tableWidth, y + 14)
+			.lineWidth(1.5)
+			.stroke()
 
-		// Footer
-		y += 40
-		doc
-			.font("Helvetica")
-			.fontSize(9)
-			.text("Penerima", leftX + 30, y)
-		doc.text("Dibuat oleh,", rightX + 70, y)
-		y += 40
-		doc.text("(....................)", leftX + 20, y)
-		doc.text(invoice.company_name, rightX + 50, y)
-		// doc.text("Finance Dept", rightX, y + 15)
+		// Footer tanda tangan
+		y += 25
+		if (y > 360) {
+			doc.addPage()
+			y = 30
+		}
+		doc.font("Helvetica").fontSize(8.5).text("Penerima,", leftX + 30, y)
+		doc.text("Hormat Kami,", rightX + 40, y)
+		y += 35
+		doc.text("( ......................... )", leftX + 15, y)
+		doc.font("Helvetica-Bold").text(invoice.company_name, rightX + 20, y)
 
 		doc.end()
 	})
 }
 
 function formatRupiah(num) {
-	return (
-		"Rp " + (num || 0).toLocaleString("id-ID", { minimumFractionDigits: 0 })
-	)
+	return "Rp " + Math.round(num || 0).toLocaleString("id-ID")
 }
+
 function formatTanggal(tgl) {
 	if (!tgl) return "-"
-	const d = new Date(tgl)
-	return d.toLocaleDateString("id-ID")
+	return new Date(tgl).toLocaleDateString("id-ID")
 }

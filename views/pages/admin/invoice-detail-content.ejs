@@ -1,17 +1,32 @@
+<% const isQuotation = invoice.document_type === 'quotation'; %>
 <div class="detail-container-main">
 	<!-- Header dengan nomor invoice dan aksi -->
 	<div class="detail-header">
 		<div>
-			<div class="invoice-number-display">
-				<%= invoice.invoice_number %>
+			<div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem;">
+				<span class="invoice-number-display"><%= invoice.invoice_number %></span>
+				<% if (isQuotation) { %>
+					<span class="badge" style="background: #fff4e5; color: #d97706; font-size: 0.8rem; padding: 0.3rem 0.75rem;">
+						📋 PENAWARAN HARGA
+					</span>
+				<% } else { %>
+					<span class="badge" style="background: var(--primary-light); color: var(--primary); font-size: 0.8rem; padding: 0.3rem 0.75rem;">
+						🧾 INVOICE
+					</span>
+				<% } %>
 			</div>
 			<span class="invoice-status status-<%= invoice.status %>">
 				<%= invoice.status.toUpperCase() %>
 			</span>
 		</div>
 		<div class="action-buttons">
+			<% if (isQuotation) { %>
+				<button class="btn btn-convert" onclick="convertToInvoice()" style="background: #0356fc; color: white;">
+					🔄 Konversi ke Invoice
+				</button>
+			<% } %>
 			<button class="btn btn-warning" onclick="openEditM()">
-				Edit Invoice
+				Edit <%= isQuotation ? 'Penawaran' : 'Invoice' %>
 			</button>
 			<a
 				href="/admin/invoice/<%= invoice.id %>/pdf/normal"
@@ -21,9 +36,9 @@
 				Download PDF
 			</a>
 			<button class="btn btn-success" onclick="generateShareLink()">
-				Generate Share Link
+				Share Link
 			</button>
-			<a href="/admin/invoice/history" class="btn btn-secondary">
+			<a href="/admin/invoice/history<%= isQuotation ? '?document_type=quotation' : '?document_type=invoice' %>" class="btn btn-secondary">
 				Kembali
 			</a>
 			<button class="btn btn-danger" onclick="deleteInvoice()">
@@ -37,22 +52,22 @@
 		<div>
 			<!-- Informasi Dasar -->
 			<div class="detail-card">
-				<h3>Informasi Invoice</h3>
+				<h3><%= isQuotation ? 'Informasi Penawaran' : 'Informasi Invoice' %></h3>
 				<div class="detail-row">
-					<div class="detail-label">Nomor Invoice:</div>
-					<div class="detail-value"><%= invoice.invoice_number %></div>
+					<div class="detail-label">Nomor Dokumen:</div>
+					<div class="detail-value" style="font-weight: 600;"><%= invoice.invoice_number %></div>
 				</div>
 				<div class="detail-row">
 					<div class="detail-label">Tanggal:</div>
 					<div class="detail-value">
-						<%= new Date(invoice.invoice_date).toLocaleDateString('id-ID') %>
+						<%= new Date(invoice.invoice_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) %>
 					</div>
 				</div>
 				<% if (invoice.due_date) { %>
 				<div class="detail-row">
-					<div class="detail-label">Jatuh Tempo:</div>
+					<div class="detail-label"><%= isQuotation ? 'Berlaku Hingga:' : 'Jatuh Tempo:' %></div>
 					<div class="detail-value">
-						<%= new Date(invoice.due_date).toLocaleDateString('id-ID') %>
+						<%= new Date(invoice.due_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) %>
 					</div>
 				</div>
 				<% } %>
@@ -64,20 +79,17 @@
 
 			<!-- Data Penerima -->
 			<div class="detail-card">
-				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-					<h3 style="margin: 0;">Data Penerima</h3>
-					<!-- <a href="/invoice/admin/edit/<%= invoice.id %>" class="btn btn-sm btn-secondary">
-						Edit
-					</a> -->
-				</div>
+				<h3>Data Penerima</h3>
 				<div class="detail-row">
 					<div class="detail-label">Nama:</div>
-					<div class="detail-value"><%= invoice.recipient_name %></div>
+					<div class="detail-value" style="font-weight: 600;"><%= invoice.recipient_name %></div>
 				</div>
+				<% if (invoice.recipient_phone) { %>
 				<div class="detail-row">
 					<div class="detail-label">Telepon:</div>
 					<div class="detail-value"><%= invoice.recipient_phone %></div>
 				</div>
+				<% } %>
 				<% if (invoice.recipient_npwp) { %>
 				<div class="detail-row">
 					<div class="detail-label">NPWP:</div>
@@ -94,81 +106,144 @@
 
 			<!-- Daftar Item -->
 			<div class="detail-card">
-				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-					<h3 style="margin: 0;">Daftar Item</h3>
-					<!-- <button class="btn btn-sm btn-secondary" onclick="openEditM()">
-						Edit
-					</button> -->
-				</div>
+				<h3>Daftar Barang / Jasa</h3>
 				<% if (invoice.items && invoice.items.length > 0) { %>
 				<table class="items-table">
 					<thead>
 						<tr>
+							<th style="width: 40px; text-align: center;">No</th>
 							<th>Deskripsi</th>
-							<th style="text-align: center">Qty</th>
-							<th style="text-align: right">Harga</th>
-							<th style="text-align: right">Total</th>
+							<th style="text-align: center;">Qty</th>
+							<th style="text-align: center;">Satuan</th>
+							<th style="text-align: right;">Harga Satuan</th>
+							<th style="text-align: right;">Total</th>
 						</tr>
 					</thead>
 					<tbody>
-						<% let subtotal = 0; invoice.items.forEach(item => { const
-						itemTotal = (item.quantity || 0) * (item.price || 0); subtotal
-						+= itemTotal; %>
-						<tr>
-							<td><%= item.description || item.name %></td>
-							<td style="text-align: center"><%= item.quantity %></td>
-							<td style="text-align: right">
-								Rp <%= Math.round(item.price || 0).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) %>
+						<% 
+						let globalIdx = 0;
+						let calculatedSubtotal = 0;
+
+						invoice.items.forEach(item => {
+							if (item.is_group) {
+								let groupSubtotal = 0;
+						%>
+							<!-- Group Header Row -->
+							<tr class="group-row">
+								<td colspan="6" style="background: var(--primary); color: white; font-weight: 700; padding: 0.5rem 0.75rem;">
+									<%= item.group_name || 'Grup' %>
+								</td>
+							</tr>
+							<% (item.items || []).forEach(sub => { 
+								globalIdx++;
+								const lineTotal = (sub.quantity || 0) * (sub.price || 0);
+								groupSubtotal += lineTotal;
+								calculatedSubtotal += lineTotal;
+							%>
+							<tr>
+								<td style="text-align: center; color: var(--text-muted);"><%= globalIdx %></td>
+								<td><%= sub.description || sub.name %></td>
+								<td style="text-align: center;"><%= sub.quantity %></td>
+								<td style="text-align: center;"><%= sub.unit || '-' %></td>
+								<td style="text-align: right;">
+									Rp <%= Math.round(sub.price || 0).toLocaleString('id-ID') %>
+								</td>
+								<td style="text-align: right; font-weight: 500;">
+									Rp <%= Math.round(lineTotal).toLocaleString('id-ID') %>
+								</td>
+							</tr>
+							<% }); %>
+							<!-- Group Subtotal Row -->
+							<tr class="subtotal-row">
+								<td colspan="5" style="text-align: right; font-weight: 600; color: var(--primary); background: var(--primary-light);">
+									Subtotal <%= item.group_name %>:
+								</td>
+								<td style="text-align: right; font-weight: 700; color: var(--primary); background: var(--primary-light);">
+									Rp <%= Math.round(groupSubtotal).toLocaleString('id-ID') %>
+								</td>
+							</tr>
+						<% 
+							} else {
+								globalIdx++;
+								const lineTotal = (item.quantity || 0) * (item.price || 0);
+								calculatedSubtotal += lineTotal;
+						%>
+							<tr>
+								<td style="text-align: center; color: var(--text-muted);"><%= globalIdx %></td>
+								<td><%= item.description || item.name %></td>
+								<td style="text-align: center;"><%= item.quantity %></td>
+								<td style="text-align: center;"><%= item.unit || '-' %></td>
+								<td style="text-align: right;">
+									Rp <%= Math.round(item.price || 0).toLocaleString('id-ID') %>
+								</td>
+								<td style="text-align: right; font-weight: 500;">
+									Rp <%= Math.round(lineTotal).toLocaleString('id-ID') %>
+								</td>
+							</tr>
+						<% 
+							}
+						}); 
+						%>
+
+						<!-- Subtotal Summary -->
+						<tr class="total-row">
+							<td colspan="5" style="text-align: right; font-weight: 600;">Subtotal:</td>
+							<td style="text-align: right; font-weight: 600;">
+								Rp <%= Math.round(calculatedSubtotal).toLocaleString('id-ID') %>
 							</td>
-							<td style="text-align: right">
-								Rp <%= Math.round(itemTotal).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) %>
+						</tr>
+
+						<!-- Diskon jika ada -->
+						<% if (invoice.discount_value > 0) { %>
+						<tr>
+							<td colspan="5" style="text-align: right; color: #15803d;">
+								Diskon (<%= invoice.discount_type === 'percentage' ? invoice.discount_value + '%' : 'Nominal' %>):
+							</td>
+							<td style="text-align: right; color: #15803d; font-weight: 600;">
+								− Rp <%= Math.round(invoice.discount_value || 0).toLocaleString('id-ID') %>
+							</td>
+						</tr>
+						<% } %>
+
+						<!-- Pajak jika ada -->
+						<% (invoice.taxes || []).forEach(tax => { %>
+						<tr>
+							<td colspan="5" style="text-align: right; color: var(--text-muted);">
+								<%= tax.name %> (<%= tax.percentage %>%):
+							</td>
+							<td style="text-align: right;">
+								Rp <%= Math.round(tax.amount || 0).toLocaleString('id-ID') %>
 							</td>
 						</tr>
 						<% }); %>
-					<tr class="total-row">
-						<td colspan="3" style="text-align: right">Subtotal:</td>
-						<td class="total-value">
-							Rp <%= Math.round(subtotal).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) %>
-						</td>
-					</tr>
+
+						<!-- Grand Total -->
+						<tr style="border-top: 2px solid var(--primary); background: var(--bg);">
+							<td colspan="5" style="text-align: right; font-weight: 700; font-size: 1rem; color: var(--text);">
+								Total Akhir:
+							</td>
+							<td style="text-align: right; font-weight: 700; font-size: 1.15rem; color: var(--primary);">
+								Rp <%= Math.round(invoice.total_amount || 0).toLocaleString('id-ID') %>
+							</td>
+						</tr>
 					</tbody>
 				</table>
 				<% } else { %>
-				<p>Tidak ada item</p>
+				<p style="color: var(--text-muted);">Tidak ada item</p>
 				<% } %>
 			</div>
 
-			<!-- Pajak -->
-			<% if (invoice.taxes && invoice.taxes.length > 0) { %>
+			<!-- Info Pembayaran (Hanya untuk Invoice, TIDAK untuk Penawaran) -->
+			<% if (!isQuotation && invoice.bank_name) { %>
 			<div class="detail-card">
-				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-					<h3 style="margin: 0;">Pajak & Biaya</h3>
-					<button class="btn btn-sm btn-secondary" onclick="openEditM()">
-						Edit
-					</button>
-				</div>
-				<% invoice.taxes.forEach(tax => { %>
-				<div class="detail-row">
-					<div class="detail-label"><%= tax.name %> (<%= tax.percentage %>%):</div>
-					<div class="detail-value">
-						Rp <%= Math.round(tax.amount || 0).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) %>
-					</div>
-				</div>
-				<% }); %>
-			</div>
-			<% } %>
-
-			<!-- Info Pembayaran -->
-			<% if (invoice.bank_name) { %>
-			<div class="detail-card">
-				<h3>Informasi Pembayaran</h3>
+				<h3>Informasi Pembayaran (Transfer Bank)</h3>
 				<div class="detail-row">
 					<div class="detail-label">Bank:</div>
-					<div class="detail-value"><%= invoice.bank_name %></div>
+					<div class="detail-value" style="font-weight: 600;"><%= invoice.bank_name %></div>
 				</div>
 				<div class="detail-row">
 					<div class="detail-label">No. Rekening:</div>
-					<div class="detail-value">
+					<div class="detail-value" style="font-weight: 700; color: var(--primary); font-size: 1.05rem;">
 						<%= invoice.bank_account_number %>
 					</div>
 				</div>
@@ -182,72 +257,80 @@
 
 		<!-- Sidebar -->
 		<div>
-			<!-- Total -->
+			<!-- Total Ringkasan -->
 			<div class="detail-card">
-				<h3>Total</h3>
-				<div class="detail-row">
-					<div class="detail-label">Total:</div>
-					<div
-						class="detail-value"
-						style="font-size: 1.5rem; color: #667eea; font-weight: bold"
-					>
-						Rp <%= Math.round(invoice.total_amount || 0).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) %>
-					</div>
+				<h3>Total Nilai</h3>
+				<div style="font-size: 1.6rem; color: var(--primary); font-weight: 800; letter-spacing: -0.5px;">
+					Rp <%= Math.round(invoice.total_amount || 0).toLocaleString('id-ID') %>
+				</div>
+				<div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">
+					<%= isQuotation ? 'Total Penawaran Harga' : 'Total Tagihan Invoice' %>
 				</div>
 			</div>
 
 			<!-- Update Status -->
 			<div class="detail-card">
-				<h3>Update Status</h3>
+				<h3>Status Dokumen</h3>
 				<div class="status-update">
 					<select id="statusSelect">
-						<option value="draft" <%= invoice.status === 'draft' ? 'selected' : '' %>>Draft</option>
-						<option value="issued" <%= invoice.status === 'issued' ? 'selected' : '' %>>Diterbitkan</option>
-						<option value="sent" <%= invoice.status === 'sent' ? 'selected' : '' %>>Terkirim</option>
-						<option value="paid" <%= invoice.status === 'paid' ? 'selected' : '' %>>Dibayar</option>
-						<option value="overdue" <%= invoice.status === 'overdue' ? 'selected' : '' %>>Jatuh Tempo</option>
-						<option value="cancelled" <%= invoice.status === 'cancelled' ? 'selected' : '' %>>Dibatalkan</option>
+						<% if (isQuotation) { %>
+							<option value="draft" <%= invoice.status === 'draft' ? 'selected' : '' %>>Draft</option>
+							<option value="sent" <%= invoice.status === 'sent' ? 'selected' : '' %>>Terkirim</option>
+							<option value="accepted" <%= invoice.status === 'accepted' ? 'selected' : '' %>>Diterima</option>
+							<option value="rejected" <%= invoice.status === 'rejected' ? 'selected' : '' %>>Ditolak</option>
+							<option value="cancelled" <%= invoice.status === 'cancelled' ? 'selected' : '' %>>Dibatalkan</option>
+						<% } else { %>
+							<option value="draft" <%= invoice.status === 'draft' ? 'selected' : '' %>>Draft</option>
+							<option value="issued" <%= invoice.status === 'issued' ? 'selected' : '' %>>Diterbitkan</option>
+							<option value="sent" <%= invoice.status === 'sent' ? 'selected' : '' %>>Terkirim</option>
+							<option value="paid" <%= invoice.status === 'paid' ? 'selected' : '' %>>Dibayar (Lunas)</option>
+							<option value="overdue" <%= invoice.status === 'overdue' ? 'selected' : '' %>>Jatuh Tempo</option>
+							<option value="cancelled" <%= invoice.status === 'cancelled' ? 'selected' : '' %>>Dibatalkan</option>
+						<% } %>
 					</select>
-					<% if (invoice.status === 'paid') { %>
-					<input
-						type="date"
-						id="paidDate"
-						value="<%= invoice.paid_date ? new Date(invoice.paid_date).toISOString().split('T')[0] : '' %>"
-					/>
+					<% if (!isQuotation) { %>
+					<div id="paidDateWrapper" style="<%= invoice.status === 'paid' ? '' : 'display:none;' %>">
+						<label style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.25rem; display: block;">Tanggal Lunas:</label>
+						<input
+							type="date"
+							id="paidDate"
+							value="<%= invoice.paid_date ? new Date(invoice.paid_date).toISOString().split('T')[0] : '' %>"
+						/>
+					</div>
 					<% } %>
 					<button
 						class="btn btn-primary"
 						onclick="updateStatus()"
-						style="margin-top: 0.5rem"
+						style="margin-top: 0.25rem;"
 					>
-						Simpan
+						Simpan Status
 					</button>
 				</div>
 			</div>
 
 			<!-- Share Link -->
 			<div class="detail-card">
-				<h3>Shared Link</h3>
+				<h3>Public Share Link</h3>
 				<div id="shareLinkContainer" style="display: none">
 					<div class="share-link-box">
 						<input type="text" id="shareLink" readonly />
 						<button class="copy-btn" onclick="copyShareLink()">
-							Copy Link
+							Copy
 						</button>
 					</div>
 				</div>
-				<div id="noShareLinkMsg" style="color: #999; font-size: 0.9rem">
-					<p>
-						Belum ada shared link. Klik "Generate Share Link" untuk
-						membuat.
-					</p>
+				<div id="noShareLinkMsg" style="color: var(--text-muted); font-size: 0.85rem;">
+					<p>Belum ada link berbagi.</p>
+					<button class="btn btn-small" onclick="generateShareLink()" style="margin-top: 0.5rem;">
+						Buat Share Link
+					</button>
 				</div>
 			</div>
 
 			<!-- Template Info -->
 			<% if (invoice.template_name) { %>
 			<div class="detail-card">
-				<h3>Template Invoice</h3>
+				<h3>Template Dokumen</h3>
 				<div class="detail-row">
 					<div class="detail-label">Template:</div>
 					<div class="detail-value"><%= invoice.template_name %></div>
@@ -256,12 +339,7 @@
 				<img
 					src="<%= invoice.logo_path %>"
 					alt="Logo"
-					style="
-						max-width: 100%;
-						height: auto;
-						margin-top: 1rem;
-						border-radius: 4px;
-					"
+					style="max-width: 100%; height: auto; margin-top: 0.75rem; border-radius: 4px;"
 				/>
 				<% } %>
 			</div>

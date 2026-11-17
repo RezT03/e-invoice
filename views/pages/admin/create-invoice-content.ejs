@@ -1,14 +1,35 @@
 <div class="create-container">
 	<div class="form-container">
 		<form id="createInvoiceForm" action="/admin/invoice/create" method="POST">
+
+			<!-- Toggle Jenis Dokumen -->
+			<div class="form-section" style="padding-bottom: 1.25rem; margin-bottom: 1.25rem;">
+				<div class="section-title">
+					<div class="section-icon">📄</div>
+					<h3>Jenis Dokumen</h3>
+				</div>
+				<div class="doc-type-toggle">
+					<input type="radio" name="document_type" id="type_invoice" class="radio-invoice" value="invoice" checked onchange="toggleDocType()">
+					<label for="type_invoice">🧾 Invoice</label>
+					<input type="radio" name="document_type" id="type_quotation" class="radio-quotation" value="quotation" onchange="toggleDocType()">
+					<label for="type_quotation">📋 Penawaran Harga</label>
+				</div>
+				<div id="docTypeNotice" class="tip-text" style="margin-top: 0.75rem; display: none;">
+					📋 Mode <strong>Penawaran Harga</strong> — dokumen tidak menyertakan informasi rekening bank. Penawaran bisa dikonversi menjadi Invoice kapan saja.
+				</div>
+			</div>
+
 			<!-- Informasi Perusahaan -->
 			<div class="form-section">
-				<h3>Informasi Perusahaan</h3>
+				<div class="section-title">
+					<div class="section-icon">🏢</div>
+					<h3>Informasi Perusahaan</h3>
+				</div>
 				<div class="form-row">
 					<div class="form-group">
-						<label for="company_id">Perusahaan *</label>
+						<label for="company_id">Perusahaan <span class="required">*</span></label>
 						<select id="company_id" name="company_id" required>
-							<option value="">-- Pilih Perusahaan --</option>
+							<option value="">— Pilih Perusahaan —</option>
 							<% companies.forEach(company => { %>
 							<option value="<%= company.id %>"><%= company.name %></option>
 							<% }); %>
@@ -17,20 +38,33 @@
 				</div>
 			</div>
 
-			<!-- Informasi Invoice -->
+			<!-- Informasi Nomor & Tanggal -->
 			<div class="form-section">
-				<h3>Informasi Invoice</h3>
-				<div class="form-row">
+				<div class="section-title">
+					<div class="section-icon">🗓️</div>
+					<h3 id="docTypeHeading">Informasi Invoice</h3>
+				</div>
+				<div class="form-row three-col">
 					<div class="form-group">
-						<label for="invoice_number">Nomor Invoice *</label>
+						<label for="invoice_number">Nomor Dokumen <span class="required">*</span></label>
 						<input
 							type="text"
 							id="invoice_number"
 							name="invoice_number"
-							placeholder="INV-2025-001"
+							placeholder="INV/RESPRO/001/11.2026"
 							required
 						/>
 					</div>
+					<div class="form-group">
+						<label for="invoice_date">Tanggal <span class="required">*</span></label>
+						<input type="date" id="invoice_date" name="invoice_date" required />
+					</div>
+					<div class="form-group">
+						<label for="due_date" id="dueDateLabel">Tanggal Jatuh Tempo</label>
+						<input type="date" id="due_date" name="due_date" />
+					</div>
+				</div>
+				<div class="form-row">
 					<div class="form-group">
 						<label for="status">Status</label>
 						<select id="status" name="status">
@@ -40,36 +74,37 @@
 							<option value="paid">Dibayar</option>
 						</select>
 					</div>
-				</div>
-
-				<div class="form-row">
-					<div class="form-group">
-						<label for="invoice_date">Tanggal Invoice *</label>
-						<input type="date" id="invoice_date" name="invoice_date" required />
-					</div>
-					<div class="form-group">
-						<label for="due_date">Tanggal Jatuh Tempo</label>
-						<input type="date" id="due_date" name="due_date" />
+					<div class="form-group" id="statusQuotationGroup" style="display:none;">
+						<label for="status_quotation">Status Penawaran</label>
+						<select id="status_quotation" name="status_quotation">
+							<option value="draft">Draft</option>
+							<option value="sent">Terkirim</option>
+							<option value="accepted">Diterima</option>
+							<option value="rejected">Ditolak</option>
+						</select>
 					</div>
 				</div>
 			</div>
 
 			<!-- Data Penerima -->
 			<div class="form-section">
-				<h3>Data Penerima Invoice</h3>
+				<div class="section-title">
+					<div class="section-icon">👤</div>
+					<h3>Data Penerima</h3>
+				</div>
 				<div class="form-row">
 					<div class="form-group">
-						<label for="recipient_name">Nama Penerima *</label>
+						<label for="recipient_name">Nama <span class="required">*</span></label>
 						<input
 							type="text"
 							id="recipient_name"
 							name="recipient_name"
-							placeholder="Nama lengkap"
+							placeholder="Nama lengkap / instansi"
 							required
 						/>
 					</div>
 					<div class="form-group">
-						<label for="recipient_phone">Nomor Telepon *</label>
+						<label for="recipient_phone">Nomor Telepon</label>
 						<input
 							type="text"
 							id="recipient_phone"
@@ -78,7 +113,6 @@
 						/>
 					</div>
 				</div>
-
 				<div class="form-row">
 					<div class="form-group">
 						<label for="recipient_npwp">NPWP</label>
@@ -90,7 +124,6 @@
 						/>
 					</div>
 				</div>
-
 				<div class="form-row full">
 					<div class="form-group">
 						<label for="recipient_address">Alamat</label>
@@ -103,45 +136,57 @@
 				</div>
 			</div>
 
-			<!-- Items/Daftar Barang -->
+			<!-- Daftar Barang/Jasa dengan Grouping -->
 			<div class="form-section">
-				<h3>Daftar Barang/Jasa</h3>
+				<div class="section-title">
+					<div class="section-icon">📦</div>
+					<h3>Daftar Barang / Jasa</h3>
+				</div>
 				<div class="tip-text">
-					<strong>Tips:</strong>
-					Anda bisa copy-paste banyak baris dari Excel/Google Sheets langsung ke
-					kolom pertama (Deskripsi)
+					💡 <strong>Tips:</strong> Gunakan <strong>Group</strong> untuk mengelompokkan item (mis: I. Musik, II. FI). Copy group untuk menduplikat struktur yang mirip. Paste dari Excel langsung ke kolom Deskripsi.
 				</div>
 
 				<div class="items-section">
 					<div id="itemsContainer"></div>
-					<button type="button" class="btn-add" onclick="addItem()">
-						+ Tambah Item
-					</button>
+
+					<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem;">
+						<button type="button" class="btn-add-group" onclick="addGroup()">
+							+ Tambah Group
+						</button>
+						<button type="button" class="btn-add" onclick="addItem(null)">
+							+ Tambah Item (tanpa group)
+						</button>
+					</div>
 				</div>
 
 				<input type="hidden" id="items" name="items" value="[]" />
 			</div>
 
-			<!-- Pajak -->
+			<!-- Pajak & Biaya -->
 			<div class="form-section">
-				<h3>Pajak & Biaya (Opsional)</h3>
+				<div class="section-title">
+					<div class="section-icon">📊</div>
+					<h3>Pajak & Biaya Tambahan <span style="font-weight:400; color: var(--text-muted); font-size:0.85rem;">(opsional)</span></h3>
+				</div>
 				<div class="items-section">
 					<div id="taxesContainer"></div>
 					<button type="button" class="btn-add" onclick="addTax()">
-						+ Tambah Pajak
+						+ Tambah Pajak / Biaya
 					</button>
 				</div>
-
 				<input type="hidden" id="taxes" name="taxes" value="[]" />
 			</div>
 
 			<!-- Diskon -->
 			<div class="form-section">
-				<h3>Diskon (Opsional)</h3>
+				<div class="section-title">
+					<div class="section-icon">🏷️</div>
+					<h3>Diskon <span style="font-weight:400; color: var(--text-muted); font-size:0.85rem;">(opsional)</span></h3>
+				</div>
 				<div class="discount-section">
 					<div class="discount-row">
 						<div class="form-group">
-							<label for="discount_type">Tipe Diskon:</label>
+							<label for="discount_type">Tipe Diskon</label>
 							<select
 								id="discount_type"
 								name="discount_type"
@@ -153,12 +198,12 @@
 							</select>
 						</div>
 						<div class="form-group">
-							<label id="discountLabel" for="discount_value">Diskon (%):</label>
+							<label id="discountLabel" for="discount_value">Nilai Diskon</label>
 							<input
 								type="number"
 								id="discount_value"
 								name="discount_value"
-								placeholder="Misal: 10 untuk 10%"
+								placeholder="0"
 								value="0"
 								min="0"
 								step="0.01"
@@ -169,28 +214,31 @@
 			</div>
 
 			<!-- Ringkasan Total -->
-			<div class="form-section" style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 20px;">
-				<h3 style="margin-top: 0;">Ringkasan Invoice</h3>
-				<div id="summarySection" style="display: flex; flex-direction: column; gap: 10px;">
-					<div class="summary-item">
-						<span>Subtotal:</span>
-						<strong>Rp 0</strong>
-					</div>
-					<div class="summary-item" style="border-top: 2px solid #ccc; padding-top: 10px; margin-top: 10px;">
-						<span style="font-weight: bold;">Total:</span>
-						<strong style="font-size: 18px; color: #2c3e50;">Rp 0</strong>
+			<div class="form-section">
+				<div class="section-title">
+					<div class="section-icon">💰</div>
+					<h3>Ringkasan</h3>
+				</div>
+				<div class="summary-box">
+					<div id="summarySection">
+						<div class="summary-item">
+							<span>Subtotal:</span>
+							<strong>Rp 0</strong>
+						</div>
+						<div class="summary-item total">
+							<span>Total:</span>
+							<strong>Rp 0</strong>
+						</div>
 					</div>
 				</div>
 			</div>
 
-			<!-- Form Actions -->
+			<!-- Actions -->
 			<div class="form-actions">
-				<button type="submit" class="btn-submit">Simpan Invoice</button>
-				<a
-					href="/admin/invoice/history"
-					class="btn-cancel"
-					style="text-align: center; text-decoration: none"
-				>
+				<button type="submit" class="btn-submit" id="submitBtn">
+					💾 Simpan Invoice
+				</button>
+				<a href="/admin/invoice/history" class="btn-cancel">
 					Batal
 				</a>
 			</div>

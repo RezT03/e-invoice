@@ -1,13 +1,44 @@
 <div class="history-container">
+	<!-- Page Header -->
+	<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+		<div>
+			<h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem;">
+				<% if (typeof document_type !== 'undefined' && document_type === 'quotation') { %>
+					📋 Daftar Penawaran Harga
+				<% } else if (typeof document_type !== 'undefined' && document_type === 'invoice') { %>
+					🧾 Daftar Invoice
+				<% } else { %>
+					📁 Riwayat Dokumen
+				<% } %>
+			</h2>
+			<p style="color: var(--text-muted); font-size: 0.85rem;">
+				Total <%= totalInvoices || 0 %> dokumen ditemukan
+			</p>
+		</div>
+		<div style="display: flex; gap: 0.6rem;">
+			<a href="/admin/invoice/create" class="btn btn-primary" style="font-size: 0.88rem; padding: 0.55rem 1.1rem;">
+				+ Buat Dokumen Baru
+			</a>
+		</div>
+	</div>
+
 	<!-- Filters -->
 	<div class="filters">
 		<div class="filter-group">
-			<label for="searchFilter">Cari Invoice</label>
+			<label for="searchFilter">Cari</label>
 			<input
 				type="text"
 				id="searchFilter"
-				placeholder="Nomor invoice atau nama penerima..."
+				placeholder="Nomor dokumen atau penerima..."
 			/>
+		</div>
+		<div class="filter-group">
+			<label for="docTypeFilter">Tipe Dokumen</label>
+			<select id="docTypeFilter">
+				<option value="">Semua Dokumen</option>
+				<option value="invoice">🧾 Invoice</option>
+				<option value="quotation">📋 Penawaran Harga</option>
+			</select>
 		</div>
 		<div class="filter-group">
 			<label for="dateFilter">Tanggal</label>
@@ -21,11 +52,13 @@
 				<option value="issued">Diterbitkan</option>
 				<option value="sent">Terkirim</option>
 				<option value="paid">Dibayar</option>
+				<option value="accepted">Diterima (Penawaran)</option>
+				<option value="rejected">Ditolak (Penawaran)</option>
 				<option value="overdue">Jatuh Tempo</option>
 				<option value="cancelled">Dibatalkan</option>
 			</select>
 		</div>
-		<div style="display: flex; gap: 0.5rem">
+		<div style="display: flex; gap: 0.5rem; align-items: flex-end;">
 			<button class="btn-filter" id="btnApplyFilters">Filter</button>
 			<button class="btn-filter btn-reset" id="btnResetFilters">Reset</button>
 		</div>
@@ -37,34 +70,57 @@
 		<table class="invoices-table">
 			<thead>
 				<tr>
-					<th>No. Invoice</th>
+					<th>No. Dokumen</th>
+					<th>Tipe</th>
 					<th>Penerima</th>
 					<th>Perusahaan</th>
 					<th>Tanggal</th>
-					<th>Total</th>
-					<th>Status</th>
-					<th>Aksi</th>
+					<th style="text-align: right;">Total</th>
+					<th style="text-align: center;">Status</th>
+					<th style="text-align: center;">Aksi</th>
 				</tr>
 			</thead>
 			<tbody>
-				<% invoices.forEach(invoice => { %>
+				<% invoices.forEach(invoice => { 
+					const isQuotation = invoice.document_type === 'quotation';
+				%>
 				<tr>
-					<td class="invoice-number"><%= invoice.invoice_number %></td>
-					<td><%= invoice.recipient_name %></td>
-					<td><%= invoice.company_name %></td>
+					<td class="invoice-number">
+						<a href="/admin/invoice/<%= invoice.id %>" style="color: var(--primary); font-weight: 600; text-decoration: none;">
+							<%= invoice.invoice_number %>
+						</a>
+					</td>
+					<td>
+						<% if (isQuotation) { %>
+							<span class="badge" style="background: #fff4e5; color: #d97706; font-size: 0.72rem;">
+								📋 Penawaran
+							</span>
+						<% } else { %>
+							<span class="badge" style="background: var(--primary-light); color: var(--primary); font-size: 0.72rem;">
+								🧾 Invoice
+							</span>
+						<% } %>
+					</td>
+					<td style="font-weight: 500;"><%= invoice.recipient_name %></td>
+					<td style="color: var(--text-muted); font-size: 0.85rem;"><%= invoice.company_name %></td>
 					<td>
 						<%= new Date(invoice.invoice_date).toLocaleDateString('id-ID') %>
 					</td>
-					<td>Rp <%= (invoice.total_amount || 0).toLocaleString('id-ID') %></td>
-					<td>
+					<td style="text-align: right; font-weight: 600;">
+						Rp <%= (invoice.total_amount || 0).toLocaleString('id-ID') %>
+					</td>
+					<td style="text-align: center;">
 						<span class="badge status-<%= invoice.status %>">
 							<%= invoice.status.toUpperCase() %>
 						</span>
 					</td>
-					<td>
-						<div class="actions">
+					<td style="text-align: center;">
+						<div class="actions" style="display: flex; gap: 0.4rem; justify-content: center;">
 							<a href="/admin/invoice/<%= invoice.id %>" class="btn-small">
 								Lihat
+							</a>
+							<a href="/admin/invoice/<%= invoice.id %>/pdf/normal" class="btn-small secondary" download title="Download PDF">
+								PDF
 							</a>
 						</div>
 					</td>
@@ -74,31 +130,50 @@
 		</table>
 
 		<!-- Pagination -->
-		<% if (totalPages > 1) { %>
+		<% if (totalPages > 1) { 
+			const p = typeof pageNum !== 'undefined' ? pageNum : (typeof currentPage !== 'undefined' ? currentPage : 1);
+			function buildPageUrl(pageNo) {
+				let q = `?page=${pageNo}`;
+				if (search) q += `&search=${encodeURIComponent(search)}`;
+				if (date) q += `&date=${encodeURIComponent(date)}`;
+				if (status) q += `&status=${encodeURIComponent(status)}`;
+				if (typeof document_type !== 'undefined' && document_type) q += `&document_type=${encodeURIComponent(document_type)}`;
+				return q;
+			}
+		%>
 		<div class="pagination">
-			<% if (pageNum > 1) { %>
-			<a href="?page=1">First</a>
-			<a href="?page=<%= pageNum - 1 %>">Previous</a>
+			<% if (p > 1) { %>
+			<a href="<%= buildPageUrl(1) %>">«</a>
+			<a href="<%= buildPageUrl(p - 1) %>">‹</a>
 			<% } else { %>
-			<span class="disabled">First</span>
-			<span class="disabled">Previous</span>
-			<% } %> <% for (let i = Math.max(1, pageNum - 2); i <=
-			Math.min(totalPages, pageNum + 2); i++) { %> <% if (i === pageNum) { %>
-			<span class="active"><%= i %></span>
+			<span class="disabled">«</span>
+			<span class="disabled">‹</span>
+			<% } %> 
+			
+			<% for (let i = Math.max(1, p - 2); i <= Math.min(totalPages, p + 2); i++) { %> 
+				<% if (i === p) { %>
+				<span class="active"><%= i %></span>
+				<% } else { %>
+				<a href="<%= buildPageUrl(i) %>"><%= i %></a>
+				<% } %> 
+			<% } %> 
+			
+			<% if (p < totalPages) { %>
+			<a href="<%= buildPageUrl(p + 1) %>">›</a>
+			<a href="<%= buildPageUrl(totalPages) %>">»</a>
 			<% } else { %>
-			<a href="?page=<%= i %>"><%= i %></a>
-			<% } %> <% } %> <% if (pageNum < totalPages) { %>
-			<a href="?page=<%= pageNum + 1 %>">Next</a>
-			<a href="?page=<%= totalPages %>">Last</a>
-			<% } else { %>
-			<span class="disabled">Next</span>
-			<span class="disabled">Last</span>
+			<span class="disabled">›</span>
+			<span class="disabled">»</span>
 			<% } %>
 		</div>
-		<% } %> <% } else { %>
+		<% } %> 
+		<% } else { %>
 		<div class="empty-state">
-			<p>Belum ada invoice</p>
-			<a href="/admin/invoice/create" class="btn-small">Buat Invoice Baru</a>
+			<div style="font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.4;">📄</div>
+			<p>Tidak ada dokumen yang sesuai dengan filter</p>
+			<a href="/admin/invoice/create" class="btn btn-primary" style="display: inline-flex; margin-top: 0.5rem;">
+				+ Buat Dokumen Baru
+			</a>
 		</div>
 		<% } %>
 	</div>

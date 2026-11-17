@@ -1,42 +1,59 @@
 /* Dashboard Page Styles */
 
+:root {
+  --primary: #0356fc;
+  --primary-dark: #0244cc;
+  --primary-light: #e8f0ff;
+  --secondary: #fc032d;
+  --text: #1a1f36;
+  --text-muted: #6b7280;
+  --bg: #f4f6fb;
+  --white: #ffffff;
+  --border: #e5e7eb;
+  --border-light: #f0f2f5;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
 .dashboard-content {
 	flex: 1;
-	padding: 2rem;
+	padding: 1.75rem;
 	overflow-y: auto;
 }
 
 .stats-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-	gap: 1.5rem;
-	margin-bottom: 2rem;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 1.25rem;
+	margin-bottom: 1.75rem;
 }
 
 .stat-card {
-	background: white;
-	padding: 1.5rem;
-	border-radius: 8px;
+	background: var(--white);
+	padding: 1.25rem 1.5rem;
+	border-radius: var(--radius);
 	display: flex;
 	gap: 1rem;
 	align-items: center;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	box-shadow: var(--shadow-sm);
+	border: 1px solid var(--border);
 	transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .stat-card:hover {
 	transform: translateY(-2px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	box-shadow: 0 4px 16px rgba(3, 86, 252, 0.08);
 }
 
 .stat-icon {
-	width: 60px;
-	height: 60px;
-	border-radius: 8px;
+	width: 50px;
+	height: 50px;
+	border-radius: var(--radius-sm);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 1.5rem;
+	font-size: 1.25rem;
 	flex-shrink: 0;
 }
 
@@ -45,54 +62,37 @@
 }
 
 .stat-label {
-	font-size: 0.85rem;
-	color: #999;
+	font-size: 0.78rem;
+	color: var(--text-muted);
 	margin: 0;
 	text-transform: uppercase;
-	letter-spacing: 0.5px;
+	letter-spacing: 0.4px;
+	font-weight: 600;
 }
 
 .stat-value {
-	font-size: 1.8rem;
+	font-size: 1.7rem;
 	font-weight: 700;
-	color: #333;
-	margin: 0.25rem 0 0 0;
+	color: var(--text);
+	margin: 0.1rem 0 0 0;
+	letter-spacing: -0.5px;
 }
 
 .value-card {
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	background: var(--primary);
 	color: white;
-	padding: 2rem;
-	border-radius: 8px;
-	margin-bottom: 2rem;
-	box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.value-card h3 {
-	font-size: 1rem;
-	font-weight: 500;
-	margin-bottom: 0.75rem;
-	opacity: 0.9;
-}
-
-.value-amount {
-	font-size: 2rem;
-	font-weight: 700;
-	margin: 0;
+	padding: 1.5rem 1.75rem;
+	border-radius: var(--radius);
+	margin-bottom: 1.75rem;
+	box-shadow: 0 4px 20px rgba(3, 86, 252, 0.2);
 }
 
 .recent-section {
-	background: white;
-	padding: 2rem;
-	border-radius: 8px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.recent-section h3 {
-	margin-top: 0;
-	margin-bottom: 1.5rem;
-	font-size: 1.1rem;
-	color: #333;
+	background: var(--white);
+	padding: 1.5rem;
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-sm);
+	border: 1px solid var(--border);
 }
 
 .table-container {
@@ -105,79 +105,60 @@
 }
 
 .invoices-table thead {
-	background: #f8f9fa;
-	border-bottom: 2px solid #ddd;
+	background: var(--bg);
+	border-bottom: 2px solid var(--border);
 }
 
 .invoices-table th {
-	padding: 1rem;
+	padding: 0.8rem 1rem;
 	text-align: left;
 	font-weight: 600;
-	color: #333;
-	font-size: 0.9rem;
+	color: var(--text-muted);
+	font-size: 0.8rem;
 	text-transform: uppercase;
-	letter-spacing: 0.5px;
+	letter-spacing: 0.4px;
+	white-space: nowrap;
 }
 
 .invoices-table td {
-	padding: 1rem;
-	border-bottom: 1px solid #eee;
-	color: #666;
-	font-size: 0.95rem;
+	padding: 0.85rem 1rem;
+	border-bottom: 1px solid var(--border-light);
+	color: var(--text);
+	font-size: 0.9rem;
 }
 
 .invoices-table tbody tr:hover {
-	background-color: #f9f9f9;
+	background-color: var(--primary-light);
 }
 
 .badge {
 	display: inline-block;
-	padding: 0.35rem 0.75rem;
+	padding: 0.25rem 0.65rem;
 	border-radius: 20px;
-	font-size: 0.8rem;
+	font-size: 0.75rem;
 	font-weight: 600;
 	text-transform: uppercase;
-	letter-spacing: 0.5px;
+	letter-spacing: 0.4px;
 }
 
-.status-draft {
-	background: #e2e3e5;
-	color: #383d41;
-}
-
-.status-issued {
-	background: #cfe2ff;
-	color: #084298;
-}
-
-.status-sent {
-	background: #cff4fc;
-	color: #055160;
-}
-
-.status-paid {
-	background: #d1e7dd;
-	color: #0f5132;
-}
-
-.status-overdue {
-	background: #f8d7da;
-	color: #842029;
-}
-
-.status-cancelled {
-	background: #f5c2c7;
-	color: #842029;
-}
+.status-draft { background: #f1f3f5; color: #495057; }
+.status-issued { background: var(--primary-light); color: var(--primary); }
+.status-sent { background: #e3fafc; color: #0c8599; }
+.status-paid { background: #e6f9f0; color: #15803d; }
+.status-overdue { background: #fff0f2; color: #fc032d; }
+.status-cancelled { background: #f8f9fa; color: #868e96; }
+.status-accepted { background: #e6f9f0; color: #15803d; }
+.status-rejected { background: #fff0f2; color: #fc032d; }
 
 .btn-small {
-	display: inline-block;
-	padding: 0.4rem 0.8rem;
-	background: #667eea;
+	display: inline-flex;
+	align-items: center;
+	padding: 0.35rem 0.75rem;
+	background: var(--primary);
 	color: white;
 	text-decoration: none;
-	border-radius: 4px;
-	font-size: 0.85rem;
+	border-radius: var(--radius-sm);
+	font-size: 0.82rem;
 	transition: background 0.2s;
 	border: none;
 	cursor: pointer;
@@ -185,68 +166,22 @@
 }
 
 .btn-small:hover {
-	background: #5568d3;
+	background: var(--primary-dark);
 }
 
 .empty-state {
 	padding: 3rem;
 	text-align: center;
-	color: #999;
-}
-
-.empty-state p {
-	margin-bottom: 1rem;
-	font-size: 1rem;
-}
-
-.empty-state .btn-small {
-	display: inline-block;
-	margin-top: 1rem;
+	color: var(--text-muted);
 }
 
 @media (max-width: 768px) {
-	.dashboard-content {
-		padding: 1rem;
-	}
-
-	.stats-grid {
-		grid-template-columns: 1fr;
-		gap: 1rem;
-	}
-
-	.stat-card {
-		flex-direction: row;
-	}
-
-	.invoices-table {
-		font-size: 0.85rem;
-	}
-
-	.invoices-table th,
-	.invoices-table td {
-		padding: 0.75rem 0.5rem;
-	}
+	.dashboard-content { padding: 1rem; }
+	.stats-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+	.stat-card { padding: 1rem; }
+	.stat-value { font-size: 1.3rem; }
 }
 
 @media (max-width: 480px) {
-	.invoices-table {
-		font-size: 0.75rem;
-	}
-
-	.invoices-table th,
-	.invoices-table td {
-		padding: 0.5rem;
-	}
-
-	.stat-card {
-		padding: 1rem;
-	}
-
-	.stat-value {
-		font-size: 1.3rem;
-	}
-
-	.recent-section {
-		padding: 1rem;
-	}
+	.stats-grid { grid-template-columns: 1fr; }
 }

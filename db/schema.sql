@@ -57,7 +57,8 @@ CREATE TABLE IF NOT EXISTS invoices (
   items JSON,
   taxes JSON,
   total_amount DECIMAL(15, 2),
-  status ENUM('draft', 'issued', 'sent', 'paid', 'overdue', 'cancelled') DEFAULT 'draft',
+  status ENUM('draft', 'issued', 'sent', 'paid', 'overdue', 'cancelled', 'accepted', 'rejected') DEFAULT 'draft',
+  document_type ENUM('invoice', 'quotation') DEFAULT 'invoice',
   paid_date DATETIME,
   share_token VARCHAR(255) UNIQUE,
   share_token_created_at TIMESTAMP,
@@ -68,6 +69,7 @@ CREATE TABLE IF NOT EXISTS invoices (
   INDEX idx_invoice_number (invoice_number),
   INDEX idx_share_token (share_token),
   INDEX idx_status (status),
+  INDEX idx_document_type (document_type),
   INDEX idx_company_id (company_id)
 );
 

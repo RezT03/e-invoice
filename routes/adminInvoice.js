@@ -1,4 +1,4 @@
-// adminInvoice.js
+﻿// adminInvoice.js
 const express = require("express")
 const router = express.Router()
 const adminInvoiceController = require("../controllers/adminInvoiceController")
@@ -22,6 +22,7 @@ router.post("/:uuid/update", adminInvoiceController.updateInvoice)
 router.post("/:uuid/status", adminInvoiceController.updateStatus)
 router.post("/:uuid/generate-share", adminInvoiceController.generateShareLink)
 router.delete("/:uuid/delete", adminInvoiceController.deleteInvoice)
+router.post("/:uuid/convert-to-invoice", adminInvoiceController.convertToInvoice)
 router.get("/:uuid", adminInvoiceController.viewInvoiceAdmin) // HARUS PALING BAWAH
 
 module.exports = router

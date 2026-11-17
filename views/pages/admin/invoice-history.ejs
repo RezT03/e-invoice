@@ -1,6 +1,15 @@
 <%- include('../../layouts/admin', { 
-    currentPage: 'history', pageTitle: 'Riwayat Invoice', 
+    currentPage: 'history', 
+    pageTitle: (typeof document_type !== 'undefined' && document_type === 'quotation') ? 'Daftar Penawaran' : (typeof document_type !== 'undefined' && document_type === 'invoice' ? 'Daftar Invoice' : 'Riwayat Dokumen'), 
     additionalStyles: ['invoice-history'], 
     additionalScripts: ['invoice-history'], 
-contentFile: 'admin/invoice-history-content', invoices,
-pageNum: currentPage, totalPages }) %>
+    contentFile: 'admin/invoice-history-content', 
+    invoices,
+    pageNum: currentPage, 
+    totalPages,
+    totalInvoices,
+    search,
+    date,
+    status,
+    document_type
+}) %>

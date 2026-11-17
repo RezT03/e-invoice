@@ -4,33 +4,46 @@
 		<p>Restu Production</p>
 	</div>
 
+	<% 
+		const activeDocType = typeof document_type !== 'undefined' ? document_type : (typeof docType !== 'undefined' ? docType : '');
+	%>
 	<nav class="sidebar-nav">
+		<div class="nav-section-label">Utama</div>
 		<a
 			href="/admin/invoice/dashboard"
 			class="nav-item <%= currentPage === 'dashboard' ? 'active' : '' %>"
 		>
-			<span class="icon">D</span>
+			<span class="icon">📊</span>
 			<span class="label">Dashboard</span>
 		</a>
+
+		<div class="nav-section-label">Dokumen</div>
 		<a
 			href="/admin/invoice/create"
 			class="nav-item <%= currentPage === 'create' ? 'active' : '' %>"
 		>
-			<span class="icon">+</span>
-			<span class="label">Buat Invoice</span>
+			<span class="icon">➕</span>
+			<span class="label">Buat Baru</span>
 		</a>
 		<a
-			href="/admin/invoice/history"
-			class="nav-item <%= currentPage === 'history' ? 'active' : '' %>"
+			href="/admin/invoice/history?document_type=invoice"
+			class="nav-item <%= currentPage === 'history' && activeDocType !== 'quotation' ? 'active' : '' %>"
 		>
-			<span class="icon">H</span>
-			<span class="label">Riwayat Invoice</span>
+			<span class="icon">🧾</span>
+			<span class="label">Invoice</span>
+		</a>
+		<a
+			href="/admin/invoice/history?document_type=quotation"
+			class="nav-item <%= currentPage === 'history' && activeDocType === 'quotation' ? 'active' : '' %>"
+		>
+			<span class="icon">📋</span>
+			<span class="label">Penawaran Harga</span>
 		</a>
 	</nav>
 
 	<div class="sidebar-footer">
 		<a href="/auth/logout" class="logout-btn">
-			<span class="icon">L</span>
+			<span class="icon">🚪</span>
 			<span class="label">Logout</span>
 		</a>
 	</div>

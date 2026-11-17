@@ -52,13 +52,13 @@ h6 {
 
 /* Links */
 a {
-	color: #667eea;
+	color: #0356fc;
 	text-decoration: none;
 	transition: color 0.2s;
 }
 
 a:hover {
-	color: #5568d3;
+	color: #0244cc;
 	text-decoration: underline;
 }
 
@@ -104,7 +104,7 @@ input[type="date"]:focus,
 select:focus,
 textarea:focus {
 	outline: none;
-	border-color: #667eea;
+	border-color: #0356fc;
 	box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
 }
 
@@ -133,12 +133,12 @@ button {
 }
 
 .btn-primary {
-	background: #667eea;
+	background: #0356fc;
 	color: white;
 }
 
 .btn-primary:hover {
-	background: #5568d3;
+	background: #0244cc;
 	transform: translateY(-2px);
 }
 

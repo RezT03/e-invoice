@@ -1,90 +1,110 @@
 /* Invoice History Page Styles */
 
+:root {
+  --primary: #0356fc;
+  --primary-dark: #0244cc;
+  --primary-light: #e8f0ff;
+  --secondary: #fc032d;
+  --text: #1a1f36;
+  --text-muted: #6b7280;
+  --bg: #f4f6fb;
+  --white: #ffffff;
+  --border: #e5e7eb;
+  --border-light: #f0f2f5;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
 .history-container {
 	flex: 1;
-	padding: 2rem;
+	padding: 1.75rem;
 	overflow-y: auto;
 }
 
 .filters {
-	background: white;
-	padding: 1.5rem;
-	border-radius: 8px;
-	margin-bottom: 2rem;
+	background: var(--white);
+	padding: 1.25rem 1.5rem;
+	border-radius: var(--radius);
+	margin-bottom: 1.5rem;
 	display: grid;
-	grid-template-columns: 1fr 1fr 1fr auto;
+	grid-template-columns: 1.5fr 1fr 1fr 1fr auto;
 	gap: 1rem;
 	align-items: end;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+	box-shadow: var(--shadow-sm);
+	border: 1px solid var(--border);
 }
 
 .filter-group {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: 0.4rem;
 }
 
 .filter-group label {
-	font-size: 0.85rem;
+	font-size: 0.78rem;
 	font-weight: 600;
-	color: #555;
+	color: var(--text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.4px;
 }
 
 .filter-group input,
 .filter-group select {
-	padding: 0.75rem;
-	border: 1px solid #ddd;
-	border-radius: 4px;
-	font-size: 0.95rem;
+	padding: 0.6rem 0.8rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-sm);
+	font-size: 0.9rem;
 	font-family: inherit;
+	color: var(--text);
+	background: var(--white);
+	transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .filter-group input::placeholder {
-	color: #999;
+	color: #b0b8c9;
 }
 
 .filter-group input:focus,
 .filter-group select:focus {
 	outline: none;
-	border-color: #667eea;
-	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px rgba(3, 86, 252, 0.08);
 }
 
 .btn-filter {
-	padding: 0.75rem 1.5rem;
-	background: #667eea;
+	padding: 0.6rem 1.25rem;
+	background: var(--primary);
 	color: white;
 	border: none;
-	border-radius: 4px;
+	border-radius: var(--radius-sm);
 	cursor: pointer;
-	font-size: 0.95rem;
-	font-weight: 500;
-	transition: all 0.2s;
+	font-size: 0.88rem;
+	font-weight: 600;
+	transition: background 0.2s;
+	white-space: nowrap;
 }
 
 .btn-filter:hover {
-	background: #5568d3;
-	transform: translateY(-1px);
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.btn-filter:active {
-	transform: translateY(0);
+	background: var(--primary-dark);
 }
 
 .btn-filter.btn-reset {
-	background: #6c757d;
-	padding: 0.75rem 1rem;
+	background: var(--white);
+	color: var(--text-muted);
+	border: 1px solid var(--border);
 }
 
 .btn-filter.btn-reset:hover {
-	background: #5a6268;
+	background: var(--bg);
+	color: var(--text);
 }
 
 .table-container {
-	background: white;
-	border-radius: 8px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	background: var(--white);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-sm);
+	border: 1px solid var(--border);
 	overflow: hidden;
 }
 
@@ -94,138 +114,110 @@
 }
 
 .invoices-table thead {
-	background: #f8f9fa;
-	border-bottom: 2px solid #ddd;
+	background: var(--bg);
+	border-bottom: 2px solid var(--border);
 }
 
 .invoices-table th {
-	padding: 1rem;
+	padding: 0.8rem 1rem;
 	text-align: left;
 	font-weight: 600;
-	color: #333;
-	font-size: 0.9rem;
+	color: var(--text-muted);
+	font-size: 0.8rem;
 	text-transform: uppercase;
-	letter-spacing: 0.5px;
+	letter-spacing: 0.4px;
+	white-space: nowrap;
 }
 
 .invoices-table td {
-	padding: 1rem;
-	border-bottom: 1px solid #eee;
-	color: #666;
-	font-size: 0.95rem;
+	padding: 0.85rem 1rem;
+	border-bottom: 1px solid var(--border-light);
+	color: var(--text);
+	font-size: 0.9rem;
 }
 
-.invoices-table tr:hover {
-	background: #f9f9f9;
-}
-
-.invoice-number {
-	font-weight: 600;
-	color: #333;
-}
-
-.badge {
-	display: inline-block;
-	padding: 0.25rem 0.75rem;
-	border-radius: 20px;
-	font-size: 0.85rem;
-	font-weight: 500;
-}
-
-.status-draft {
-	background: #e2e3e5;
-	color: #383d41;
-}
-
-.status-issued {
-	background: #cfe2ff;
-	color: #084298;
-}
-
-.status-sent {
-	background: #cff4fc;
-	color: #055160;
-}
-
-.status-paid {
-	background: #d1e7dd;
-	color: #0f5132;
-}
-
-.status-overdue {
-	background: #f8d7da;
-	color: #842029;
-}
-
-.status-cancelled {
-	background: #f5c2c7;
-	color: #842029;
-}
-
-.btn-small {
-	display: inline-block;
-	padding: 0.4rem 0.8rem;
-	background: #667eea;
-	color: white;
-	text-decoration: none;
-	border-radius: 4px;
-	font-size: 0.85rem;
-	transition: background 0.2s;
-	border: none;
-	cursor: pointer;
-}
-
-.btn-small:hover {
-	background: #5568d3;
+.invoices-table tbody tr:hover {
+	background-color: var(--primary-light);
 }
 
 .actions {
 	display: flex;
-	gap: 0.5rem;
+	gap: 0.4rem;
 }
 
+.btn-small {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.35rem 0.75rem;
+	background: var(--primary);
+	color: white;
+	text-decoration: none;
+	border-radius: var(--radius-sm);
+	font-size: 0.82rem;
+	font-weight: 500;
+	border: none;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+
+.btn-small:hover {
+	background: var(--primary-dark);
+}
+
+.btn-small.secondary {
+	background: transparent;
+	color: var(--primary);
+	border: 1px solid var(--primary);
+}
+
+.btn-small.secondary:hover {
+	background: var(--primary-light);
+}
+
+/* Pagination */
 .pagination {
 	display: flex;
-	gap: 0.5rem;
+	gap: 0.4rem;
+	padding: 1.25rem;
 	justify-content: center;
-	margin-top: 2rem;
+	align-items: center;
+	background: var(--white);
+	border-top: 1px solid var(--border);
 }
 
 .pagination a,
 .pagination span {
-	padding: 0.5rem 0.75rem;
-	border: 1px solid #ddd;
-	border-radius: 4px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 34px;
+	height: 34px;
+	padding: 0 0.5rem;
+	border-radius: var(--radius-sm);
+	font-size: 0.85rem;
 	text-decoration: none;
-	color: #667eea;
+	border: 1px solid var(--border);
+	color: var(--text);
+	background: var(--white);
 	transition: all 0.2s;
 }
 
 .pagination a:hover {
-	background: #667eea;
-	color: white;
+	background: var(--primary-light);
+	border-color: var(--primary);
+	color: var(--primary);
 }
 
 .pagination span.active {
-	background: #667eea;
+	background: var(--primary);
 	color: white;
-	border-color: #667eea;
+	border-color: var(--primary);
+	font-weight: 600;
 }
 
 .pagination span.disabled {
-	color: #ccc;
+	opacity: 0.35;
 	cursor: not-allowed;
-}
-
-.empty-state {
-	padding: 3rem;
-	text-align: center;
-	color: #999;
-}
-
-.empty-state p {
-	margin-bottom: 1rem;
-	font-size: 1rem;
 }
 
 @media (max-width: 1024px) {
@@ -238,87 +230,10 @@
 	.history-container {
 		padding: 1rem;
 	}
-
 	.filters {
 		grid-template-columns: 1fr;
-		gap: 1rem;
 	}
-
-	.filter-group {
-		width: 100%;
-	}
-
-	.filter-group input,
-	.filter-group select {
-		width: 100%;
-	}
-
-	.btn-filter {
-		width: 100%;
-	}
-
-	.table-container {
-		border-radius: 0;
-		box-shadow: none;
-		border: 1px solid #eee;
-	}
-
-	.invoices-table {
-		font-size: 0.8rem;
-	}
-
-	.invoices-table th {
-		padding: 0.75rem 0.5rem;
-		font-size: 0.75rem;
-		text-transform: none;
-		letter-spacing: 0;
-	}
-
-	.invoices-table td {
-		padding: 0.75rem 0.5rem;
-		font-size: 0.8rem;
-	}
-
-	.invoice-number {
-		display: block;
-		margin-bottom: 0.25rem;
-	}
-
-	.actions {
-		flex-direction: column;
-		gap: 0.25rem;
-	}
-
-	.btn-small {
-		width: 100%;
-		text-align: center;
-		padding: 0.35rem 0.5rem;
-		font-size: 0.75rem;
-	}
-
-	.badge {
-		font-size: 0.7rem;
-		padding: 0.2rem 0.5rem;
-	}
-
-	.pagination {
-		flex-wrap: wrap;
-		gap: 0.25rem;
-	}
-
-	.pagination a,
-	.pagination span {
-		padding: 0.4rem 0.6rem;
-		font-size: 0.8rem;
-	}
-}
-
-@media (max-width: 480px) {
 	.table-container {
 		overflow-x: auto;
-	}
-
-	.invoices-table {
-		min-width: 500px;
 	}
 }

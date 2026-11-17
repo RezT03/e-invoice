@@ -1,28 +1,72 @@
-// Create Invoice Page Scripts
+// Create Invoice / Quotation — Full Script with Grouping Support
 
 document.addEventListener("DOMContentLoaded", function () {
 	// Set default date to today
 	const invoiceDateInput = document.getElementById("invoice_date")
 	if (invoiceDateInput) {
-		invoiceDateInput.valueAsDate = new Date()
+		const today = new Date()
+		invoiceDateInput.value = today.toISOString().split("T")[0]
 	}
 
-	// Add first item by default
-	addItem()
+	// Add first item by default (ungrouped)
+	addItem(null)
 
-	// Add event listener untuk diskon
+	// Discount listeners
 	const discountTypeSelect = document.getElementById("discount_type")
-	if (discountTypeSelect) {
+	if (discountTypeSelect)
 		discountTypeSelect.addEventListener("change", updateDiscountLabel)
-	}
 
 	const discountValueInput = document.getElementById("discount_value")
-	if (discountValueInput) {
+	if (discountValueInput)
 		discountValueInput.addEventListener("input", updateSummary)
+
+	// Form submit
+	const form = document.getElementById("createInvoiceForm")
+	if (form) {
+		form.addEventListener("submit", handleFormSubmit)
 	}
 })
 
-// Parse currency string to number (e.g., "Rp 50.000" -> 50000)
+// ===================== DOC TYPE TOGGLE =====================
+
+function toggleDocType() {
+	const isQuotation =
+		document.getElementById("type_quotation") &&
+		document.getElementById("type_quotation").checked
+	const notice = document.getElementById("docTypeNotice")
+	const heading = document.getElementById("docTypeHeading")
+	const submitBtn = document.getElementById("submitBtn")
+	const statusGroup = document.getElementById("status")
+	const statusQuotationGroup = document.getElementById("statusQuotationGroup")
+	const dueDateLabel = document.getElementById("dueDateLabel")
+
+	if (isQuotation) {
+		if (notice) notice.style.display = "block"
+		if (heading) heading.textContent = "Informasi Penawaran Harga"
+		if (submitBtn) submitBtn.textContent = "💾 Simpan Penawaran"
+		if (statusGroup) statusGroup.closest(".form-group").style.display = "none"
+		if (statusQuotationGroup) statusQuotationGroup.style.display = "flex"
+		if (dueDateLabel) dueDateLabel.textContent = "Berlaku Hingga"
+
+		// Update placeholder nomor
+		const invNo = document.getElementById("invoice_number")
+		if (invNo && (!invNo.value || invNo.value.startsWith("INV")))
+			invNo.placeholder = "QT/RESPRO/001/11.2026"
+	} else {
+		if (notice) notice.style.display = "none"
+		if (heading) heading.textContent = "Informasi Invoice"
+		if (submitBtn) submitBtn.textContent = "💾 Simpan Invoice"
+		if (statusGroup) statusGroup.closest(".form-group").style.display = "flex"
+		if (statusQuotationGroup) statusQuotationGroup.style.display = "none"
+		if (dueDateLabel) dueDateLabel.textContent = "Tanggal Jatuh Tempo"
+
+		const invNo = document.getElementById("invoice_number")
+		if (invNo) invNo.placeholder = "INV/RESPRO/001/11.2026"
+	}
+}
+
+// ===================== HELPERS =====================
+
 function parseCurrency(str) {
 	if (!str) return 0
 	let cleaned = str.replace(/Rp\s?/i, "").trim()
@@ -31,7 +75,6 @@ function parseCurrency(str) {
 	return parseFloat(cleaned) || 0
 }
 
-// Escape HTML untuk prevent XSS
 function escapeHtml(text) {
 	const map = {
 		"&": "&amp;",
@@ -40,58 +83,226 @@ function escapeHtml(text) {
 		'"': "&quot;",
 		"'": "&#039;",
 	}
-	return text.replace(/[&<>"']/g, (m) => map[m])
+	return String(text || "").replace(/[&<>"']/g, (m) => map[m])
 }
 
-// Items management
-function addItem() {
+function formatRupiah(num) {
+	return "Rp " + Math.round(num || 0).toLocaleString("id-ID")
+}
+
+// ===================== GROUP MANAGEMENT =====================
+
+let groupCounter = 0
+
+function addGroup() {
 	const container = document.getElementById("itemsContainer")
 	if (!container) return
 
+	groupCounter++
+	const groupId = "group_" + groupCounter
+
+	const groupDiv = document.createElement("div")
+	groupDiv.className = "group-container"
+	groupDiv.dataset.groupId = groupId
+
+	groupDiv.innerHTML = `
+    <div class="group-header">
+      <span style="font-size:0.8rem; opacity:0.75; white-space:nowrap;">Nama Group:</span>
+      <input 
+        type="text" 
+        class="group-name-input" 
+        placeholder="Contoh: I. Musik" 
+        onchange="updateItems()"
+        oninput="updateItems()"
+      >
+      <button type="button" class="btn-copy-group" onclick="copyGroup(this)">📋 Copy Group</button>
+      <button type="button" class="btn-remove-group" onclick="removeGroup(this)">🗑 Hapus Group</button>
+    </div>
+    <div class="group-items-container" id="${groupId}_items"></div>
+    <div style="padding: 0.4rem 0 0.4rem 0.5rem;">
+      <button type="button" class="btn-add" onclick="addItem('${groupId}')">+ Tambah Item</button>
+    </div>
+  `
+
+	container.appendChild(groupDiv)
+	addItem(groupId) // Auto add first item
+	updateItems()
+}
+
+function removeGroup(btn) {
+	const groupDiv = btn.closest(".group-container")
+	if (groupDiv) {
+		groupDiv.remove()
+		updateItems()
+		updateSummary()
+	}
+}
+
+function copyGroup(btn) {
+	const sourceGroup = btn.closest(".group-container")
+	if (!sourceGroup) return
+
+	groupCounter++
+	const newGroupId = "group_" + groupCounter
+
+	const newGroupDiv = document.createElement("div")
+	newGroupDiv.className = "group-container"
+	newGroupDiv.dataset.groupId = newGroupId
+
+	// Copy group name + " (copy)"
+	const srcName =
+		sourceGroup.querySelector(".group-name-input").value || "Grup Baru"
+
+	newGroupDiv.innerHTML = `
+    <div class="group-header">
+      <span style="font-size:0.8rem; opacity:0.75; white-space:nowrap;">Nama Group:</span>
+      <input 
+        type="text" 
+        class="group-name-input" 
+        value="${escapeHtml(srcName)} (copy)"
+        onchange="updateItems()"
+        oninput="updateItems()"
+      >
+      <button type="button" class="btn-copy-group" onclick="copyGroup(this)">📋 Copy Group</button>
+      <button type="button" class="btn-remove-group" onclick="removeGroup(this)">🗑 Hapus Group</button>
+    </div>
+    <div class="group-items-container" id="${newGroupId}_items"></div>
+    <div style="padding: 0.4rem 0 0.4rem 0.5rem;">
+      <button type="button" class="btn-add" onclick="addItem('${newGroupId}')">+ Tambah Item</button>
+    </div>
+  `
+
+	// Copy items from source
+	const srcItems = sourceGroup.querySelectorAll(".item-row")
+	const newItemsContainer = newGroupDiv.querySelector(
+		`#${newGroupId}_items`,
+	)
+
+	srcItems.forEach((srcRow) => {
+		const descVal = srcRow.querySelector(".item-description")
+			? srcRow.querySelector(".item-description").value
+			: ""
+		const unitVal = srcRow.querySelector(".item-unit")
+			? srcRow.querySelector(".item-unit").value
+			: ""
+		const qtyVal = srcRow.querySelector(".item-qty")
+			? srcRow.querySelector(".item-qty").value
+			: ""
+		const priceVal = srcRow.querySelector(".item-price")
+			? srcRow.querySelector(".item-price").value
+			: ""
+		const priceType = srcRow.querySelector(".item-price-type")
+			? srcRow.querySelector(".item-price-type").value
+			: "unit"
+
+		const newRow = createItemRow(
+			descVal,
+			unitVal,
+			qtyVal,
+			priceVal,
+			priceType,
+		)
+		newItemsContainer.appendChild(newRow)
+		attachItemListeners(newRow)
+	})
+
+	// If no items copied, add one empty
+	if (srcItems.length === 0) {
+		const emptyRow = createItemRow("", "", "", "", "unit")
+		newItemsContainer.appendChild(emptyRow)
+		attachItemListeners(emptyRow)
+	}
+
+	sourceGroup.after(newGroupDiv)
+	updateItems()
+	updateSummary()
+}
+
+// ===================== ITEM MANAGEMENT =====================
+
+function addItem(groupId) {
+	let container
+
+	if (groupId) {
+		container = document.getElementById(groupId + "_items")
+		if (!container) {
+			// Try finding by data-group-id
+			const groupDiv = document.querySelector(
+				`[data-group-id="${groupId}"]`,
+			)
+			if (groupDiv) container = groupDiv.querySelector(".group-items-container")
+		}
+	} else {
+		container = document.getElementById("itemsContainer")
+	}
+
+	if (!container) return
+
+	const row = createItemRow("", "", "", "", "unit")
+	container.appendChild(row)
+	attachItemListeners(row)
+	updateItems()
+}
+
+function createItemRow(desc, unit, qty, price, priceType) {
 	const row = document.createElement("div")
 	row.className = "item-row"
 	row.innerHTML = `
-        <input type="text" placeholder="Deskripsi item" class="item-description" onpaste="handleItemPaste(event)">
-        <input type="text" placeholder="Satuan" class="item-unit" onpaste="handleItemPaste(event)">
-        <input type="number" placeholder="Qty" class="item-qty" value="" min="0" step="0.01" oninput="updateItemTotal(this)" onpaste="handleItemPaste(event)">
-        <div class="item-price-container">
-        	<select class="item-price-type" onchange="togglePriceInput(this)">
-        		<option value="unit">Harga Satuan</option>
-        		<option value="total">Harga Total</option>
-        	</select>
-        	<input type="number" placeholder="Harga" class="item-price" value="" min="0" step="0.01" oninput="updateItemTotal(this)" onpaste="handleItemPaste(event)">
-        </div>
-        <div class="item-total">0</div>
-        <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updateItems();">Hapus</button>
-    `
-
-	container.appendChild(row)
-	row.addEventListener("change", updateItems)
-	row.addEventListener("input", updateItems)
+    <input type="text" placeholder="Deskripsi item" class="item-description" value="${escapeHtml(desc)}" onpaste="handleItemPaste(event)">
+    <input type="text" placeholder="Satuan" class="item-unit" value="${escapeHtml(unit)}">
+    <input type="number" placeholder="Qty" class="item-qty" value="${escapeHtml(qty)}" min="0" step="0.01" oninput="updateItemTotal(this)">
+    <div class="item-price-container">
+      <select class="item-price-type" onchange="togglePriceInput(this)">
+        <option value="unit" ${priceType === "unit" ? "selected" : ""}>Satuan</option>
+        <option value="total" ${priceType === "total" ? "selected" : ""}>Total</option>
+      </select>
+      <input type="number" placeholder="Harga" class="item-price" value="${escapeHtml(price)}" min="0" step="0.01" oninput="updateItemTotal(this)">
+    </div>
+    <div class="item-total">${qty && price ? formatRupiah(parseFloat(qty) * parseFloat(price)) : "Rp 0"}</div>
+    <button type="button" class="btn-remove" onclick="removeItem(this)" title="Hapus item">✕</button>
+  `
+	return row
 }
 
-// Handle paste event untuk multi-row items
+function attachItemListeners(row) {
+	row.addEventListener("change", () => {
+		updateItems()
+		updateSummary()
+	})
+	row.addEventListener("input", () => {
+		updateItems()
+		updateSummary()
+	})
+}
+
+function removeItem(btn) {
+	const row = btn.closest(".item-row")
+	if (row) {
+		row.remove()
+		updateItems()
+		updateSummary()
+	}
+}
+
+// ===================== PASTE HANDLER =====================
+
 function handleItemPaste(event) {
 	event.preventDefault()
 	const clipboardData = event.clipboardData || window.clipboardData
 	const pastedText = clipboardData.getData("text")
-
 	if (!pastedText) return
 
-	// Split by newline (handle both \n and \r\n)
 	let rows = pastedText
 		.trim()
 		.split(/\r?\n/)
 		.filter((r) => r.trim())
-
-	// If no rows, return
 	if (rows.length === 0) return
 
-	// Get current container
-	const container = document.getElementById("itemsContainer")
 	const currentRow = event.target.closest(".item-row")
+	const container = currentRow ? currentRow.parentElement : null
+	if (!container) return
 
-	// Determine which column was pasted to
+	// Find target column
 	const targetClass = event.target.className
 	let columnIndex = 0
 	if (targetClass.includes("item-description")) columnIndex = 0
@@ -99,24 +310,18 @@ function handleItemPaste(event) {
 	else if (targetClass.includes("item-qty")) columnIndex = 2
 	else if (targetClass.includes("item-price")) columnIndex = 3
 
-	// Remove current empty row if empty
+	// Remove current row if empty
 	if (currentRow) {
 		const inputs = currentRow.querySelectorAll("input")
 		const isEmpty = Array.from(inputs).every((i) => !i.value)
-		if (isEmpty) {
-			currentRow.remove()
-		}
+		if (isEmpty) currentRow.remove()
 	}
 
-	// Parse each row
-	rows.forEach((rowText, idx) => {
+	rows.forEach((rowText) => {
 		rowText = rowText.trim()
 		if (!rowText) return
 
-		// Try to split by tab first
 		let cells = rowText.split("\t").map((c) => c.trim())
-
-		// If no tabs found, treat as single value for the target column
 		if (cells.length === 1) {
 			cells = ["", "", "", ""]
 			cells[columnIndex] = rowText
@@ -127,47 +332,23 @@ function handleItemPaste(event) {
 		const qty = cells[2] || ""
 		const price = cells[3] || ""
 
-		const row = document.createElement("div")
-		row.className = "item-row"
-
-		// Parse qty - handle both plain numbers and formatted numbers (support decimal)
-		let numQty = 0
-		if (qty) {
-			// Remove non-numeric except dot and comma
-			const cleanQty = qty.replace(/[^\d.,]/g, "").replace(",", ".")
-			numQty = parseFloat(cleanQty) || 0
-		}
-
-		// Parse price - handle currency format
+		const cleanQty = qty ? parseFloat(qty.replace(/[^\d.,]/g, "").replace(",", ".")) || 0 : 0
 		const numPrice = price ? parseCurrency(price) : 0
-		const total = numQty * numPrice
 
-		row.innerHTML = `
-            <input type="text" value="${escapeHtml(name)}" placeholder="Deskripsi item" class="item-description">
-            <input type="text" value="${escapeHtml(unit)}" placeholder="Satuan" class="item-unit">
-            <input type="number" value="${numQty}" placeholder="Qty" class="item-qty" min="0" step="0.01" oninput="updateItemTotal(this)">
-            <div class="item-price-container">
-                <select class="item-price-type" onchange="togglePriceInput(this)">
-                    <option value="unit" selected>Harga Satuan</option>
-                    <option value="total">Harga Total</option>
-                </select>
-                <input type="number" value="${numPrice}" placeholder="Harga" class="item-price" min="0" step="0.01" oninput="updateItemTotal(this)">
-            </div>
-            <div class="item-total">${total.toLocaleString("id-ID")}</div>
-            <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updateItems();">Hapus</button>
-        `
-
-		container.appendChild(row)
-		row.addEventListener("change", updateItems)
-		row.addEventListener("input", updateItems)
+		const newRow = createItemRow(name, unit, cleanQty || "", numPrice || "", "unit")
+		container.appendChild(newRow)
+		attachItemListeners(newRow)
 	})
 
 	updateItems()
+	updateSummary()
 }
 
-// Update total harga per item
+// ===================== ITEM TOTAL =====================
+
 function updateItemTotal(input) {
 	const row = input.closest(".item-row")
+	if (!row) return
 	const qtyInput = row.querySelector(".item-qty")
 	const priceInput = row.querySelector(".item-price")
 	const priceTypeSelect = row.querySelector(".item-price-type")
@@ -175,176 +356,185 @@ function updateItemTotal(input) {
 
 	const qty = parseFloat(qtyInput.value) || 0
 	const price = parseFloat(priceInput.value) || 0
-	const priceType = priceTypeSelect.value // "unit" atau "total"
+	const priceType = priceTypeSelect.value
 
-	let total = 0
-	if (priceType === "unit") {
-		// Harga satuan: total = qty * price
-		total = qty * price
-	} else {
-		// Harga total: yang diinput sudah total, qty akan dibagi nanti saat menyimpan
-		total = price
-	}
-
-	totalSpan.textContent = total.toLocaleString("id-ID")
+	let total = priceType === "unit" ? qty * price : price
+	totalSpan.textContent = formatRupiah(total)
 	updateItems()
-}
-
-// Toggle antara input harga satuan atau harga total
-function togglePriceInput(select) {
-	const row = select.closest(".item-row")
-	const priceInput = row.querySelector(".item-price")
-	const priceType = select.value
-
-	if (priceType === "unit") {
-		priceInput.placeholder = "Harga Satuan"
-	} else {
-		priceInput.placeholder = "Harga Total"
-	}
-
-	// Trigger update untuk refresh total
-	updateItemTotal(priceInput)
-}
-
-function updateItems() {
-	const container = document.getElementById("itemsContainer")
-	const items = []
-
-	container.querySelectorAll(".item-row").forEach((row) => {
-		const description = row.querySelector(".item-description").value
-		const unit = row.querySelector(".item-unit").value
-		const quantity = parseFloat(row.querySelector(".item-qty").value) || 0
-		const priceInput = parseFloat(row.querySelector(".item-price").value) || 0
-		const priceType = row.querySelector(".item-price-type").value
-
-		if (description && quantity && priceInput) {
-			let price = priceInput
-
-			// Jika input adalah harga total, hitung harga satuan
-			if (priceType === "total") {
-				price = priceInput / quantity
-			}
-
-			items.push({ description, unit, quantity, price })
-		}
-	})
-
-	document.getElementById("items").value = JSON.stringify(items)
 	updateSummary()
 }
 
-// Discount management
+function togglePriceInput(select) {
+	const row = select.closest(".item-row")
+	const priceInput = row.querySelector(".item-price")
+	priceInput.placeholder = select.value === "unit" ? "Harga Satuan" : "Harga Total"
+	updateItemTotal(priceInput)
+}
+
+// ===================== BUILD ITEMS DATA =====================
+
+function updateItems() {
+	const container = document.getElementById("itemsContainer")
+	const result = []
+
+	// Iterate through direct children of container
+	container.childNodes.forEach((node) => {
+		if (!node.classList) return
+
+		if (node.classList.contains("group-container")) {
+			// It's a group
+			const groupNameInput = node.querySelector(".group-name-input")
+			const groupName = groupNameInput ? groupNameInput.value.trim() : ""
+			const groupItems = []
+
+			node.querySelectorAll(".item-row").forEach((row) => {
+				const itemData = extractItemData(row)
+				if (itemData) groupItems.push(itemData)
+			})
+
+			result.push({
+				is_group: true,
+				group_name: groupName,
+				items: groupItems,
+			})
+		} else if (node.classList.contains("item-row")) {
+			// It's a flat item
+			const itemData = extractItemData(node)
+			if (itemData) result.push(itemData)
+		}
+	})
+
+	document.getElementById("items").value = JSON.stringify(result)
+}
+
+function extractItemData(row) {
+	const description = row.querySelector(".item-description")
+		? row.querySelector(".item-description").value
+		: ""
+	const unit = row.querySelector(".item-unit")
+		? row.querySelector(".item-unit").value
+		: ""
+	const quantity =
+		parseFloat(row.querySelector(".item-qty") ? row.querySelector(".item-qty").value : 0) || 0
+	const priceInput =
+		parseFloat(row.querySelector(".item-price") ? row.querySelector(".item-price").value : 0) || 0
+	const priceType = row.querySelector(".item-price-type")
+		? row.querySelector(".item-price-type").value
+		: "unit"
+
+	if (!description) return null
+
+	let price = priceType === "total" && quantity > 0 ? priceInput / quantity : priceInput
+
+	return { description, unit, quantity, price }
+}
+
+// ===================== CALCULATE TOTALS =====================
+
+function calculateSubtotal(items) {
+	let total = 0
+	for (const item of items || []) {
+		if (item.is_group) {
+			for (const sub of item.items || []) {
+				total += (sub.quantity || 0) * (sub.price || 0)
+			}
+		} else {
+			total += (item.quantity || 0) * (item.price || 0)
+		}
+	}
+	return total
+}
+
+// ===================== SUMMARY =====================
+
+function updateSummary() {
+	updateItems()
+	const items = JSON.parse(document.getElementById("items").value || "[]")
+	const subtotal = calculateSubtotal(items)
+
+	// Discount
+	const discountType = document.getElementById("discount_type").value
+	const discountValue =
+		parseFloat(document.getElementById("discount_value").value) || 0
+	let discountAmount = 0
+	if (discountType === "percentage") discountAmount = (subtotal * discountValue) / 100
+	else if (discountType === "nominal") discountAmount = discountValue
+
+	const subtotalAfterDiscount = subtotal - discountAmount
+
+	// Taxes
+	const taxContainer = document.getElementById("taxesContainer")
+	let totalTax = 0
+	taxContainer.querySelectorAll(".tax-row").forEach((row) => {
+		const pct = parseFloat(row.querySelector(".tax-percentage").value) || 0
+		totalTax += (subtotalAfterDiscount * pct) / 100
+	})
+
+	const totalFinal = subtotalAfterDiscount + totalTax
+
+	const summarySection = document.getElementById("summarySection")
+	if (!summarySection) return
+
+	let html = `
+    <div class="summary-item">
+      <span>Subtotal:</span>
+      <strong>${formatRupiah(subtotal)}</strong>
+    </div>
+  `
+
+	if (discountAmount > 0) {
+		html += `
+      <div class="summary-item discount">
+        <span>Diskon (${discountType === "percentage" ? discountValue + "%" : "Nominal"}):</span>
+        <strong>− ${formatRupiah(discountAmount)}</strong>
+      </div>
+    `
+	}
+
+	if (totalTax > 0) {
+		html += `
+      <div class="summary-item">
+        <span>Pajak/Biaya:</span>
+        <strong>+ ${formatRupiah(totalTax)}</strong>
+      </div>
+    `
+	}
+
+	html += `
+    <div class="summary-item total">
+      <span>Total:</span>
+      <strong>${formatRupiah(totalFinal)}</strong>
+    </div>
+  `
+
+	summarySection.innerHTML = html
+}
+
+// ===================== DISCOUNT =====================
+
 function updateDiscountLabel() {
 	const type = document.getElementById("discount_type").value
 	const label = document.getElementById("discountLabel")
 	const input = document.getElementById("discount_value")
 
 	if (type === "percentage") {
-		label.textContent = "Diskon (%):"
+		label.textContent = "Nilai Diskon (%)"
 		input.placeholder = "Misal: 10 untuk 10%"
 		input.step = "0.01"
 	} else if (type === "nominal") {
-		label.textContent = "Diskon (Rp):"
+		label.textContent = "Nilai Diskon (Rp)"
 		input.placeholder = "Misal: 50000"
 		input.step = "1"
-	}
-
-	if (type === "none") {
+	} else {
+		label.textContent = "Nilai Diskon"
 		input.value = 0
 	}
 
 	updateSummary()
 }
 
-// Hitung dan tampilkan ringkasan total
-function updateSummary() {
-	// Hitung subtotal dari items
-	const container = document.getElementById("itemsContainer")
-	let subtotal = 0
+// ===================== TAXES =====================
 
-	container.querySelectorAll(".item-row").forEach((row) => {
-		const quantity = parseFloat(row.querySelector(".item-qty").value) || 0
-		const priceInput = parseFloat(row.querySelector(".item-price").value) || 0
-		const priceType = row.querySelector(".item-price-type").value
-
-		let itemTotal = 0
-		if (priceType === "unit") {
-			itemTotal = quantity * priceInput
-		} else {
-			itemTotal = priceInput // Harga total yang diinput
-		}
-		subtotal += itemTotal
-	})
-
-	// Hitung diskon
-	const discountType = document.getElementById("discount_type").value
-	const discountValue =
-		parseFloat(document.getElementById("discount_value").value) || 0
-	let discountAmount = 0
-
-	if (discountType === "percentage") {
-		discountAmount = (subtotal * discountValue) / 100
-	} else if (discountType === "nominal") {
-		discountAmount = discountValue
-	}
-
-	// Subtotal setelah diskon
-	const subtotalAfterDiscount = subtotal - discountAmount
-
-	// Hitung total pajak
-	const taxContainer = document.getElementById("taxesContainer")
-	let totalTax = 0
-
-	taxContainer.querySelectorAll(".tax-row").forEach((row) => {
-		const percentage =
-			parseFloat(row.querySelector(".tax-percentage").value) || 0
-		totalTax += (subtotalAfterDiscount * percentage) / 100
-	})
-
-	// Total akhir
-	const totalFinal = subtotalAfterDiscount + totalTax
-
-	// Update display (jika ada elemen untuk menampilkan)
-	const summarySection = document.getElementById("summarySection")
-	if (summarySection) {
-		summarySection.innerHTML = `
-            <div class="summary-item">
-                <span>Subtotal:</span>
-                <strong>Rp ${subtotal.toLocaleString("id-ID")}</strong>
-            </div>
-            ${
-							discountAmount > 0
-								? `
-            <div class="summary-item">
-                <span>Diskon (${discountType === "percentage" ? discountValue + "%" : "Nominal"}):</span>
-                <strong style="color: green;">-Rp ${discountAmount.toLocaleString("id-ID")}</strong>
-            </div>
-            `
-								: ""
-						}
-            <div class="summary-item">
-                <span>Subtotal setelah diskon:</span>
-                <strong>Rp ${subtotalAfterDiscount.toLocaleString("id-ID")}</strong>
-            </div>
-            ${
-							totalTax > 0
-								? `
-            <div class="summary-item">
-                <span>Pajak/Biaya:</span>
-                <strong>Rp ${totalTax.toLocaleString("id-ID")}</strong>
-            </div>
-            `
-								: ""
-						}
-            <div class="summary-item" style="border-top: 2px solid #ccc; padding-top: 10px; margin-top: 10px;">
-                <span style="font-weight: bold;">Total:</span>
-                <strong style="font-size: 18px; color: #2c3e50;">Rp ${totalFinal.toLocaleString("id-ID")}</strong>
-            </div>
-        `
-	}
-}
-
-// Taxes management
 function addTax() {
 	const container = document.getElementById("taxesContainer")
 	if (!container) return
@@ -352,10 +542,10 @@ function addTax() {
 	const row = document.createElement("div")
 	row.className = "tax-row"
 	row.innerHTML = `
-        <input type="text" placeholder="Nama pajak/biaya" class="tax-name">
-        <input type="number" placeholder="Persentase %" class="tax-percentage" value="" min="0" max="100" step="0.01">
-        <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updateTaxes();">Hapus</button>
-    `
+    <input type="text" placeholder="Nama pajak/biaya (mis: PPN)" class="tax-name">
+    <input type="number" placeholder="Persentase %" class="tax-percentage" value="" min="0" max="100" step="0.01">
+    <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updateTaxes();" title="Hapus">✕</button>
+  `
 
 	container.appendChild(row)
 	row.addEventListener("change", updateTaxes)
@@ -368,75 +558,84 @@ function updateTaxes() {
 
 	container.querySelectorAll(".tax-row").forEach((row) => {
 		const name = row.querySelector(".tax-name").value
-		const percentage =
-			parseFloat(row.querySelector(".tax-percentage").value) || 0
-
-		if (name && percentage) {
-			taxes.push({ name, percentage })
-		}
+		const percentage = parseFloat(row.querySelector(".tax-percentage").value) || 0
+		if (name && percentage) taxes.push({ name, percentage })
 	})
 
 	document.getElementById("taxes").value = JSON.stringify(taxes)
 	updateSummary()
 }
 
-// Form submit
-document.addEventListener("DOMContentLoaded", function () {
-	const form = document.getElementById("createInvoiceForm")
-	if (!form) return
+// ===================== FORM SUBMIT =====================
 
-	form.addEventListener("submit", async (e) => {
-		e.preventDefault()
+async function handleFormSubmit(e) {
+	e.preventDefault()
+	updateItems()
+	updateTaxes()
 
-		updateItems()
-		updateTaxes()
+	const form = e.target
+	const isQuotation = form.querySelector('[name="document_type"]:checked')
+		? form.querySelector('[name="document_type"]:checked').value === "quotation"
+		: false
 
-		// Ambil data dari form dengan cara yang lebih aman
-		const formElement = e.target
-		const formData = {
-			company_id: formElement.querySelector('[name="company_id"]').value,
-			invoice_number: formElement.querySelector('[name="invoice_number"]')
-				.value,
-			status: formElement.querySelector('[name="status"]').value,
-			invoice_date: formElement.querySelector('[name="invoice_date"]').value,
-			due_date: formElement.querySelector('[name="due_date"]').value,
-			recipient_name: formElement.querySelector('[name="recipient_name"]')
-				.value,
-			recipient_phone: formElement.querySelector('[name="recipient_phone"]')
-				.value,
-			recipient_npwp: formElement.querySelector('[name="recipient_npwp"]')
-				.value,
-			recipient_address: formElement.querySelector('[name="recipient_address"]')
-				.value,
-			items: formElement.querySelector('[name="items"]').value,
-			taxes: formElement.querySelector('[name="taxes"]').value,
-			discount_type: formElement.querySelector('[name="discount_type"]').value,
-			discount_value:
-				parseFloat(
-					formElement.querySelector('[name="discount_value"]').value,
-				) || 0,
-		}
+	// Get status from correct select
+	let status = "draft"
+	if (isQuotation) {
+		const sq = form.querySelector('[name="status_quotation"]')
+		status = sq ? sq.value : "draft"
+	} else {
+		const si = form.querySelector('[name="status"]')
+		status = si ? si.value : "draft"
+	}
 
-		try {
-			const response = await fetch("/admin/invoice/create", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(formData),
-			})
+	const formData = {
+		company_id: form.querySelector('[name="company_id"]').value,
+		document_type: isQuotation ? "quotation" : "invoice",
+		invoice_number: form.querySelector('[name="invoice_number"]').value,
+		status: status,
+		invoice_date: form.querySelector('[name="invoice_date"]').value,
+		due_date: form.querySelector('[name="due_date"]').value,
+		recipient_name: form.querySelector('[name="recipient_name"]').value,
+		recipient_phone: form.querySelector('[name="recipient_phone"]').value,
+		recipient_npwp: form.querySelector('[name="recipient_npwp"]').value,
+		recipient_address: form.querySelector('[name="recipient_address"]').value,
+		items: form.querySelector('[name="items"]').value,
+		taxes: form.querySelector('[name="taxes"]').value,
+		discount_type: form.querySelector('[name="discount_type"]').value,
+		discount_value:
+			parseFloat(form.querySelector('[name="discount_value"]').value) || 0,
+	}
 
-			const result = await response.json()
+	const submitBtn = document.getElementById("submitBtn")
+	if (submitBtn) {
+		submitBtn.disabled = true
+		submitBtn.textContent = "Menyimpan..."
+	}
 
-			if (result.success) {
-				alert("Invoice berhasil dibuat!")
-				window.location.href = `/admin/invoice/${result.id}`
-			} else {
-				alert("Error: " + (result.error || "Terjadi kesalahan"))
+	try {
+		const response = await fetch("/admin/invoice/create", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(formData),
+		})
+
+		const result = await response.json()
+
+		if (result.success) {
+			window.location.href = `/admin/invoice/${result.id}`
+		} else {
+			alert("Error: " + (result.error || "Terjadi kesalahan"))
+			if (submitBtn) {
+				submitBtn.disabled = false
+				submitBtn.textContent = isQuotation ? "💾 Simpan Penawaran" : "💾 Simpan Invoice"
 			}
-		} catch (error) {
-			console.error("Submit error:", error)
-			alert("Error: " + error.message)
 		}
-	})
-})
+	} catch (error) {
+		console.error("Submit error:", error)
+		alert("Error: " + error.message)
+		if (submitBtn) {
+			submitBtn.disabled = false
+			submitBtn.textContent = "💾 Simpan"
+		}
+	}
+}
