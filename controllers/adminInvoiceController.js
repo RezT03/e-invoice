@@ -1,6 +1,7 @@
 const db = require("../db/connection")
 const { v4: uuidv4 } = require("uuid")
 const generatePDF = require("../utils/pdfGenerator")
+const { getBaseUrl } = require("../utils/appUrl")
 const crypto = require("crypto")
 
 // Helper: hitung subtotal dari flat array maupun grouped array (backward compatible)
@@ -588,7 +589,7 @@ exports.downloadPDF = async (req, res) => {
 			invoice.taxes = []
 		}
 
-		const pdfBuffer = await generatePDF(invoice, type || "normal")
+		const pdfBuffer = await generatePDF(invoice, type || "normal", getBaseUrl(req))
 		res.setHeader("Content-Type", "application/pdf")
 		res.setHeader(
 			"Content-Disposition",

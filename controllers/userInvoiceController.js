@@ -1,5 +1,6 @@
 const db = require("../db/connection")
 const generatePDF = require("../utils/pdfGenerator")
+const { getBaseUrl } = require("../utils/appUrl")
 
 // HALAMAN CEK INVOICE (user check invoice form)
 exports.showCheckInvoice = (req, res) => {
@@ -176,7 +177,7 @@ exports.downloadPDF = async (req, res) => {
 			invoice.taxes = []
 		}
 
-		const pdfBuffer = await generatePDF(invoice, templateType)
+		const pdfBuffer = await generatePDF(invoice, templateType, getBaseUrl(req))
 		res.setHeader("Content-Type", "application/pdf")
 		res.setHeader(
 			"Content-Disposition",
@@ -234,7 +235,7 @@ exports.downloadPDFFromCheck = async (req, res) => {
 			invoice.taxes = []
 		}
 
-		const pdfBuffer = await generatePDF(invoice, templateType)
+		const pdfBuffer = await generatePDF(invoice, templateType, getBaseUrl(req))
 		res.setHeader("Content-Type", "application/pdf")
 		res.setHeader(
 			"Content-Disposition",

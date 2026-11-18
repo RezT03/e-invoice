@@ -13,7 +13,7 @@ const COLOR_BG = "#f4f6fb"
 const COLOR_GROUP_HEADER = "#0356fc"
 const COLOR_GROUP_SUBTOTAL = "#e8f0ff"
 
-module.exports = async function (invoice) {
+module.exports = async function (invoice, baseUrl) {
 	return new Promise(async (resolve, reject) => {
 		try {
 			const isQuotation = invoice.document_type === "quotation"
@@ -427,7 +427,6 @@ module.exports = async function (invoice) {
 			doc.fontSize(9).font("Helvetica").fillColor(COLOR_TEXT).text("Hormat Kami,", MARGIN, y)
 
 			try {
-				const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`
 				const qrBuffer = await generateInvoiceQRCode(invoice.share_token, baseUrl)
 				doc.image(qrBuffer, MARGIN, y + 12, { width: 72 })
 			} catch (e) {
