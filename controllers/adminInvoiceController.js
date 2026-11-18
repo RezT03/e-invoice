@@ -2,6 +2,7 @@ const db = require("../db/connection")
 const { v4: uuidv4 } = require("uuid")
 const generatePDF = require("../utils/pdfGenerator")
 const { getBaseUrl } = require("../utils/appUrl")
+const { getInvoicePayments } = require("./paymentController")
 const crypto = require("crypto")
 
 // Helper: hitung subtotal dari flat array maupun grouped array (backward compatible)
@@ -19,9 +20,39 @@ function calculateSubtotal(items) {
   return total
 }
 
+// Opsi urutan daftar dokumen (whitelist agar aman dari SQL injection).
+// Default: berdasarkan tanggal invoice, bukan created_at.
+const DOCUMENT_SORT_OPTIONS = {
+	invoice_date_desc: "i.invoice_date DESC, i.created_at DESC",
+	invoice_date_asc: "i.invoice_date ASC, i.created_at ASC",
+	invoice_number_asc: "i.invoice_number ASC",
+	invoice_number_desc: "i.invoice_number DESC",
+	recipient_asc: "i.recipient_name ASC",
+	total_amount_desc: "i.total_amount DESC",
+	total_amount_asc: "i.total_amount ASC",
+	created_at_desc: "i.created_at DESC",
+	created_at_asc: "i.created_at ASC",
+}
+
+const DEFAULT_SORT = "invoice_date_desc"
+
+// Validasi parameter ?sort= dan kembalikan klausa ORDER BY yang aman
+function resolveSort(sortParam) {
+	const sort = Object.prototype.hasOwnProperty.call(
+		DOCUMENT_SORT_OPTIONS,
+		sortParam,
+	)
+		? sortParam
+		: DEFAULT_SORT
+	return { sort, orderBy: DOCUMENT_SORT_OPTIONS[sort] }
+}
+
 // ADMIN DASHBOARD
 exports.getDashboard = async (req, res) => {
 	try {
+		// Urutan dokumen - default: berdasarkan tanggal invoice (bukan created_at)
+		const { sort, orderBy } = resolveSort(req.query.sort)
+
 		// Statistik invoice
 		const [stats] = await db.execute(`
       SELECT 
@@ -38,19 +69,21 @@ exports.getDashboard = async (req, res) => {
       SELECT i.id, i.invoice_number, i.recipient_name, i.status, i.document_type, i.total_amount, i.invoice_date, c.name as company_name
       FROM invoices i
       JOIN companies c ON i.company_id = c.id
-      ORDER BY i.created_at DESC
+      ORDER BY ${orderBy}
       LIMIT 10
     `)
 
 		res.render("pages/admin/dashboard", {
 			stats: stats[0] || {},
 			recentInvoices,
+			sort,
 		})
 	} catch (error) {
 		console.error("Dashboard error:", error)
 		res.status(500).render("pages/admin/dashboard", {
 			stats: {},
 			recentInvoices: [],
+			sort: DEFAULT_SORT,
 			error: "Terjadi kesalahan saat memuat dashboard",
 		})
 	}
@@ -70,10 +103,16 @@ exports.showCreateForm = async (req, res) => {
 			[selectedCompanyId],
 		)
 
+		// Pelanggan aktif untuk dropdown integrasi Master Pelanggan
+		const [customers] = await db.execute(
+			"SELECT id, name, company, phone, email, npwp, address FROM customers WHERE is_active = 1 ORDER BY name ASC",
+		)
+
 		res.render("pages/admin/create-invoice", {
 			companies,
 			templates,
 			selectedCompanyId,
+			customers,
 		})
 	} catch (error) {
 		console.error("Create form error:", error)
@@ -105,6 +144,7 @@ exports.createInvoice = async (req, res) => {
 			recipient_phone,
 			recipient_npwp,
 			recipient_address,
+			customer_id,
 			invoice_date,
 			due_date,
 			company_id,
@@ -163,14 +203,15 @@ exports.createInvoice = async (req, res) => {
 		await db.execute(
 			`
       INSERT INTO invoices 
-      (id, invoice_number, company_id, template_id, recipient_name, recipient_phone, recipient_npwp, 
+      (id, invoice_number, company_id, customer_id, template_id, recipient_name, recipient_phone, recipient_npwp, 
        recipient_address, invoice_date, due_date, items, taxes, discount_type, discount_value, total_amount, status, document_type)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
 			[
 				id,
 				invoice_number,
 				company_id,
+				customer_id || null,
 				null,
 				recipient_name,
 				recipient_phone,
@@ -242,7 +283,26 @@ exports.viewInvoiceAdmin = async (req, res) => {
 			invoice.taxes = []
 		}
 
-		res.render("pages/admin/invoice-detail", { invoice, isAdmin: true })
+		// Ringkasan & daftar pembayaran untuk invoice ini (aman bila tabel belum ada)
+		let payments = []
+		let totalPaid = 0
+		try {
+			const result = await getInvoicePayments(uuid)
+			payments = result.payments
+			totalPaid = result.totalPaid
+		} catch (err) {
+			console.error("Gagal memuat pembayaran invoice:", err.message)
+		}
+		const totalAmount = Number(invoice.total_amount) || 0
+		const remaining = totalAmount - totalPaid
+
+		res.render("pages/admin/invoice-detail", {
+			invoice,
+			isAdmin: true,
+			payments,
+			totalPaid,
+			remaining,
+		})
 	} catch (error) {
 		console.error("View invoice error:", error)
 		res.status(500).send("Terjadi kesalahan: " + error.message)
@@ -311,6 +371,9 @@ exports.getInvoiceHistory = async (req, res) => {
 		const status = req.query.status || ""
 		const document_type = req.query.document_type || ""
 
+		// Urutan dokumen - default: berdasarkan tanggal invoice (bukan created_at)
+		const { sort, orderBy } = resolveSort(req.query.sort)
+
 		// Build WHERE clause dynamically
 		let whereClause = "WHERE 1=1"
 		const params = []
@@ -342,7 +405,7 @@ exports.getInvoiceHistory = async (req, res) => {
       FROM invoices i 
       JOIN companies c ON i.company_id = c.id 
       ${whereClause}
-      ORDER BY i.created_at DESC
+      ORDER BY ${orderBy}
       LIMIT ? OFFSET ?
     `,
 			[...params, limit, offset],
@@ -365,6 +428,7 @@ exports.getInvoiceHistory = async (req, res) => {
 			date,
 			status,
 			document_type,
+			sort,
 		})
 	} catch (error) {
 		console.error("History error:", error)

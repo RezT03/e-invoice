@@ -1,6 +1,9 @@
 <%- include('../../layouts/admin', { 
     currentPage: 'history', 
     pageTitle: (typeof invoice !== 'undefined' && invoice.document_type === 'quotation') ? 'Detail Penawaran' : 'Detail Invoice', 
-    additionalStyles: ['invoice-detail'], 
+    additionalStyles: ['invoice-detail', 'payment'], 
     additionalScripts:['invoice-detail'], 
-    contentFile: 'admin/invoice-detail-content', invoice }) %>
+    contentFile: 'admin/invoice-detail-content', invoice,
+    payments: typeof payments !== 'undefined' ? payments : [],
+    totalPaid: typeof totalPaid !== 'undefined' ? totalPaid : 0,
+    remaining: typeof remaining !== 'undefined' ? remaining : 0 }) %>

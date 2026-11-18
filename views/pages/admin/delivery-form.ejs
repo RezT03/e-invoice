@@ -1,0 +1,13 @@
+<%- include('../../layouts/admin', {
+    currentPage: 'deliveries',
+    pageTitle: delivery ? 'Edit Surat Jalan' : 'Buat Surat Jalan',
+    additionalStyles: ['create-invoice', 'booking', 'delivery'],
+    additionalScripts: ['delivery-form'],
+    contentFile: 'admin/delivery-form-content',
+    delivery,
+    suggestedNumber,
+    customers: typeof customers !== 'undefined' ? customers : [],
+    bookings: typeof bookings !== 'undefined' ? bookings : [],
+    companies: typeof companies !== 'undefined' ? companies : [],
+    error
+}) %>

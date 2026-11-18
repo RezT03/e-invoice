@@ -1,0 +1,83 @@
+/* ============================================================
+   Booking / Jadwal Event — Styles
+   Melengkapi kelas yang sudah ada (invoice-history.css, create-invoice.css).
+   Brand: Primary #0356fc | Secondary #fc032d
+   ============================================================ */
+
+/* Grid filter khusus halaman booking (4 kolom + aksi) */
+.filters.booking-filters {
+	grid-template-columns: 1.5fr 1fr 1fr auto;
+}
+
+/* ===================== ALERT ===================== */
+.booking-alert {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	padding: 0.75rem 1rem;
+	border-radius: var(--radius-sm);
+	font-size: 0.88rem;
+	margin-bottom: 1.25rem;
+	border: 1px solid transparent;
+	line-height: 1.4;
+}
+
+.booking-alert code {
+	background: rgba(0, 0, 0, 0.06);
+	padding: 0.05rem 0.35rem;
+	border-radius: 4px;
+	font-size: 0.82rem;
+}
+
+.booking-alert-success {
+	background: #e6f9f0;
+	color: #15803d;
+	border-color: #a3e9c5;
+}
+
+.booking-alert-error {
+	background: #fff0f2;
+	color: #fc032d;
+	border-color: #fca5a5;
+}
+
+.booking-alert-warning {
+	background: #fff4e5;
+	color: #b45309;
+	border-color: #fcd9a5;
+}
+
+/* ===================== STATUS BOOKING ===================== */
+.badge.bstatus-draft { background: #f1f3f5; color: #495057; }
+.badge.bstatus-confirmed { background: var(--primary-light); color: var(--primary); }
+.badge.bstatus-ongoing { background: #e3fafc; color: #0c8599; }
+.badge.bstatus-completed { background: #e6f9f0; color: #15803d; }
+.badge.bstatus-cancelled { background: #f8f9fa; color: #868e96; }
+
+/* ===================== STATUS SINKRON KALENDER ===================== */
+.badge.sync-synced { background: #e6f9f0; color: #15803d; }
+.badge.sync-failed { background: #fff0f2; color: #fc032d; }
+.badge.sync-pending { background: #fff4e5; color: #b45309; }
+.badge.sync-skipped { background: #f1f3f5; color: #6b7280; }
+
+/* ===================== TOMBOL DANGER ===================== */
+.btn-small.danger {
+	background: var(--secondary);
+}
+
+.btn-small.danger:hover {
+	background: #d10026;
+}
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 1024px) {
+	.filters.booking-filters {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+@media (max-width: 768px) {
+	.filters.booking-filters {
+		grid-template-columns: 1fr;
+	}
+}

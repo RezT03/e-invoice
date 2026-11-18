@@ -1,0 +1,155 @@
+<div class="history-container">
+	<!-- Page Header -->
+	<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+		<div>
+			<h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem;">
+				<i class="fa-solid fa-users"></i> Master Pelanggan
+			</h2>
+			<p style="color: var(--text-muted); font-size: 0.85rem;">
+				Total <%= totalCustomers || 0 %> pelanggan ditemukan
+			</p>
+		</div>
+		<div class="page-actions">
+			<a href="/admin/customers/create" class="btn btn-primary" style="font-size: 0.88rem; padding: 0.55rem 1.1rem;">
+				<i class="fa-solid fa-plus"></i> Tambah Pelanggan
+			</a>
+		</div>
+	</div>
+
+	<% if (typeof success !== 'undefined' && success) { %>
+	<div class="booking-alert booking-alert-success">
+		<i class="fa-solid fa-circle-check"></i> <%= success %>
+	</div>
+	<% } %>
+	<% if (typeof error !== 'undefined' && error) { %>
+	<div class="booking-alert booking-alert-error">
+		<i class="fa-solid fa-circle-exclamation"></i> <%= error %>
+	</div>
+	<% } %>
+
+	<!-- Filters -->
+	<div class="filters customer-filters">
+		<div class="filter-group">
+			<label for="searchFilter">Cari</label>
+			<input type="text" id="searchFilter" placeholder="Nama, instansi, telepon, atau email..." value="<%= search || '' %>" />
+		</div>
+		<div class="filter-group">
+			<label for="statusFilter">Status</label>
+			<select id="statusFilter">
+				<option value="">Semua Status</option>
+				<option value="active" <%= statusFilter === 'active' ? 'selected' : '' %>>Aktif</option>
+				<option value="inactive" <%= statusFilter === 'inactive' ? 'selected' : '' %>>Nonaktif</option>
+			</select>
+		</div>
+		<div class="filter-group">
+			<label for="sortFilter">Urutkan</label>
+			<select id="sortFilter">
+				<option value="name_asc" <%= sort === 'name_asc' ? 'selected' : '' %>>Nama A-Z</option>
+				<option value="name_desc" <%= sort === 'name_desc' ? 'selected' : '' %>>Nama Z-A</option>
+				<option value="company_asc" <%= sort === 'company_asc' ? 'selected' : '' %>>Instansi A-Z</option>
+				<option value="created_at_desc" <%= sort === 'created_at_desc' ? 'selected' : '' %>>Terakhir Ditambahkan</option>
+				<option value="created_at_asc" <%= sort === 'created_at_asc' ? 'selected' : '' %>>Paling Awal Ditambahkan</option>
+			</select>
+		</div>
+		<div class="filter-actions">
+			<button class="btn-filter" id="btnApplyFilters">Filter</button>
+			<button class="btn-filter btn-reset" id="btnResetFilters">Reset</button>
+		</div>
+	</div>
+
+	<!-- Table -->
+	<div class="table-container">
+		<% if (customers && customers.length > 0) { %>
+		<table class="invoices-table">
+			<thead>
+				<tr>
+					<th>Nama</th>
+					<th>Instansi</th>
+					<th>Telepon</th>
+					<th>Email</th>
+					<th>Kota</th>
+					<th style="text-align: center;">Status</th>
+					<th style="text-align: center;">Aksi</th>
+				</tr>
+			</thead>
+			<tbody>
+				<% customers.forEach(c => { %>
+				<tr>
+					<td style="font-weight: 500;"><%= c.name %></td>
+					<td style="color: var(--text-muted); font-size: 0.85rem;"><%= c.company || '-' %></td>
+					<td style="white-space: nowrap; font-size: 0.85rem;"><%= c.phone || '-' %></td>
+					<td style="color: var(--text-muted); font-size: 0.85rem;"><%= c.email || '-' %></td>
+					<td style="color: var(--text-muted); font-size: 0.85rem;"><%= c.city || '-' %></td>
+					<td style="text-align: center;">
+						<span class="badge <%= c.is_active ? 'bstatus-confirmed' : 'bstatus-cancelled' %>">
+							<%= c.is_active ? 'AKTIF' : 'NONAKTIF' %>
+						</span>
+					</td>
+					<td style="text-align: center;">
+						<div class="actions" style="display: flex; gap: 0.4rem; justify-content: center;">
+							<a href="/admin/customers/<%= c.id %>/edit" class="btn-small">Edit</a>
+							<form action="/admin/customers/<%= c.id %>/toggle" method="POST" style="display:inline;">
+								<button type="submit" class="btn-small secondary" title="Aktifkan / nonaktifkan pelanggan">
+									<%= c.is_active ? 'Nonaktifkan' : 'Aktifkan' %>
+								</button>
+							</form>
+							<form action="/admin/customers/<%= c.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Hapus pelanggan <%= c.name %>?');">
+								<button type="submit" class="btn-small danger" title="Hapus pelanggan">Hapus</button>
+							</form>
+						</div>
+					</td>
+				</tr>
+				<% }); %>
+			</tbody>
+		</table>
+
+		<!-- Pagination -->
+		<% if (totalPages > 1) {
+			const p = typeof pageNum !== 'undefined' ? pageNum : 1;
+			function buildPageUrl(pageNo) {
+				let q = `?page=${pageNo}`;
+				if (search) q += `&search=${encodeURIComponent(search)}`;
+				if (statusFilter) q += `&status=${encodeURIComponent(statusFilter)}`;
+				if (sort) q += `&sort=${encodeURIComponent(sort)}`;
+				return q;
+			}
+		%>
+		<div class="pagination">
+			<% if (p > 1) { %>
+			<a href="<%= buildPageUrl(1) %>">«</a>
+			<a href="<%= buildPageUrl(p - 1) %>">‹</a>
+			<% } else { %>
+			<span class="disabled">«</span>
+			<span class="disabled">‹</span>
+			<% } %>
+
+			<% for (let i = Math.max(1, p - 2); i <= Math.min(totalPages, p + 2); i++) { %>
+				<% if (i === p) { %>
+				<span class="active"><%= i %></span>
+				<% } else { %>
+				<a href="<%= buildPageUrl(i) %>"><%= i %></a>
+				<% } %>
+			<% } %>
+
+			<% if (p < totalPages) { %>
+			<a href="<%= buildPageUrl(p + 1) %>">›</a>
+			<a href="<%= buildPageUrl(totalPages) %>">»</a>
+			<% } else { %>
+			<span class="disabled">›</span>
+			<span class="disabled">»</span>
+			<% } %>
+		</div>
+		<% } %>
+		<% } else { %>
+		<div class="empty-state">
+			<div style="font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.4;"><i class="fa-solid fa-user-group"></i></div>
+			<p>Belum ada pelanggan yang sesuai</p>
+			<a href="/admin/customers/create" class="btn btn-primary" style="display: inline-flex; margin-top: 0.5rem;">
+				+ Tambah Pelanggan
+			</a>
+		</div>
+		<% } %>
+	</div>
+</div>
+
+<script src="/js/customer-list.js"></script>

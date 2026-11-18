@@ -1,0 +1,17 @@
+<%- include('../../layouts/admin', {
+    currentPage: 'products',
+    pageTitle: 'Master Produk & Stok',
+    additionalStyles: ['invoice-history', 'booking', 'product'],
+    contentFile: 'admin/products-content',
+    products,
+    pageNum: currentPage,
+    totalPages,
+    totalProducts,
+    search,
+    category,
+    statusFilter,
+    sort,
+    categories,
+    success,
+    error
+}) %>

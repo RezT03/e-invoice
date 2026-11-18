@@ -1,0 +1,11 @@
+<%- include('../../layouts/admin', {
+    currentPage: 'bookings',
+    pageTitle: booking ? 'Edit Booking' : 'Buat Booking',
+    additionalStyles: ['create-invoice', 'booking'],
+    contentFile: 'admin/booking-form-content',
+    booking,
+    suggestedNumber,
+    customers: typeof customers !== 'undefined' ? customers : [],
+    calendarConfigured,
+    error
+}) %>

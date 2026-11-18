@@ -39,6 +39,47 @@
 			<span class="icon"><i class="fa-solid fa-hand-holding-dollar"></i></span>
 			<span class="label">Penawaran Harga</span>
 		</a>
+
+		<div class="nav-section-label">Master Data</div>
+		<a
+			href="/admin/products"
+			class="nav-item <%= currentPage === 'products' ? 'active' : '' %>"
+		>
+			<span class="icon"><i class="fa-solid fa-boxes-stacked"></i></span>
+			<span class="label">Produk &amp; Stok</span>
+		</a>
+		<a
+			href="/admin/customers"
+			class="nav-item <%= currentPage === 'customers' ? 'active' : '' %>"
+		>
+			<span class="icon"><i class="fa-solid fa-users"></i></span>
+			<span class="label">Pelanggan</span>
+		</a>
+
+		<div class="nav-section-label">Operasional</div>
+		<a
+			href="/admin/bookings"
+			class="nav-item <%= currentPage === 'bookings' ? 'active' : '' %>"
+		>
+			<span class="icon"><i class="fa-regular fa-calendar-check"></i></span>
+			<span class="label">Jadwal &amp; Booking</span>
+		</a>
+		<a
+			href="/admin/deliveries"
+			class="nav-item <%= currentPage === 'deliveries' ? 'active' : '' %>"
+		>
+			<span class="icon"><i class="fa-solid fa-truck-fast"></i></span>
+			<span class="label">Surat Jalan</span>
+		</a>
+
+		<div class="nav-section-label">Keuangan</div>
+		<a
+			href="/admin/payments"
+			class="nav-item <%= currentPage === 'payments' ? 'active' : '' %>"
+		>
+			<span class="icon"><i class="fa-solid fa-money-bill-wave"></i></span>
+			<span class="label">Pembayaran &amp; Termin</span>
+		</a>
 	</nav>
 
 	<div class="sidebar-footer">

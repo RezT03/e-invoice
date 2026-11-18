@@ -1,0 +1,15 @@
+<%- include('../../layouts/admin', {
+    currentPage: 'deliveries',
+    pageTitle: 'Surat Jalan',
+    additionalStyles: ['invoice-history', 'booking', 'delivery'],
+    contentFile: 'admin/deliveries-content',
+    deliveries,
+    pageNum: currentPage,
+    totalPages,
+    totalDeliveries,
+    search,
+    status,
+    sort,
+    success,
+    error
+}) %>

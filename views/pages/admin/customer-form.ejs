@@ -1,0 +1,8 @@
+<%- include('../../layouts/admin', {
+    currentPage: 'customers',
+    pageTitle: customer ? 'Edit Pelanggan' : 'Tambah Pelanggan',
+    additionalStyles: ['create-invoice', 'booking', 'customer'],
+    contentFile: 'admin/customer-form-content',
+    customer,
+    error
+}) %>

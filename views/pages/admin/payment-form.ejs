@@ -1,0 +1,13 @@
+<%- include('../../layouts/admin', {
+    currentPage: 'payments',
+    pageTitle: payment ? 'Edit Pembayaran' : 'Catat Pembayaran',
+    additionalStyles: ['create-invoice', 'booking', 'payment'],
+    contentFile: 'admin/payment-form-content',
+    payment,
+    suggestedNumber,
+    customers: typeof customers !== 'undefined' ? customers : [],
+    invoices: typeof invoices !== 'undefined' ? invoices : [],
+    presetInvoiceId: typeof presetInvoiceId !== 'undefined' ? presetInvoiceId : null,
+    redirectTo: typeof redirectTo !== 'undefined' ? redirectTo : null,
+    error
+}) %>

@@ -1,0 +1,16 @@
+<%- include('../../layouts/admin', {
+    currentPage: 'payments',
+    pageTitle: 'Pembayaran',
+    additionalStyles: ['invoice-history', 'booking', 'payment'],
+    contentFile: 'admin/payments-content',
+    payments,
+    pageNum: currentPage,
+    totalPages,
+    totalPayments,
+    totalAmount,
+    search,
+    method,
+    sort,
+    success,
+    error
+}) %>

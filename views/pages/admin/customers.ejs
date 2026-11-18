@@ -1,0 +1,15 @@
+<%- include('../../layouts/admin', {
+    currentPage: 'customers',
+    pageTitle: 'Master Pelanggan',
+    additionalStyles: ['invoice-history', 'booking', 'customer'],
+    contentFile: 'admin/customers-content',
+    customers,
+    pageNum: currentPage,
+    totalPages,
+    totalCustomers,
+    search,
+    statusFilter,
+    sort,
+    success,
+    error
+}) %>

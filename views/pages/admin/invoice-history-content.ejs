@@ -58,6 +58,12 @@
 				<option value="cancelled">Dibatalkan</option>
 			</select>
 		</div>
+		<div class="filter-group">
+			<label for="sortFilter">Urutkan</label>
+			<select id="sortFilter">
+				<%- include('../../partials/admin/sort-options', { sort: typeof sort !== 'undefined' ? sort : 'invoice_date_desc' }) %>
+			</select>
+		</div>
 		<div class="filter-actions">
 			<button class="btn-filter" id="btnApplyFilters">Filter</button>
 			<button class="btn-filter btn-reset" id="btnResetFilters">Reset</button>
@@ -138,6 +144,7 @@
 				if (date) q += `&date=${encodeURIComponent(date)}`;
 				if (status) q += `&status=${encodeURIComponent(status)}`;
 				if (typeof document_type !== 'undefined' && document_type) q += `&document_type=${encodeURIComponent(document_type)}`;
+				if (typeof sort !== 'undefined' && sort) q += `&sort=${encodeURIComponent(sort)}`;
 				return q;
 			}
 		%>

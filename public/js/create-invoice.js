@@ -20,12 +20,41 @@ document.addEventListener("DOMContentLoaded", function () {
 	if (discountValueInput)
 		discountValueInput.addEventListener("input", updateSummary)
 
+	// Customer picker (integrasi Master Pelanggan)
+	initCustomerPicker()
+
 	// Form submit
 	const form = document.getElementById("createInvoiceForm")
 	if (form) {
 		form.addEventListener("submit", handleFormSubmit)
 	}
 })
+
+// ===================== CUSTOMER PICKER =====================
+// Mengisi otomatis Data Penerima dari Master Pelanggan (opsional).
+function initCustomerPicker() {
+	const picker = document.getElementById("customer_picker")
+	if (!picker) return
+
+	const idField = document.getElementById("customer_id")
+	const nameEl = document.getElementById("recipient_name")
+	const phoneEl = document.getElementById("recipient_phone")
+	const npwpEl = document.getElementById("recipient_npwp")
+	const addressEl = document.getElementById("recipient_address")
+
+	picker.addEventListener("change", () => {
+		const opt = picker.options[picker.selectedIndex]
+		if (idField) idField.value = opt ? opt.value || "" : ""
+
+		// Pilihan kosong = isi manual, jangan timpa apa pun
+		if (!opt || !opt.value) return
+
+		if (nameEl) nameEl.value = opt.dataset.name || ""
+		if (phoneEl) phoneEl.value = opt.dataset.phone || ""
+		if (npwpEl) npwpEl.value = opt.dataset.npwp || ""
+		if (addressEl) addressEl.value = opt.dataset.address || ""
+	})
+}
 
 // ===================== DOC TYPE TOGGLE =====================
 
@@ -599,6 +628,9 @@ async function handleFormSubmit(e) {
 		recipient_phone: form.querySelector('[name="recipient_phone"]').value,
 		recipient_npwp: form.querySelector('[name="recipient_npwp"]').value,
 		recipient_address: form.querySelector('[name="recipient_address"]').value,
+		customer_id: form.querySelector('[name="customer_id"]')
+			? form.querySelector('[name="customer_id"]').value
+			: "",
 		items: form.querySelector('[name="items"]').value,
 		taxes: form.querySelector('[name="taxes"]').value,
 		discount_type: form.querySelector('[name="discount_type"]').value,

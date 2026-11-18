@@ -1,0 +1,176 @@
+<div class="history-container">
+	<!-- Page Header -->
+	<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+		<div>
+			<h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem;">
+				<i class="fa-solid fa-truck-fast"></i> Surat Jalan
+			</h2>
+			<p style="color: var(--text-muted); font-size: 0.85rem;">
+				Total <%= totalDeliveries || 0 %> surat jalan ditemukan
+			</p>
+		</div>
+		<div class="page-actions">
+			<a href="/admin/deliveries/create" class="btn btn-primary" style="font-size: 0.88rem; padding: 0.55rem 1.1rem;">
+				<i class="fa-solid fa-plus"></i> Buat Surat Jalan
+			</a>
+		</div>
+	</div>
+
+	<% if (typeof success !== 'undefined' && success) { %>
+	<div class="booking-alert booking-alert-success">
+		<i class="fa-solid fa-circle-check"></i> <%= success %>
+	</div>
+	<% } %>
+	<% if (typeof error !== 'undefined' && error) { %>
+	<div class="booking-alert booking-alert-error">
+		<i class="fa-solid fa-circle-exclamation"></i> <%= error %>
+	</div>
+	<% } %>
+
+	<!-- Filters -->
+	<div class="filters booking-filters">
+		<div class="filter-group">
+			<label for="searchFilter">Cari</label>
+			<input type="text" id="searchFilter" placeholder="No. surat jalan, penerima, atau driver..." value="<%= search || '' %>" />
+		</div>
+		<div class="filter-group">
+			<label for="statusFilter">Status</label>
+			<select id="statusFilter">
+				<option value="">Semua Status</option>
+				<option value="draft" <%= status === 'draft' ? 'selected' : '' %>>Draft</option>
+				<option value="delivered" <%= status === 'delivered' ? 'selected' : '' %>>Terkirim</option>
+				<option value="returned" <%= status === 'returned' ? 'selected' : '' %>>Dikembalikan</option>
+				<option value="cancelled" <%= status === 'cancelled' ? 'selected' : '' %>>Dibatalkan</option>
+			</select>
+		</div>
+		<div class="filter-group">
+			<label for="sortFilter">Urutkan</label>
+			<select id="sortFilter">
+				<option value="delivery_date_desc" <%= sort === 'delivery_date_desc' ? 'selected' : '' %>>Tanggal Terbaru</option>
+				<option value="delivery_date_asc" <%= sort === 'delivery_date_asc' ? 'selected' : '' %>>Tanggal Terlama</option>
+				<option value="delivery_number_asc" <%= sort === 'delivery_number_asc' ? 'selected' : '' %>>Nomor (A-Z)</option>
+				<option value="delivery_number_desc" <%= sort === 'delivery_number_desc' ? 'selected' : '' %>>Nomor (Z-A)</option>
+				<option value="created_at_desc" <%= sort === 'created_at_desc' ? 'selected' : '' %>>Terakhir Dibuat</option>
+			</select>
+		</div>
+		<div class="filter-actions">
+			<button class="btn-filter" id="btnApplyFilters">Filter</button>
+			<button class="btn-filter btn-reset" id="btnResetFilters">Reset</button>
+		</div>
+	</div>
+
+	<!-- Table -->
+	<div class="table-container">
+		<% if (deliveries && deliveries.length > 0) { %>
+		<table class="invoices-table">
+			<thead>
+				<tr>
+					<th>No. Surat Jalan</th>
+					<th>Penerima</th>
+					<th>Referensi Booking</th>
+					<th>Tanggal</th>
+					<th>Driver / Kendaraan</th>
+					<th style="text-align: center;">Status</th>
+					<th style="text-align: center;">Aksi</th>
+				</tr>
+			</thead>
+			<tbody>
+				<% deliveries.forEach(d => {
+					const fmtDate = (v) => v ? new Date(v).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+					const statusLabel = { draft: 'DRAFT', delivered: 'TERKIRIM', returned: 'DIKEMBALIKAN', cancelled: 'DIBATALKAN' };
+					let itemCount = 0;
+					try { itemCount = Array.isArray(d.items) ? d.items.length : (JSON.parse(d.items || '[]').length || 0); } catch (e) { itemCount = 0; }
+				%>
+				<tr>
+					<td class="invoice-number" style="font-weight: 600; white-space: nowrap;">
+						<%= d.delivery_number %>
+					</td>
+					<td style="font-weight: 500;">
+						<%= d.recipient_name %>
+						<% if (itemCount > 0) { %>
+						<div style="font-weight: 400; color: var(--text-muted); font-size: 0.78rem;"><%= itemCount %> item</div>
+						<% } %>
+					</td>
+					<td style="color: var(--text-muted); font-size: 0.85rem;">
+						<% if (d.booking_id) { %>
+						<%= d.booking_number || '-' %><br />
+						<span style="font-size: 0.78rem;"><%= d.booking_title || '' %></span>
+						<% } else { %>-<% } %>
+					</td>
+					<td style="white-space: nowrap; font-size: 0.85rem;">
+						<i class="fa-solid fa-arrow-up-from-bracket" style="color: var(--text-muted);"></i> <%= fmtDate(d.delivery_date) %><br />
+						<i class="fa-solid fa-arrow-down-to-bracket" style="color: var(--text-muted);"></i> <span style="color: var(--text-muted);">s/d <%= fmtDate(d.return_date) %></span>
+					</td>
+					<td style="font-size: 0.85rem;">
+						<%= d.driver_name || '-' %>
+						<% if (d.vehicle_number) { %><br /><span style="color: var(--text-muted);"><%= d.vehicle_number %></span><% } %>
+					</td>
+					<td style="text-align: center;">
+						<span class="badge dstatus-<%= d.status %>"><%= statusLabel[d.status] || d.status %></span>
+					</td>
+					<td style="text-align: center;">
+						<div class="actions" style="display: flex; gap: 0.4rem; justify-content: center;">
+							<a href="/admin/deliveries/<%= d.id %>/pdf" target="_blank" rel="noopener" class="btn-small secondary" title="Cetak / PDF surat jalan">
+								<i class="fa-solid fa-print"></i> Cetak
+							</a>
+							<a href="/admin/deliveries/<%= d.id %>/edit" class="btn-small">Edit</a>
+							<form action="/admin/deliveries/<%= d.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Hapus surat jalan <%= d.delivery_number %>?');">
+								<button type="submit" class="btn-small danger" title="Hapus surat jalan">Hapus</button>
+							</form>
+						</div>
+					</td>
+				</tr>
+				<% }); %>
+			</tbody>
+		</table>
+
+		<!-- Pagination -->
+		<% if (totalPages > 1) {
+			const p = typeof pageNum !== 'undefined' ? pageNum : 1;
+			function buildPageUrl(pageNo) {
+				let q = `?page=${pageNo}`;
+				if (search) q += `&search=${encodeURIComponent(search)}`;
+				if (status) q += `&status=${encodeURIComponent(status)}`;
+				if (sort) q += `&sort=${encodeURIComponent(sort)}`;
+				return q;
+			}
+		%>
+		<div class="pagination">
+			<% if (p > 1) { %>
+			<a href="<%= buildPageUrl(1) %>">«</a>
+			<a href="<%= buildPageUrl(p - 1) %>">‹</a>
+			<% } else { %>
+			<span class="disabled">«</span>
+			<span class="disabled">‹</span>
+			<% } %>
+
+			<% for (let i = Math.max(1, p - 2); i <= Math.min(totalPages, p + 2); i++) { %>
+				<% if (i === p) { %>
+				<span class="active"><%= i %></span>
+				<% } else { %>
+				<a href="<%= buildPageUrl(i) %>"><%= i %></a>
+				<% } %>
+			<% } %>
+
+			<% if (p < totalPages) { %>
+			<a href="<%= buildPageUrl(p + 1) %>">›</a>
+			<a href="<%= buildPageUrl(totalPages) %>">»</a>
+			<% } else { %>
+			<span class="disabled">›</span>
+			<span class="disabled">»</span>
+			<% } %>
+		</div>
+		<% } %>
+		<% } else { %>
+		<div class="empty-state">
+			<div style="font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.4;"><i class="fa-solid fa-truck-fast"></i></div>
+			<p>Belum ada surat jalan yang sesuai</p>
+			<a href="/admin/deliveries/create" class="btn btn-primary" style="display: inline-flex; margin-top: 0.5rem;">
+				+ Buat Surat Jalan
+			</a>
+		</div>
+		<% } %>
+	</div>
+</div>
+
+<script src="/js/delivery-list.js"></script>

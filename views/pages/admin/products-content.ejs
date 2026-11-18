@@ -1,0 +1,179 @@
+<div class="history-container">
+	<!-- Page Header -->
+	<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+		<div>
+			<h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem;">
+				<i class="fa-solid fa-boxes-stacked"></i> Master Produk &amp; Stok
+			</h2>
+			<p style="color: var(--text-muted); font-size: 0.85rem;">
+				Total <%= totalProducts || 0 %> produk ditemukan
+			</p>
+		</div>
+		<div class="page-actions">
+			<a href="/admin/products/create" class="btn btn-primary" style="font-size: 0.88rem; padding: 0.55rem 1.1rem;">
+				<i class="fa-solid fa-plus"></i> Tambah Produk
+			</a>
+		</div>
+	</div>
+
+	<% if (typeof success !== 'undefined' && success) { %>
+	<div class="booking-alert booking-alert-success">
+		<i class="fa-solid fa-circle-check"></i> <%= success %>
+	</div>
+	<% } %>
+	<% if (typeof error !== 'undefined' && error) { %>
+	<div class="booking-alert booking-alert-error">
+		<i class="fa-solid fa-circle-exclamation"></i> <%= error %>
+	</div>
+	<% } %>
+
+	<!-- Filters -->
+	<div class="filters product-filters">
+		<div class="filter-group">
+			<label for="searchFilter">Cari</label>
+			<input type="text" id="searchFilter" placeholder="Nama atau SKU produk..." value="<%= search || '' %>" />
+		</div>
+		<div class="filter-group">
+			<label for="categoryFilter">Kategori</label>
+			<select id="categoryFilter">
+				<option value="">Semua Kategori</option>
+				<% (categories || []).forEach(cat => { %>
+				<option value="<%= cat %>" <%= category === cat ? 'selected' : '' %>><%= cat %></option>
+				<% }); %>
+			</select>
+		</div>
+		<div class="filter-group">
+			<label for="statusFilter">Status</label>
+			<select id="statusFilter">
+				<option value="">Semua Status</option>
+				<option value="active" <%= statusFilter === 'active' ? 'selected' : '' %>>Aktif</option>
+				<option value="inactive" <%= statusFilter === 'inactive' ? 'selected' : '' %>>Nonaktif</option>
+			</select>
+		</div>
+		<div class="filter-group">
+			<label for="sortFilter">Urutkan</label>
+			<select id="sortFilter">
+				<option value="name_asc" <%= sort === 'name_asc' ? 'selected' : '' %>>Nama A-Z</option>
+				<option value="name_desc" <%= sort === 'name_desc' ? 'selected' : '' %>>Nama Z-A</option>
+				<option value="sku_asc" <%= sort === 'sku_asc' ? 'selected' : '' %>>SKU A-Z</option>
+				<option value="rental_price_desc" <%= sort === 'rental_price_desc' ? 'selected' : '' %>>Harga Sewa Tertinggi</option>
+				<option value="rental_price_asc" <%= sort === 'rental_price_asc' ? 'selected' : '' %>>Harga Sewa Terendah</option>
+				<option value="stock_desc" <%= sort === 'stock_desc' ? 'selected' : '' %>>Stok Terbanyak</option>
+				<option value="stock_asc" <%= sort === 'stock_asc' ? 'selected' : '' %>>Stok Tersedikit</option>
+				<option value="created_at_desc" <%= sort === 'created_at_desc' ? 'selected' : '' %>>Terakhir Ditambahkan</option>
+			</select>
+		</div>
+		<div class="filter-actions">
+			<button class="btn-filter" id="btnApplyFilters">Filter</button>
+			<button class="btn-filter btn-reset" id="btnResetFilters">Reset</button>
+		</div>
+	</div>
+
+	<!-- Table -->
+	<div class="table-container">
+		<% if (products && products.length > 0) { %>
+		<table class="invoices-table">
+			<thead>
+				<tr>
+					<th>SKU</th>
+					<th>Nama Produk</th>
+					<th>Kategori</th>
+					<th>Satuan</th>
+					<th style="text-align: right;">Harga Sewa</th>
+					<th style="text-align: center;">Stok</th>
+					<th style="text-align: center;">Status</th>
+					<th style="text-align: center;">Aksi</th>
+				</tr>
+			</thead>
+			<tbody>
+				<% products.forEach(p => {
+					const total = Number(p.stock_total) || 0;
+					const available = Number(p.stock_available) || 0;
+					const isLow = total > 0 && available <= Math.max(1, Math.floor(total * 0.2));
+					const fmtRupiah = (n) => 'Rp ' + (Number(n) || 0).toLocaleString('id-ID');
+				%>
+				<tr>
+					<td class="invoice-number" style="font-weight: 600; white-space: nowrap;"><%= p.sku %></td>
+					<td style="font-weight: 500;"><%= p.name %></td>
+					<td style="color: var(--text-muted); font-size: 0.85rem;"><%= p.category || '-' %></td>
+					<td style="color: var(--text-muted); font-size: 0.85rem;"><%= p.unit || 'unit' %></td>
+					<td style="text-align: right; white-space: nowrap;"><%= fmtRupiah(p.rental_price) %></td>
+					<td style="text-align: center;">
+						<span class="badge <%= isLow ? 'stock-low' : 'stock-ok' %>">
+							<%= available %> / <%= total %>
+						</span>
+					</td>
+					<td style="text-align: center;">
+						<span class="badge <%= p.is_active ? 'bstatus-confirmed' : 'bstatus-cancelled' %>">
+							<%= p.is_active ? 'AKTIF' : 'NONAKTIF' %>
+						</span>
+					</td>
+					<td style="text-align: center;">
+						<div class="actions" style="display: flex; gap: 0.4rem; justify-content: center;">
+							<a href="/admin/products/<%= p.id %>/edit" class="btn-small">Edit</a>
+							<form action="/admin/products/<%= p.id %>/toggle" method="POST" style="display:inline;">
+								<button type="submit" class="btn-small secondary" title="Aktifkan / nonaktifkan produk">
+									<%= p.is_active ? 'Nonaktifkan' : 'Aktifkan' %>
+								</button>
+							</form>
+							<form action="/admin/products/<%= p.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Hapus produk <%= p.name %>?');">
+								<button type="submit" class="btn-small danger" title="Hapus produk">Hapus</button>
+							</form>
+						</div>
+					</td>
+				</tr>
+				<% }); %>
+			</tbody>
+		</table>
+
+		<!-- Pagination -->
+		<% if (totalPages > 1) {
+			const p = typeof pageNum !== 'undefined' ? pageNum : 1;
+			function buildPageUrl(pageNo) {
+				let q = `?page=${pageNo}`;
+				if (search) q += `&search=${encodeURIComponent(search)}`;
+				if (category) q += `&category=${encodeURIComponent(category)}`;
+				if (statusFilter) q += `&status=${encodeURIComponent(statusFilter)}`;
+				if (sort) q += `&sort=${encodeURIComponent(sort)}`;
+				return q;
+			}
+		%>
+		<div class="pagination">
+			<% if (p > 1) { %>
+			<a href="<%= buildPageUrl(1) %>">«</a>
+			<a href="<%= buildPageUrl(p - 1) %>">‹</a>
+			<% } else { %>
+			<span class="disabled">«</span>
+			<span class="disabled">‹</span>
+			<% } %>
+
+			<% for (let i = Math.max(1, p - 2); i <= Math.min(totalPages, p + 2); i++) { %>
+				<% if (i === p) { %>
+				<span class="active"><%= i %></span>
+				<% } else { %>
+				<a href="<%= buildPageUrl(i) %>"><%= i %></a>
+				<% } %>
+			<% } %>
+
+			<% if (p < totalPages) { %>
+			<a href="<%= buildPageUrl(p + 1) %>">›</a>
+			<a href="<%= buildPageUrl(totalPages) %>">»</a>
+			<% } else { %>
+			<span class="disabled">›</span>
+			<span class="disabled">»</span>
+			<% } %>
+		</div>
+		<% } %>
+		<% } else { %>
+		<div class="empty-state">
+			<div style="font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.4;"><i class="fa-solid fa-box-open"></i></div>
+			<p>Belum ada produk yang sesuai</p>
+			<a href="/admin/products/create" class="btn btn-primary" style="display: inline-flex; margin-top: 0.5rem;">
+				+ Tambah Produk
+			</a>
+		</div>
+		<% } %>
+	</div>
+</div>
+
+<script src="/js/product-list.js"></script>

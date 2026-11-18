@@ -1,0 +1,23 @@
+/* ============================================================
+   Master Pelanggan — Styles
+   Melengkapi kelas yang sudah ada (invoice-history.css, create-invoice.css).
+   Brand: Primary #0356fc | Secondary #fc032d
+   ============================================================ */
+
+/* Grid filter khusus halaman pelanggan (3 kolom + aksi) */
+.filters.customer-filters {
+	grid-template-columns: 1.8fr 1fr 1fr auto;
+}
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 1024px) {
+	.filters.customer-filters {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+@media (max-width: 768px) {
+	.filters.customer-filters {
+		grid-template-columns: 1fr;
+	}
+}

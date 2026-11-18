@@ -1,0 +1,189 @@
+<%
+	const isEdit = payment && payment.id;
+	const formAction = isEdit ? `/admin/payments/${payment.id}/update` : '/admin/payments/create';
+	const paymentDateVal = isEdit && payment.payment_date ? String(payment.payment_date).slice(0,10) : '';
+	const methodVal = isEdit ? (payment.method || 'transfer') : 'transfer';
+%>
+<div class="create-container">
+	<div class="form-container">
+		<div style="margin-bottom: 1.5rem;">
+			<h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem;">
+				<%= isEdit ? 'Edit Pembayaran' : 'Catat Pembayaran Baru' %>
+			</h2>
+			<p style="color: var(--text-muted); font-size: 0.85rem;">
+				Catat pembayaran / termin untuk sebuah invoice. Satu invoice bisa memiliki beberapa pembayaran.
+			</p>
+		</div>
+
+		<% if (typeof error !== 'undefined' && error) { %>
+		<div class="booking-alert booking-alert-error">
+			<i class="fa-solid fa-circle-exclamation"></i> <%= error %>
+		</div>
+		<% } %>
+
+		<form action="<%= formAction %>" method="POST" id="paymentForm" enctype="multipart/form-data">
+			<input type="hidden" name="redirect_to" value="<%= (typeof redirectTo !== 'undefined' && redirectTo) ? redirectTo : '' %>" />
+			<!-- Informasi Pembayaran -->
+			<div class="form-section">
+				<div class="section-title">
+					<div class="section-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+					<h3>Informasi Pembayaran</h3>
+				</div>
+				<div class="form-row">
+					<div class="form-group">
+						<label for="payment_number">Nomor Pembayaran</label>
+						<input type="text" id="payment_number" name="payment_number" value="<%= isEdit ? payment.payment_number : (suggestedNumber || '') %>" />
+					</div>
+					<div class="form-group">
+						<label for="payment_date">Tanggal Pembayaran <span class="required">*</span></label>
+						<input type="date" id="payment_date" name="payment_date" required value="<%= paymentDateVal %>" />
+					</div>
+				</div>
+				<div class="form-row">
+					<div class="form-group">
+						<label for="method">Metode</label>
+						<select id="method" name="method">
+							<option value="transfer" <%= methodVal === 'transfer' ? 'selected' : '' %>>Transfer</option>
+							<option value="cash" <%= methodVal === 'cash' ? 'selected' : '' %>>Tunai</option>
+							<option value="qris" <%= methodVal === 'qris' ? 'selected' : '' %>>QRIS</option>
+							<option value="other" <%= methodVal === 'other' ? 'selected' : '' %>>Lainnya</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label for="amount">Jumlah (Rp) <span class="required">*</span></label>
+						<input type="number" id="amount" name="amount" min="0" step="0.01" required placeholder="0" value="<%= isEdit ? (payment.amount || '') : '' %>" />
+					</div>
+				</div>
+				<div class="form-row full">
+					<div class="form-group">
+						<label for="reference">Referensi / No. Bukti</label>
+						<input type="text" id="reference" name="reference" placeholder="mis. no. transfer, no. cek" value="<%= isEdit ? (payment.reference || '') : '' %>" />
+					</div>
+				</div>
+			</div>
+
+			<!-- Invoice & Pelanggan -->
+			<div class="form-section">
+				<div class="section-title">
+					<div class="section-icon"><i class="fa-regular fa-file-lines"></i></div>
+					<h3>Invoice &amp; Pelanggan</h3>
+				</div>
+				<div class="form-row full">
+					<div class="form-group">
+						<label for="invoice_picker">Invoice <span style="font-weight:400; color: var(--text-muted); font-size:0.8rem;">(opsional)</span></label>
+						<select id="invoice_picker">
+							<option value="">— Tanpa invoice —</option>
+							<% (typeof invoices !== 'undefined' ? invoices : []).forEach(inv => { %>
+							<option
+								value="<%= inv.id %>"
+								data-total="<%= inv.total_amount %>"
+								data-paid="<%= inv.paid %>"
+								data-remaining="<%= inv.remaining %>"
+								data-customer-id="<%= inv.customer_id || '' %>"
+								data-recipient="<%= inv.recipient_name || '' %>"
+								<%= (isEdit && payment.invoice_id === inv.id) || (!isEdit && presetInvoiceId === inv.id) ? 'selected' : '' %>
+							><%= inv.invoice_number %> — <%= inv.recipient_name || 'Tanpa nama' %> (Sisa: Rp <%= (inv.remaining).toLocaleString('id-ID') %>)</option>
+							<% }); %>
+						</select>
+					</div>
+				</div>
+				<input type="hidden" name="invoice_id" id="invoice_id" value="<%= isEdit ? (payment.invoice_id || '') : (presetInvoiceId || '') %>" />
+				<div id="invoiceInfo" class="payment-invoice-info" style="display:none;"></div>
+				<div class="form-row full">
+					<div class="form-group">
+						<label for="customer_picker">Pilih dari Master Pelanggan <span style="font-weight:400; color: var(--text-muted); font-size:0.8rem;">(opsional)</span></label>
+						<select id="customer_picker">
+							<option value="">— Isi manual / tanpa pelanggan —</option>
+							<% (typeof customers !== 'undefined' ? customers : []).forEach(c => { %>
+							<option value="<%= c.id %>" <%= isEdit && payment.customer_id === c.id ? 'selected' : '' %>><%= c.name %><%= c.company ? ' — ' + c.company : '' %></option>
+							<% }); %>
+						</select>
+					</div>
+				</div>
+				<input type="hidden" name="customer_id" id="customer_id" value="<%= isEdit ? (payment.customer_id || '') : '' %>" />
+			</div>
+
+			<!-- Bukti Bayar -->
+			<div class="form-section">
+				<div class="section-title">
+					<div class="section-icon"><i class="fa-regular fa-image"></i></div>
+					<h3>Bukti Bayar <span style="font-weight:400; color: var(--text-muted); font-size:0.85rem;">(opsional)</span></h3>
+				</div>
+
+				<% if (isEdit && payment.proof_path) { %>
+				<div class="proof-current">
+					<a href="/admin/payments/<%= payment.id %>/proof" target="_blank" rel="noopener" class="proof-thumb-link" title="Buka bukti bayar">
+						<img src="/admin/payments/<%= payment.id %>/proof" alt="Bukti bayar" class="proof-thumb" />
+					</a>
+					<div class="proof-current-meta">
+						<div class="proof-filename">
+							<i class="fa-solid fa-paperclip"></i>
+							<%= payment.proof_original_name || 'bukti-bayar' %>
+						</div>
+						<a href="/admin/payments/<%= payment.id %>/proof" target="_blank" rel="noopener" class="btn-small secondary">
+							<i class="fa-solid fa-magnifying-glass"></i> Preview
+						</a>
+						<label class="proof-remove">
+							<input type="checkbox" name="remove_proof" value="1" id="removeProof" />
+							Hapus bukti bayar ini
+						</label>
+					</div>
+				</div>
+				<% } %>
+
+				<div class="form-row full">
+					<div class="form-group">
+						<label for="proof">
+							<%= (isEdit && payment.proof_path) ? 'Ganti Bukti Bayar' : 'Unggah Bukti Bayar' %>
+						</label>
+						<input
+							type="file"
+							id="proof"
+							name="proof"
+							accept=".jpg,.jpeg,.png,.heic,.heif,image/jpeg,image/png,image/heic,image/heif"
+						/>
+						<small class="form-hint">
+							Format: JPG, JPEG, PNG, atau HEIC. Ukuran maksimal 10 MB.
+						</small>
+					</div>
+				</div>
+
+				<div id="proofPreview" class="proof-preview" style="display:none;">
+					<img id="proofPreviewImg" alt="Pratinjau bukti bayar" />
+					<div class="proof-preview-meta">
+						<span id="proofPreviewName"></span>
+						<button type="button" class="btn-small danger" id="proofPreviewClear">
+							<i class="fa-solid fa-xmark"></i> Batalkan pilihan
+						</button>
+					</div>
+					<small id="proofPreviewNote" class="form-hint" style="display:none;">
+						File HEIC tidak dapat dipratinjau di sebagian browser — akan tetap tersimpan dan bisa dibuka lewat tombol Preview.
+					</small>
+				</div>
+			</div>
+
+			<!-- Catatan -->
+			<div class="form-section">
+				<div class="section-title">
+					<div class="section-icon"><i class="fa-regular fa-note-sticky"></i></div>
+					<h3>Catatan <span style="font-weight:400; color: var(--text-muted); font-size:0.85rem;">(opsional)</span></h3>
+				</div>
+				<div class="form-row full">
+					<div class="form-group">
+						<textarea id="notes" name="notes" placeholder="Catatan pembayaran, termin ke-berapa, dsb."><%= isEdit ? (payment.notes || '') : '' %></textarea>
+					</div>
+				</div>
+			</div>
+
+			<!-- Actions -->
+			<div class="form-actions">
+				<button type="submit" class="btn-submit">
+					<i class="fa-solid fa-floppy-disk"></i> <%= isEdit ? 'Simpan Perubahan' : 'Simpan Pembayaran' %>
+				</button>
+				<a href="<%= (typeof redirectTo !== 'undefined' && redirectTo) ? redirectTo : '/admin/payments' %>" class="btn-cancel">Batal</a>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script src="/js/payment-form.js"></script>

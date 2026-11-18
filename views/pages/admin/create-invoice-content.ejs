@@ -92,6 +92,27 @@
 					<div class="section-icon"><i class="fa-regular fa-user"></i></div>
 					<h3>Data Penerima</h3>
 				</div>
+				<div class="form-row full">
+					<div class="form-group">
+						<label for="customer_picker">Pilih dari Master Pelanggan <span style="font-weight:400; color: var(--text-muted); font-size:0.8rem;">(opsional)</span></label>
+						<select id="customer_picker">
+							<option value="">— Isi manual / pelanggan baru —</option>
+							<% (typeof customers !== 'undefined' ? customers : []).forEach(c => { %>
+							<option
+								value="<%= c.id %>"
+								data-name="<%= c.name %>"
+								data-phone="<%= c.phone || '' %>"
+								data-npwp="<%= c.npwp || '' %>"
+								data-address="<%= c.address || '' %>"
+							><%= c.name %><%= c.company ? ' — ' + c.company : '' %></option>
+							<% }); %>
+						</select>
+						<p style="margin-top:0.35rem; font-size:0.78rem; color:var(--text-muted);">
+							Memilih pelanggan akan mengisi kolom di bawah otomatis dan menautkan dokumen ke data pelanggan.
+						</p>
+					</div>
+				</div>
+				<input type="hidden" name="customer_id" id="customer_id" value="" />
 				<div class="form-row">
 					<div class="form-group">
 						<label for="recipient_name">Nama <span class="required">*</span></label>

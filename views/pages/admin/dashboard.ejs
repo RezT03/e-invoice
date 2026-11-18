@@ -2,5 +2,6 @@
     currentPage: 'dashboard', 
     pageTitle:'Dashboard', 
     additionalStyles: ['dashboard'], 
-    contentFile:'admin/dashboard-content', stats, recentInvoices 
+    contentFile:'admin/dashboard-content', stats, recentInvoices,
+    sort: typeof sort !== 'undefined' ? sort : 'invoice_date_desc'
 }) %>

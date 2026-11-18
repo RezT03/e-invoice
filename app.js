@@ -9,6 +9,11 @@ dotenv.config()
 const app = express()
 const userInvoiceRoutes = require("./routes/userInvoice")
 const adminInvoiceRoutes = require("./routes/adminInvoice")
+const bookingRoutes = require("./routes/booking")
+const productRoutes = require("./routes/product")
+const customerRoutes = require("./routes/customer")
+const deliveryRoutes = require("./routes/delivery")
+const paymentRoutes = require("./routes/payment")
 const authRoutes = require("./routes/auth")
 const { checkAdminAuth } = require("./middleware/auth")
 
@@ -30,6 +35,11 @@ app.use(
 app.use("/auth", authRoutes)
 app.use("/invoice", userInvoiceRoutes)
 app.use("/admin/invoice", checkAdminAuth, adminInvoiceRoutes)
+app.use("/admin/bookings", checkAdminAuth, bookingRoutes)
+app.use("/admin/products", checkAdminAuth, productRoutes)
+app.use("/admin/customers", checkAdminAuth, customerRoutes)
+app.use("/admin/deliveries", checkAdminAuth, deliveryRoutes)
+app.use("/admin/payments", checkAdminAuth, paymentRoutes)
 
 // Home route - redirect ke invoice check
 app.get("/", (req, res) => {

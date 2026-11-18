@@ -1,0 +1,19 @@
+<%
+	// Opsi urutan dokumen. Dipakai bersama oleh dashboard & history.
+	// Default: berdasarkan tanggal invoice (bukan created_at).
+	const selectedSort = typeof sort !== 'undefined' && sort ? sort : 'invoice_date_desc';
+	const sortChoices = [
+		{ value: 'invoice_date_desc', label: 'Tanggal Invoice (Terbaru)' },
+		{ value: 'invoice_date_asc', label: 'Tanggal Invoice (Terlama)' },
+		{ value: 'invoice_number_asc', label: 'Nomor Dokumen (A-Z)' },
+		{ value: 'invoice_number_desc', label: 'Nomor Dokumen (Z-A)' },
+		{ value: 'recipient_asc', label: 'Penerima (A-Z)' },
+		{ value: 'total_amount_desc', label: 'Total (Tertinggi)' },
+		{ value: 'total_amount_asc', label: 'Total (Terendah)' },
+		{ value: 'created_at_desc', label: 'Terakhir Dibuat' },
+		{ value: 'created_at_asc', label: 'Paling Awal Dibuat' },
+	];
+%>
+<% sortChoices.forEach(choice => { %>
+<option value="<%= choice.value %>" <%= selectedSort === choice.value ? 'selected' : '' %>><%= choice.label %></option>
+<% }); %>

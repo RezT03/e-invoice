@@ -1,0 +1,209 @@
+<%
+	const isEdit = booking && booking.id;
+	const formAction = isEdit ? `/admin/bookings/${booking.id}/update` : '/admin/bookings/create';
+%>
+<div class="create-container">
+	<div class="form-container">
+		<div style="margin-bottom: 1.5rem;">
+			<h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem;">
+				<%= isEdit ? 'Edit Booking' : 'Buat Booking Baru' %>
+			</h2>
+			<p style="color: var(--text-muted); font-size: 0.85rem;">
+				Jadwal event akan otomatis dikirim ke Google Calendar (jika sinkronisasi aktif).
+			</p>
+		</div>
+
+		<% if (typeof error !== 'undefined' && error) { %>
+		<div class="booking-alert booking-alert-error">
+			<i class="fa-solid fa-circle-exclamation"></i> <%= error %>
+		</div>
+		<% } %>
+
+		<% if (typeof calendarConfigured !== 'undefined' && !calendarConfigured) { %>
+		<div class="booking-alert booking-alert-warning">
+			<i class="fa-solid fa-triangle-exclamation"></i>
+			Google Calendar belum dikonfigurasi. Booking tetap dapat disimpan tanpa sinkronisasi.
+		</div>
+		<% } %>
+
+		<form action="<%= formAction %>" method="POST">
+			<!-- Informasi Booking -->
+			<div class="form-section">
+				<div class="section-title">
+					<div class="section-icon"><i class="fa-regular fa-calendar-days"></i></div>
+					<h3>Informasi Booking</h3>
+				</div>
+				<div class="form-row three-col">
+					<div class="form-group">
+						<label for="booking_number">Nomor Booking</label>
+						<input
+							type="text"
+							id="booking_number"
+							name="booking_number"
+							value="<%= isEdit ? booking.booking_number : (suggestedNumber || '') %>"
+						/>
+					</div>
+					<div class="form-group">
+						<label for="status">Status</label>
+						<select id="status" name="status">
+							<% const st = isEdit ? booking.status : 'draft'; %>
+							<option value="draft" <%= st === 'draft' ? 'selected' : '' %>>Draft</option>
+							<option value="confirmed" <%= st === 'confirmed' ? 'selected' : '' %>>Terkonfirmasi</option>
+							<option value="ongoing" <%= st === 'ongoing' ? 'selected' : '' %>>Berjalan</option>
+							<option value="completed" <%= st === 'completed' ? 'selected' : '' %>>Selesai</option>
+							<option value="cancelled" <%= st === 'cancelled' ? 'selected' : '' %>>Dibatalkan</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label for="crew_name">Crew / PIC</label>
+						<input
+							type="text"
+							id="crew_name"
+							name="crew_name"
+							placeholder="Nama penanggung jawab"
+							value="<%= isEdit ? (booking.crew_name || '') : '' %>"
+						/>
+					</div>
+				</div>
+				<div class="form-row full">
+					<div class="form-group">
+						<label for="title">Nama Event <span class="required">*</span></label>
+						<input
+							type="text"
+							id="title"
+							name="title"
+							placeholder="mis. Resepsi Pernikahan — Gedung A"
+							required
+							value="<%= isEdit ? booking.title : '' %>"
+						/>
+					</div>
+				</div>
+				<div class="form-row">
+					<div class="form-group">
+						<label for="event_start">Mulai <span class="required">*</span></label>
+						<input
+							type="datetime-local"
+							id="event_start"
+							name="event_start"
+							required
+							value="<%= isEdit ? booking.event_start_input : '' %>"
+						/>
+					</div>
+					<div class="form-group">
+						<label for="event_end">Selesai <span class="required">*</span></label>
+						<input
+							type="datetime-local"
+							id="event_end"
+							name="event_end"
+							required
+							value="<%= isEdit ? booking.event_end_input : '' %>"
+						/>
+					</div>
+				</div>
+				<div class="form-row full">
+					<div class="form-group">
+						<label for="location">Lokasi</label>
+						<input
+							type="text"
+							id="location"
+							name="location"
+							placeholder="Nama & alamat venue"
+							value="<%= isEdit ? (booking.location || '') : '' %>"
+						/>
+					</div>
+				</div>
+			</div>
+
+			<!-- Data Klien -->
+			<div class="form-section">
+				<div class="section-title">
+					<div class="section-icon"><i class="fa-regular fa-user"></i></div>
+					<h3>Data Klien</h3>
+				</div>
+				<div class="form-row full">
+					<div class="form-group">
+						<label for="customer_picker">Pilih dari Master Pelanggan <span style="font-weight:400; color: var(--text-muted); font-size:0.8rem;">(opsional)</span></label>
+						<select id="customer_picker">
+							<option value="">— Isi manual / pelanggan baru —</option>
+							<% (typeof customers !== 'undefined' ? customers : []).forEach(c => { %>
+							<option
+								value="<%= c.id %>"
+								data-name="<%= c.name %>"
+								data-phone="<%= c.phone || '' %>"
+								data-email="<%= c.email || '' %>"
+								<%= isEdit && booking.customer_id === c.id ? 'selected' : '' %>
+							><%= c.name %><%= c.company ? ' — ' + c.company : '' %></option>
+							<% }); %>
+						</select>
+						<p style="margin-top:0.35rem; font-size:0.78rem; color:var(--text-muted);">
+							Memilih pelanggan akan mengisi kolom di bawah otomatis dan menautkan booking ke data pelanggan.
+						</p>
+					</div>
+				</div>
+				<input type="hidden" name="customer_id" id="customer_id" value="<%= isEdit ? (booking.customer_id || '') : '' %>" />
+				<div class="form-row">
+					<div class="form-group">
+						<label for="customer_name">Nama Klien <span class="required">*</span></label>
+						<input
+							type="text"
+							id="customer_name"
+							name="customer_name"
+							placeholder="Nama / instansi"
+							required
+							value="<%= isEdit ? booking.customer_name : '' %>"
+						/>
+					</div>
+					<div class="form-group">
+						<label for="customer_phone">Nomor Telepon</label>
+						<input
+							type="text"
+							id="customer_phone"
+							name="customer_phone"
+							placeholder="08123456789"
+							value="<%= isEdit ? (booking.customer_phone || '') : '' %>"
+						/>
+					</div>
+				</div>
+				<div class="form-row full">
+					<div class="form-group">
+						<label for="customer_email">Email</label>
+						<input
+							type="email"
+							id="customer_email"
+							name="customer_email"
+							placeholder="klien@email.com"
+							value="<%= isEdit ? (booking.customer_email || '') : '' %>"
+						/>
+					</div>
+				</div>
+			</div>
+
+			<!-- Catatan -->
+			<div class="form-section">
+				<div class="section-title">
+					<div class="section-icon"><i class="fa-regular fa-note-sticky"></i></div>
+					<h3>Catatan <span style="font-weight:400; color: var(--text-muted); font-size:0.85rem;">(opsional)</span></h3>
+				</div>
+				<div class="form-row full">
+					<div class="form-group">
+						<textarea
+							id="notes"
+							name="notes"
+							placeholder="Kebutuhan teknis, permintaan khusus, dsb."
+						><%= isEdit ? (booking.notes || '') : '' %></textarea>
+					</div>
+				</div>
+			</div>
+
+			<!-- Actions -->
+			<div class="form-actions">
+				<button type="submit" class="btn-submit">
+					<i class="fa-solid fa-floppy-disk"></i> <%= isEdit ? 'Simpan Perubahan' : 'Simpan Booking' %>
+				</button>
+				<a href="/admin/bookings" class="btn-cancel">Batal</a>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script src="/js/booking-form.js"></script>

@@ -1,0 +1,16 @@
+<%- include('../../layouts/admin', {
+    currentPage: 'bookings',
+    pageTitle: 'Jadwal & Booking',
+    additionalStyles: ['invoice-history', 'booking'],
+    contentFile: 'admin/bookings-content',
+    bookings,
+    pageNum: currentPage,
+    totalPages,
+    totalBookings,
+    search,
+    status,
+    sort,
+    calendarConfigured,
+    success,
+    error
+}) %>

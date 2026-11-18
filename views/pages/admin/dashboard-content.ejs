@@ -69,13 +69,23 @@
 
 	<!-- Recent Invoices Table -->
 	<div class="recent-section">
-		<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+		<div class="recent-header">
 			<h3 style="font-size: 1.05rem; font-weight: 600; color: var(--text); margin: 0;">
-				Dokumen Terbaru
+				Daftar Dokumen
 			</h3>
-			<a href="/admin/invoice/history" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 500;">
-				Lihat Semua <i class="fa-solid fa-arrow-right"></i>
-			</a>
+			<div class="recent-header-actions">
+				<form method="GET" action="/admin/invoice/dashboard" class="sort-form">
+					<label for="sortFilter" class="sort-label">
+						<i class="fa-solid fa-arrow-down-wide-short"></i> Urutkan
+					</label>
+					<select id="sortFilter" name="sort" class="sort-select" onchange="this.form.submit()">
+						<%- include('../../partials/admin/sort-options', { sort: typeof sort !== 'undefined' ? sort : 'invoice_date_desc' }) %>
+					</select>
+				</form>
+				<a href="/admin/invoice/history" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 500;">
+					Lihat Semua <i class="fa-solid fa-arrow-right"></i>
+				</a>
+			</div>
 		</div>
 
 		<% if (recentInvoices && recentInvoices.length > 0) { %>

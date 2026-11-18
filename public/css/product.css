@@ -1,0 +1,47 @@
+/* ============================================================
+   Master Produk & Stok — Styles
+   Melengkapi kelas yang sudah ada (invoice-history.css, create-invoice.css).
+   Brand: Primary #0356fc | Secondary #fc032d
+   ============================================================ */
+
+/* Grid filter khusus halaman produk (4 kolom + aksi) */
+.filters.product-filters {
+	grid-template-columns: 1.5fr 1fr 1fr 1fr auto;
+}
+
+/* ===================== BADGE STOK ===================== */
+.badge.stock-ok {
+	background: #e6f9f0;
+	color: #15803d;
+}
+
+.badge.stock-low {
+	background: #fff4e5;
+	color: #b45309;
+}
+
+/* ===================== HINT DI FORM ===================== */
+.field-hint {
+	margin-top: 0.35rem;
+	font-size: 0.78rem;
+	color: var(--text-muted);
+}
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 1200px) {
+	.filters.product-filters {
+		grid-template-columns: 1fr 1fr 1fr;
+	}
+}
+
+@media (max-width: 1024px) {
+	.filters.product-filters {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+@media (max-width: 768px) {
+	.filters.product-filters {
+		grid-template-columns: 1fr;
+	}
+}

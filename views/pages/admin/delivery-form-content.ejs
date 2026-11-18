@@ -1,0 +1,237 @@
+<%
+	const isEdit = delivery && delivery.id;
+	const formAction = isEdit ? `/admin/deliveries/${delivery.id}/update` : '/admin/deliveries/create';
+	const dItems = isEdit && Array.isArray(delivery.items) ? delivery.items : [];
+%>
+<div class="create-container">
+	<div class="form-container">
+		<div style="margin-bottom: 1.5rem;">
+			<h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem;">
+				<%= isEdit ? 'Edit Surat Jalan' : 'Buat Surat Jalan Baru' %>
+			</h2>
+			<p style="color: var(--text-muted); font-size: 0.85rem;">
+				Catat barang keluar dan kembali untuk kebutuhan event.
+			</p>
+		</div>
+
+		<% if (typeof error !== 'undefined' && error) { %>
+		<div class="booking-alert booking-alert-error">
+			<i class="fa-solid fa-circle-exclamation"></i> <%= error %>
+		</div>
+		<% } %>
+
+		<form action="<%= formAction %>" method="POST" id="deliveryForm">
+			<!-- Informasi Surat Jalan -->
+			<div class="form-section">
+				<div class="section-title">
+					<div class="section-icon"><i class="fa-solid fa-truck-fast"></i></div>
+					<h3>Informasi Surat Jalan</h3>
+				</div>
+				<div class="form-row three-col">
+					<div class="form-group">
+						<label for="delivery_number">Nomor Surat Jalan</label>
+						<input
+							type="text"
+							id="delivery_number"
+							name="delivery_number"
+							value="<%= isEdit ? delivery.delivery_number : (suggestedNumber || '') %>"
+						/>
+					</div>
+					<div class="form-group">
+						<label for="status">Status</label>
+						<select id="status" name="status">
+							<% const st = isEdit ? delivery.status : 'draft'; %>
+							<option value="draft" <%= st === 'draft' ? 'selected' : '' %>>Draft</option>
+							<option value="delivered" <%= st === 'delivered' ? 'selected' : '' %>>Terkirim</option>
+							<option value="returned" <%= st === 'returned' ? 'selected' : '' %>>Dikembalikan</option>
+							<option value="cancelled" <%= st === 'cancelled' ? 'selected' : '' %>>Dibatalkan</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label for="company_id">Perusahaan Penerbit</label>
+						<select id="company_id" name="company_id">
+							<option value="">— Perusahaan utama —</option>
+							<% (typeof companies !== 'undefined' ? companies : []).forEach(c => { %>
+							<option value="<%= c.id %>" <%= isEdit && delivery.company_id === c.id ? 'selected' : '' %>><%= c.name %></option>
+							<% }); %>
+						</select>
+					</div>
+				</div>
+				<div class="form-row">
+					<div class="form-group">
+						<label for="booking_picker">Referensi Booking <span style="font-weight:400; color: var(--text-muted); font-size:0.8rem;">(opsional)</span></label>
+						<select id="booking_picker">
+							<option value="">— Tanpa booking —</option>
+							<% (typeof bookings !== 'undefined' ? bookings : []).forEach(b => { %>
+							<option
+								value="<%= b.id %>"
+								data-name="<%= b.customer_name || '' %>"
+								data-phone="<%= b.customer_phone || '' %>"
+								data-location="<%= b.location || '' %>"
+								data-customer-id="<%= b.customer_id || '' %>"
+								<%= isEdit && delivery.booking_id === b.id ? 'selected' : '' %>
+							><%= b.booking_number %><%= b.title ? ' — ' + b.title : '' %></option>
+							<% }); %>
+						</select>
+					</div>
+					<div class="form-group">
+						<label for="delivery_date">Tanggal Kirim</label>
+						<input type="date" id="delivery_date" name="delivery_date" value="<%= isEdit ? (delivery.delivery_date ? String(delivery.delivery_date).slice(0,10) : '') : '' %>" />
+					</div>
+					<div class="form-group">
+						<label for="return_date">Tanggal Kembali</label>
+						<input type="date" id="return_date" name="return_date" value="<%= isEdit ? (delivery.return_date ? String(delivery.return_date).slice(0,10) : '') : '' %>" />
+					</div>
+				</div>
+				<input type="hidden" name="booking_id" id="booking_id" value="<%= isEdit ? (delivery.booking_id || '') : '' %>" />
+			</div>
+
+			<!-- Data Penerima -->
+			<div class="form-section">
+				<div class="section-title">
+					<div class="section-icon"><i class="fa-regular fa-user"></i></div>
+					<h3>Data Penerima</h3>
+				</div>
+				<div class="form-row full">
+					<div class="form-group">
+						<label for="customer_picker">Pilih dari Master Pelanggan <span style="font-weight:400; color: var(--text-muted); font-size:0.8rem;">(opsional)</span></label>
+						<select id="customer_picker">
+							<option value="">— Isi manual / pelanggan baru —</option>
+							<% (typeof customers !== 'undefined' ? customers : []).forEach(c => { %>
+							<option
+								value="<%= c.id %>"
+								data-name="<%= c.name %>"
+								data-phone="<%= c.phone || '' %>"
+								data-address="<%= c.address || '' %>"
+								<%= isEdit && delivery.customer_id === c.id ? 'selected' : '' %>
+							><%= c.name %><%= c.company ? ' — ' + c.company : '' %></option>
+							<% }); %>
+						</select>
+						<p style="margin-top:0.35rem; font-size:0.78rem; color:var(--text-muted);">
+							Memilih pelanggan akan mengisi kolom di bawah otomatis dan menautkan surat jalan ke data pelanggan.
+						</p>
+					</div>
+				</div>
+				<input type="hidden" name="customer_id" id="customer_id" value="<%= isEdit ? (delivery.customer_id || '') : '' %>" />
+				<div class="form-row">
+					<div class="form-group">
+						<label for="recipient_name">Nama Penerima <span class="required">*</span></label>
+						<input
+							type="text"
+							id="recipient_name"
+							name="recipient_name"
+							placeholder="Nama / instansi penerima"
+							required
+							value="<%= isEdit ? delivery.recipient_name : '' %>"
+						/>
+					</div>
+					<div class="form-group">
+						<label for="recipient_phone">Nomor Telepon</label>
+						<input
+							type="text"
+							id="recipient_phone"
+							name="recipient_phone"
+							placeholder="08123456789"
+							value="<%= isEdit ? (delivery.recipient_phone || '') : '' %>"
+						/>
+					</div>
+				</div>
+				<div class="form-row full">
+					<div class="form-group">
+						<label for="recipient_address">Alamat / Lokasi Kirim</label>
+						<textarea id="recipient_address" name="recipient_address" placeholder="Alamat pengiriman barang"><%= isEdit ? (delivery.recipient_address || '') : '' %></textarea>
+					</div>
+				</div>
+			</div>
+
+			<!-- Pengiriman -->
+			<div class="form-section">
+				<div class="section-title">
+					<div class="section-icon"><i class="fa-solid fa-truck"></i></div>
+					<h3>Pengiriman</h3>
+				</div>
+				<div class="form-row">
+					<div class="form-group">
+						<label for="driver_name">Nama Driver</label>
+						<input type="text" id="driver_name" name="driver_name" placeholder="Nama pengirim / driver" value="<%= isEdit ? (delivery.driver_name || '') : '' %>" />
+					</div>
+					<div class="form-group">
+						<label for="vehicle_number">Nomor Kendaraan</label>
+						<input type="text" id="vehicle_number" name="vehicle_number" placeholder="mis. B 1234 XYZ" value="<%= isEdit ? (delivery.vehicle_number || '') : '' %>" />
+					</div>
+				</div>
+			</div>
+
+			<!-- Daftar Barang -->
+			<div class="form-section">
+				<div class="section-title">
+					<div class="section-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+					<h3>Daftar Barang</h3>
+					<button type="button" class="btn-small" id="btnAddItem" style="margin-left: auto;">
+						<i class="fa-solid fa-plus"></i> Tambah Barang
+					</button>
+				</div>
+				<input type="hidden" name="items" id="itemsJson" value="" />
+				<div class="table-container" style="box-shadow: none; border: 1px solid var(--border);">
+					<table class="invoices-table" id="itemsTable">
+						<thead>
+							<tr>
+								<th style="min-width: 200px;">Nama Barang / Deskripsi</th>
+								<th style="width: 90px; text-align: center;">Keluar</th>
+								<th style="width: 90px; text-align: center;">Kembali</th>
+								<th style="min-width: 120px;">Kondisi Keluar</th>
+								<th style="min-width: 120px;">Kondisi Kembali</th>
+								<th style="min-width: 140px;">Catatan</th>
+								<th style="width: 50px;"></th>
+							</tr>
+						</thead>
+						<tbody id="itemsBody">
+							<% dItems.forEach(it => { %>
+							<tr class="item-row">
+								<td><input type="text" class="it-description" placeholder="mis. Tenda 4x6" value="<%= it.description || '' %>" /></td>
+								<td><input type="number" class="it-qty-out" min="0" step="1" style="text-align:center;" value="<%= it.quantity_out || 0 %>" /></td>
+								<td><input type="number" class="it-qty-in" min="0" step="1" style="text-align:center;" value="<%= it.quantity_in || 0 %>" /></td>
+								<td><input type="text" class="it-cond-out" placeholder="Baik" value="<%= it.condition_out || '' %>" /></td>
+								<td><input type="text" class="it-cond-in" placeholder="Baik" value="<%= it.condition_in || '' %>" /></td>
+								<td><input type="text" class="it-notes" placeholder="-" value="<%= it.notes || '' %>" /></td>
+								<td style="text-align:center;"><button type="button" class="btn-small danger btn-remove-item" title="Hapus baris">&times;</button></td>
+							</tr>
+							<% }); %>
+						</tbody>
+					</table>
+				</div>
+				<p style="margin-top:0.35rem; font-size:0.78rem; color:var(--text-muted);">
+					Isi jumlah barang yang keluar; kolom "Kembali" diisi saat barang diterima kembali.
+				</p>
+			</div>
+
+			<!-- Catatan -->
+			<div class="form-section">
+				<div class="section-title">
+					<div class="section-icon"><i class="fa-regular fa-note-sticky"></i></div>
+					<h3>Catatan <span style="font-weight:400; color: var(--text-muted); font-size:0.85rem;">(opsional)</span></h3>
+				</div>
+				<div class="form-row full">
+					<div class="form-group">
+						<textarea id="notes" name="notes" placeholder="Catatan tambahan untuk surat jalan ini"><%= isEdit ? (delivery.notes || '') : '' %></textarea>
+					</div>
+				</div>
+			</div>
+
+			<!-- Actions -->
+			<div class="form-actions">
+				<button type="submit" class="btn-submit">
+					<i class="fa-solid fa-floppy-disk"></i> <%= isEdit ? 'Simpan Perubahan' : 'Simpan Surat Jalan' %>
+				</button>
+				<% if (isEdit) { %>
+				<a href="/admin/deliveries/<%= delivery.id %>/pdf" target="_blank" rel="noopener" class="btn-cancel" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem;">
+					<i class="fa-solid fa-print"></i> Cetak PDF
+				</a>
+				<% } %>
+				<a href="/admin/deliveries" class="btn-cancel">Batal</a>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script src="/js/delivery-form.js"></script>

@@ -1,0 +1,178 @@
+<div class="history-container">
+	<!-- Page Header -->
+	<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+		<div>
+			<h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem;">
+				<i class="fa-regular fa-calendar-check"></i> Jadwal &amp; Booking
+			</h2>
+			<p style="color: var(--text-muted); font-size: 0.85rem;">
+				Total <%= totalBookings || 0 %> booking ditemukan
+			</p>
+		</div>
+		<div class="page-actions">
+			<a href="/admin/bookings/create" class="btn btn-primary" style="font-size: 0.88rem; padding: 0.55rem 1.1rem;">
+				<i class="fa-solid fa-plus"></i> Buat Booking Baru
+			</a>
+		</div>
+	</div>
+
+	<% if (typeof success !== 'undefined' && success) { %>
+	<div class="booking-alert booking-alert-success">
+		<i class="fa-solid fa-circle-check"></i> <%= success %>
+	</div>
+	<% } %>
+	<% if (typeof error !== 'undefined' && error) { %>
+	<div class="booking-alert booking-alert-error">
+		<i class="fa-solid fa-circle-exclamation"></i> <%= error %>
+	</div>
+	<% } %>
+
+	<% if (typeof calendarConfigured !== 'undefined' && !calendarConfigured) { %>
+	<div class="booking-alert booking-alert-warning">
+		<i class="fa-solid fa-triangle-exclamation"></i>
+		Sinkronisasi Google Calendar belum aktif. Booking tetap tersimpan, tetapi tidak dikirim ke kalender. Atur kredensial service account di <code>.env</code>.
+	</div>
+	<% } %>
+
+	<!-- Filters -->
+	<div class="filters booking-filters">
+		<div class="filter-group">
+			<label for="searchFilter">Cari</label>
+			<input type="text" id="searchFilter" placeholder="No. booking, event, atau klien..." value="<%= search || '' %>" />
+		</div>
+		<div class="filter-group">
+			<label for="statusFilter">Status</label>
+			<select id="statusFilter">
+				<option value="">Semua Status</option>
+				<option value="draft" <%= status === 'draft' ? 'selected' : '' %>>Draft</option>
+				<option value="confirmed" <%= status === 'confirmed' ? 'selected' : '' %>>Terkonfirmasi</option>
+				<option value="ongoing" <%= status === 'ongoing' ? 'selected' : '' %>>Berjalan</option>
+				<option value="completed" <%= status === 'completed' ? 'selected' : '' %>>Selesai</option>
+				<option value="cancelled" <%= status === 'cancelled' ? 'selected' : '' %>>Dibatalkan</option>
+			</select>
+		</div>
+		<div class="filter-group">
+			<label for="sortFilter">Urutkan</label>
+			<select id="sortFilter">
+				<option value="event_start_desc" <%= sort === 'event_start_desc' ? 'selected' : '' %>>Jadwal Terbaru</option>
+				<option value="event_start_asc" <%= sort === 'event_start_asc' ? 'selected' : '' %>>Jadwal Terlama</option>
+				<option value="created_at_desc" <%= sort === 'created_at_desc' ? 'selected' : '' %>>Terakhir Dibuat</option>
+				<option value="created_at_asc" <%= sort === 'created_at_asc' ? 'selected' : '' %>>Paling Awal Dibuat</option>
+			</select>
+		</div>
+		<div class="filter-actions">
+			<button class="btn-filter" id="btnApplyFilters">Filter</button>
+			<button class="btn-filter btn-reset" id="btnResetFilters">Reset</button>
+		</div>
+	</div>
+
+	<!-- Table -->
+	<div class="table-container">
+		<% if (bookings && bookings.length > 0) { %>
+		<table class="invoices-table">
+			<thead>
+				<tr>
+					<th>No. Booking</th>
+					<th>Event</th>
+					<th>Klien</th>
+					<th>Jadwal</th>
+					<th>Lokasi</th>
+					<th>Crew / PIC</th>
+					<th style="text-align: center;">Status</th>
+					<th style="text-align: center;">Kalender</th>
+					<th style="text-align: center;">Aksi</th>
+				</tr>
+			</thead>
+			<tbody>
+				<% bookings.forEach(b => {
+					const start = b.event_start ? new Date(b.event_start) : null;
+					const end = b.event_end ? new Date(b.event_end) : null;
+					const fmt = (d) => d ? d.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+					const syncLabel = { synced: 'Tersinkron', failed: 'Gagal', pending: 'Menunggu', skipped: 'Nonaktif' };
+				%>
+				<tr>
+					<td class="invoice-number" style="font-weight: 600; white-space: nowrap;">
+						<%= b.booking_number %>
+					</td>
+					<td style="font-weight: 500;"><%= b.title %></td>
+					<td style="color: var(--text-muted); font-size: 0.85rem;"><%= b.customer_name %></td>
+					<td style="white-space: nowrap; font-size: 0.85rem;">
+						<%= fmt(start) %><br />
+						<span style="color: var(--text-muted);">s/d <%= fmt(end) %></span>
+					</td>
+					<td style="color: var(--text-muted); font-size: 0.85rem;"><%= b.location || '-' %></td>
+					<td style="font-size: 0.85rem;"><%= b.crew_name || '-' %></td>
+					<td style="text-align: center;">
+						<span class="badge bstatus-<%= b.status %>"><%= b.status.toUpperCase() %></span>
+					</td>
+					<td style="text-align: center;">
+						<span class="badge sync-<%= b.sync_status %>" title="<%= b.sync_error || '' %>">
+							<%= syncLabel[b.sync_status] || b.sync_status %>
+						</span>
+					</td>
+					<td style="text-align: center;">
+						<div class="actions" style="display: flex; gap: 0.4rem; justify-content: center;">
+							<a href="/admin/bookings/<%= b.id %>/edit" class="btn-small">Edit</a>
+							<form action="/admin/bookings/<%= b.id %>/sync" method="POST" style="display:inline;">
+								<button type="submit" class="btn-small secondary" title="Sinkron ulang ke Google Calendar">Sync</button>
+							</form>
+							<form action="/admin/bookings/<%= b.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Hapus booking <%= b.booking_number %>? Event di Google Calendar juga akan dihapus.');">
+								<button type="submit" class="btn-small danger" title="Hapus booking">Hapus</button>
+							</form>
+						</div>
+					</td>
+				</tr>
+				<% }); %>
+			</tbody>
+		</table>
+
+		<!-- Pagination -->
+		<% if (totalPages > 1) {
+			const p = typeof pageNum !== 'undefined' ? pageNum : 1;
+			function buildPageUrl(pageNo) {
+				let q = `?page=${pageNo}`;
+				if (search) q += `&search=${encodeURIComponent(search)}`;
+				if (status) q += `&status=${encodeURIComponent(status)}`;
+				if (sort) q += `&sort=${encodeURIComponent(sort)}`;
+				return q;
+			}
+		%>
+		<div class="pagination">
+			<% if (p > 1) { %>
+			<a href="<%= buildPageUrl(1) %>">«</a>
+			<a href="<%= buildPageUrl(p - 1) %>">‹</a>
+			<% } else { %>
+			<span class="disabled">«</span>
+			<span class="disabled">‹</span>
+			<% } %>
+
+			<% for (let i = Math.max(1, p - 2); i <= Math.min(totalPages, p + 2); i++) { %>
+				<% if (i === p) { %>
+				<span class="active"><%= i %></span>
+				<% } else { %>
+				<a href="<%= buildPageUrl(i) %>"><%= i %></a>
+				<% } %>
+			<% } %>
+
+			<% if (p < totalPages) { %>
+			<a href="<%= buildPageUrl(p + 1) %>">›</a>
+			<a href="<%= buildPageUrl(totalPages) %>">»</a>
+			<% } else { %>
+			<span class="disabled">›</span>
+			<span class="disabled">»</span>
+			<% } %>
+		</div>
+		<% } %>
+		<% } else { %>
+		<div class="empty-state">
+			<div style="font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.4;"><i class="fa-regular fa-calendar"></i></div>
+			<p>Belum ada booking yang sesuai</p>
+			<a href="/admin/bookings/create" class="btn btn-primary" style="display: inline-flex; margin-top: 0.5rem;">
+				+ Buat Booking Baru
+			</a>
+		</div>
+		<% } %>
+	</div>
+</div>
+
+<script src="/js/booking-list.js"></script>

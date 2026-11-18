@@ -1,0 +1,9 @@
+<%- include('../../layouts/admin', {
+    currentPage: 'products',
+    pageTitle: product ? 'Edit Produk' : 'Tambah Produk',
+    additionalStyles: ['create-invoice', 'booking', 'product'],
+    contentFile: 'admin/product-form-content',
+    product,
+    categories,
+    error
+}) %>

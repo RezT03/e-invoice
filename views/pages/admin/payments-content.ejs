@@ -1,0 +1,182 @@
+<div class="history-container">
+	<!-- Page Header -->
+	<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+		<div>
+			<h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem;">
+				<i class="fa-solid fa-money-bill-wave"></i> Pembayaran &amp; Termin
+			</h2>
+			<p style="color: var(--text-muted); font-size: 0.85rem;">
+				Total <%= totalPayments || 0 %> pembayaran ditemukan
+			</p>
+		</div>
+		<div class="page-actions">
+			<a href="/admin/payments/create" class="btn btn-primary" style="font-size: 0.88rem; padding: 0.55rem 1.1rem;">
+				<i class="fa-solid fa-plus"></i> Catat Pembayaran
+			</a>
+		</div>
+	</div>
+
+	<% if (typeof success !== 'undefined' && success) { %>
+	<div class="booking-alert booking-alert-success">
+		<i class="fa-solid fa-circle-check"></i> <%= success %>
+	</div>
+	<% } %>
+	<% if (typeof error !== 'undefined' && error) { %>
+	<div class="booking-alert booking-alert-error">
+		<i class="fa-solid fa-circle-exclamation"></i> <%= error %>
+	</div>
+	<% } %>
+
+	<!-- Ringkasan -->
+	<div class="payment-summary">
+		<div class="payment-summary-item">
+			<span class="payment-summary-label">Total Nilai Pembayaran (sesuai filter)</span>
+			<span class="payment-summary-value">Rp <%= (totalAmount || 0).toLocaleString('id-ID') %></span>
+		</div>
+	</div>
+
+	<!-- Filters -->
+	<div class="filters booking-filters">
+		<div class="filter-group">
+			<label for="searchFilter">Cari</label>
+			<input type="text" id="searchFilter" placeholder="No. pembayaran, invoice, penerima, atau referensi..." value="<%= search || '' %>" />
+		</div>
+		<div class="filter-group">
+			<label for="methodFilter">Metode</label>
+			<select id="methodFilter">
+				<option value="">Semua Metode</option>
+				<option value="cash" <%= method === 'cash' ? 'selected' : '' %>>Tunai</option>
+				<option value="transfer" <%= method === 'transfer' ? 'selected' : '' %>>Transfer</option>
+				<option value="qris" <%= method === 'qris' ? 'selected' : '' %>>QRIS</option>
+				<option value="other" <%= method === 'other' ? 'selected' : '' %>>Lainnya</option>
+			</select>
+		</div>
+		<div class="filter-group">
+			<label for="sortFilter">Urutkan</label>
+			<select id="sortFilter">
+				<option value="payment_date_desc" <%= sort === 'payment_date_desc' ? 'selected' : '' %>>Tanggal Terbaru</option>
+				<option value="payment_date_asc" <%= sort === 'payment_date_asc' ? 'selected' : '' %>>Tanggal Terlama</option>
+				<option value="amount_desc" <%= sort === 'amount_desc' ? 'selected' : '' %>>Jumlah Terbesar</option>
+				<option value="amount_asc" <%= sort === 'amount_asc' ? 'selected' : '' %>>Jumlah Terkecil</option>
+				<option value="created_at_desc" <%= sort === 'created_at_desc' ? 'selected' : '' %>>Terakhir Dicatat</option>
+			</select>
+		</div>
+		<div class="filter-actions">
+			<button class="btn-filter" id="btnApplyFilters">Filter</button>
+			<button class="btn-filter btn-reset" id="btnResetFilters">Reset</button>
+		</div>
+	</div>
+
+	<!-- Table -->
+	<div class="table-container">
+		<% if (payments && payments.length > 0) { %>
+		<table class="invoices-table">
+			<thead>
+				<tr>
+					<th>No. Pembayaran</th>
+					<th>Invoice</th>
+					<th>Penerima</th>
+					<th>Tanggal</th>
+					<th style="text-align: center;">Metode</th>
+					<th style="text-align: right;">Jumlah</th>
+					<th style="text-align: center;">Bukti</th>
+					<th style="text-align: center;">Aksi</th>
+				</tr>
+			</thead>
+			<tbody>
+				<% payments.forEach(p => {
+					const fmtDate = (v) => v ? new Date(v).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+					const methodLabel = { cash: 'Tunai', transfer: 'Transfer', qris: 'QRIS', other: 'Lainnya' };
+				%>
+				<tr>
+					<td class="invoice-number" style="font-weight: 600; white-space: nowrap;">
+						<%= p.payment_number %>
+						<% if (p.reference) { %>
+						<div style="font-weight: 400; color: var(--text-muted); font-size: 0.78rem;">Ref: <%= p.reference %></div>
+						<% } %>
+					</td>
+					<td style="font-size: 0.85rem;">
+						<% if (p.invoice_id) { %>
+						<span style="font-weight: 600;"><%= p.invoice_number || '-' %></span>
+						<% } else { %><span style="color: var(--text-muted);">Tanpa invoice</span><% } %>
+					</td>
+					<td style="color: var(--text-muted); font-size: 0.85rem;"><%= p.recipient_name || '-' %></td>
+					<td style="white-space: nowrap; font-size: 0.85rem;"><%= fmtDate(p.payment_date) %></td>
+					<td style="text-align: center;">
+						<span class="badge pay-<%= p.method %>"><%= methodLabel[p.method] || p.method %></span>
+					</td>
+					<td style="text-align: right; font-weight: 600; white-space: nowrap;">
+						Rp <%= (Number(p.amount) || 0).toLocaleString('id-ID') %>
+					</td>
+					<td style="text-align: center;">
+						<% if (p.proof_path) { %>
+						<a href="/admin/payments/<%= p.id %>/proof" target="_blank" rel="noopener" class="btn-small secondary" title="Lihat bukti bayar<%= p.proof_original_name ? ' — ' + p.proof_original_name : '' %>">
+							<i class="fa-solid fa-image"></i> Preview
+						</a>
+						<% } else { %>
+						<span style="color: var(--text-muted);">—</span>
+						<% } %>
+					</td>
+					<td style="text-align: center;">
+						<div class="actions" style="display: flex; gap: 0.4rem; justify-content: center;">
+							<a href="/admin/payments/<%= p.id %>/edit" class="btn-small">Edit</a>
+							<form action="/admin/payments/<%= p.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Hapus pembayaran <%= p.payment_number %>?');">
+								<button type="submit" class="btn-small danger" title="Hapus pembayaran">Hapus</button>
+							</form>
+						</div>
+					</td>
+				</tr>
+				<% }); %>
+			</tbody>
+		</table>
+
+		<!-- Pagination -->
+		<% if (totalPages > 1) {
+			const p = typeof pageNum !== 'undefined' ? pageNum : 1;
+			function buildPageUrl(pageNo) {
+				let q = `?page=${pageNo}`;
+				if (search) q += `&search=${encodeURIComponent(search)}`;
+				if (method) q += `&method=${encodeURIComponent(method)}`;
+				if (sort) q += `&sort=${encodeURIComponent(sort)}`;
+				return q;
+			}
+		%>
+		<div class="pagination">
+			<% if (p > 1) { %>
+			<a href="<%= buildPageUrl(1) %>">«</a>
+			<a href="<%= buildPageUrl(p - 1) %>">‹</a>
+			<% } else { %>
+			<span class="disabled">«</span>
+			<span class="disabled">‹</span>
+			<% } %>
+
+			<% for (let i = Math.max(1, p - 2); i <= Math.min(totalPages, p + 2); i++) { %>
+				<% if (i === p) { %>
+				<span class="active"><%= i %></span>
+				<% } else { %>
+				<a href="<%= buildPageUrl(i) %>"><%= i %></a>
+				<% } %>
+			<% } %>
+
+			<% if (p < totalPages) { %>
+			<a href="<%= buildPageUrl(p + 1) %>">›</a>
+			<a href="<%= buildPageUrl(totalPages) %>">»</a>
+			<% } else { %>
+			<span class="disabled">›</span>
+			<span class="disabled">»</span>
+			<% } %>
+		</div>
+		<% } %>
+		<% } else { %>
+		<div class="empty-state">
+			<div style="font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.4;"><i class="fa-solid fa-money-bill-wave"></i></div>
+			<p>Belum ada pembayaran yang sesuai</p>
+			<a href="/admin/payments/create" class="btn btn-primary" style="display: inline-flex; margin-top: 0.5rem;">
+				+ Catat Pembayaran
+			</a>
+		</div>
+		<% } %>
+	</div>
+</div>
+
+<script src="/js/payment-list.js"></script>
