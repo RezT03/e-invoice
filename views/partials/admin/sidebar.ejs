@@ -13,7 +13,7 @@
 			href="/admin/invoice/dashboard"
 			class="nav-item <%= currentPage === 'dashboard' ? 'active' : '' %>"
 		>
-			<span class="icon">📊</span>
+			<span class="icon"><i class="fa-solid fa-chart-bar"></i></span>
 			<span class="label">Dashboard</span>
 		</a>
 
@@ -22,28 +22,28 @@
 			href="/admin/invoice/create"
 			class="nav-item <%= currentPage === 'create' ? 'active' : '' %>"
 		>
-			<span class="icon">➕</span>
+			<span class="icon"><i class="fa-solid fa-plus"></i></span>
 			<span class="label">Buat Baru</span>
 		</a>
 		<a
 			href="/admin/invoice/history?document_type=invoice"
 			class="nav-item <%= currentPage === 'history' && activeDocType !== 'quotation' ? 'active' : '' %>"
 		>
-			<span class="icon">🧾</span>
+			<span class="icon"><i class="fa-regular fa-file-lines"></i></span>
 			<span class="label">Invoice</span>
 		</a>
 		<a
 			href="/admin/invoice/history?document_type=quotation"
 			class="nav-item <%= currentPage === 'history' && activeDocType === 'quotation' ? 'active' : '' %>"
 		>
-			<span class="icon">📋</span>
+			<span class="icon"><i class="fa-solid fa-hand-holding-dollar"></i></span>
 			<span class="label">Penawaran Harga</span>
 		</a>
 	</nav>
 
 	<div class="sidebar-footer">
 		<a href="/auth/logout" class="logout-btn">
-			<span class="icon">🚪</span>
+			<span class="icon"><i class="fa-solid fa-arrow-right-from-bracket"></i></span>
 			<span class="label">Logout</span>
 		</a>
 	</div>

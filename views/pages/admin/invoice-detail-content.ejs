@@ -289,7 +289,7 @@
 						<% } %>
 					</select>
 					<% if (!isQuotation) { %>
-					<div id="paidDateWrapper" style="<%= invoice.status === 'paid' ? '' : 'display:none;' %>">
+					<div id="paidDateWrapper" <%= invoice.status === 'paid' ? '' : 'hidden' %>>
 						<label style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.25rem; display: block;">Tanggal Lunas:</label>
 						<input
 							type="date"
