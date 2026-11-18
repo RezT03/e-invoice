@@ -105,7 +105,16 @@
 	border-radius: var(--radius);
 	box-shadow: var(--shadow-sm);
 	border: 1px solid var(--border);
-	overflow: hidden;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.page-actions,
+.filter-actions {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	align-items: center;
 }
 
 .invoices-table {
@@ -143,6 +152,7 @@
 .actions {
 	display: flex;
 	gap: 0.4rem;
+	flex-wrap: wrap;
 }
 
 .btn-small {
@@ -181,6 +191,7 @@
 	padding: 1.25rem;
 	justify-content: center;
 	align-items: center;
+	flex-wrap: wrap;
 	background: var(--white);
 	border-top: 1px solid var(--border);
 }
@@ -236,4 +247,19 @@
 	.table-container {
 		overflow-x: auto;
 	}
+	.filter-actions,
+	.page-actions {
+		width: 100%;
+	}
+	.btn-filter {
+		flex: 1 1 140px;
+	}
+}
+
+@media (max-width: 480px) {
+	.history-container { padding: 0.75rem; }
+	.filters { padding: 1rem; }
+	.btn-filter { width: 100%; }
+	.invoices-table th,
+	.invoices-table td { padding: 0.6rem 0.5rem; }
 }

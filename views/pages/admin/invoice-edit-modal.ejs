@@ -324,5 +324,31 @@
 		justify-content: flex-end;
 		gap: 0.75rem;
 		margin-top: 1.25rem;
+		flex-wrap: wrap;
+	}
+
+	@media (max-width: 768px) {
+		.modal-content {
+			width: calc(100% - 1rem);
+			max-width: none;
+			margin: 0.5rem auto;
+			max-height: calc(100vh - 1rem);
+		}
+		.modal-header,
+		.modal-body { padding: 1rem; }
+		.item-row,
+		.tax-row { grid-template-columns: 1fr 1fr; }
+		.item-row > *,
+		.tax-row > * { min-width: 0; }
+		.modal-actions .btn { flex: 1 1 140px; justify-content: center; }
+	}
+
+	@media (max-width: 480px) {
+		.item-row,
+		.tax-row,
+		.discount-row { grid-template-columns: 1fr; }
+		.modal-actions .btn { width: 100%; }
+		.remove-btn { width: 100%; }
+		.total-display { text-align: left; }
 	}
 </style>

@@ -7,13 +7,15 @@ document.addEventListener("DOMContentLoaded", function () {
 	if (!hamburger || !sidebar || !overlay) return
 
 	function toggleSidebar() {
-		sidebar.classList.toggle("active")
-		overlay.classList.toggle("active")
+		const isOpen = sidebar.classList.toggle("active")
+		overlay.classList.toggle("active", isOpen)
+		document.body.classList.toggle("sidebar-open", isOpen)
 	}
 
 	function closeSidebar() {
 		sidebar.classList.remove("active")
 		overlay.classList.remove("active")
+		document.body.classList.remove("sidebar-open")
 	}
 
 	hamburger.addEventListener("click", toggleSidebar)

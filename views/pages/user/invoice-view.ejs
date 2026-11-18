@@ -203,6 +203,11 @@
 				color: var(--text);
 			}
 
+			.table-container {
+				overflow-x: auto;
+				-webkit-overflow-scrolling: touch;
+			}
+
 			.items-table {
 				width: 100%;
 				margin-top: 1.5rem;
@@ -305,12 +310,28 @@
 			}
 
 			@media (max-width: 768px) {
-				.invoice-header { grid-template-columns: 1fr; }
-				.invoice-info { text-align: left; }
-				.header { flex-direction: column; gap: 1rem; }
+				.container { margin: 1rem auto; }
+				.header { flex-direction: column; gap: 1rem; padding: 1rem; }
+				.header-left h1 { font-size: 1.15rem; }
 				.header-right { flex-direction: column; width: 100%; }
 				.btn { width: 100%; justify-content: center; }
-				.total-box { width: 100%; }
+				.invoice-box { padding: 1.25rem; }
+				.invoice-header { grid-template-columns: 1fr; gap: 1.25rem; }
+				.invoice-info { text-align: left; }
+				.company-info h3 { font-size: 1.1rem; overflow-wrap: anywhere; }
+				.invoice-number { font-size: 1.25rem; overflow-wrap: anywhere; }
+				.items-table { min-width: 520px; }
+				.items-table th,
+				.items-table td { padding: 0.6rem; }
+				.total-section { justify-content: stretch; }
+				.total-box { width: 100%; min-width: 0; }
+				.total-line.grand strong { font-size: 1.1rem; }
+				.bank-details { padding: 1rem; }
+			}
+
+			@media (max-width: 480px) {
+				.invoice-box { padding: 1rem; }
+				.container { padding: 0 0.75rem; }
 			}
 		</style>
 	</head>
@@ -389,6 +410,7 @@
 				</div>
 
 				<!-- Tabel Item -->
+				<div class="table-container">
 				<table class="items-table">
 					<thead>
 						<tr>
@@ -463,6 +485,7 @@
 						%>
 					</tbody>
 				</table>
+				</div>
 
 				<!-- Total Section -->
 				<div class="total-section">

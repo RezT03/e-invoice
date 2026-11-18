@@ -3,7 +3,7 @@
 	<!-- Header dengan nomor invoice dan aksi -->
 	<div class="detail-header">
 		<div>
-			<div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem;">
+			<div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
 				<span class="invoice-number-display"><%= invoice.invoice_number %></span>
 				<% if (isQuotation) { %>
 					<span class="badge" style="background: #fff4e5; color: #d97706; font-size: 0.8rem; padding: 0.3rem 0.75rem;">
@@ -21,7 +21,7 @@
 		</div>
 		<div class="action-buttons">
 			<% if (isQuotation) { %>
-				<button class="btn btn-convert" onclick="convertToInvoice()" style="background: #0356fc; color: white;">
+				<button class="btn btn-convert" onclick="convertToInvoice()">
 					<i class="fa-solid fa-arrow-right-arrow-left"></i> Konversi ke Invoice
 				</button>
 			<% } %>
@@ -108,6 +108,7 @@
 			<div class="detail-card">
 				<h3>Daftar Barang / Jasa</h3>
 				<% if (invoice.items && invoice.items.length > 0) { %>
+				<div class="table-container">
 				<table class="items-table">
 					<thead>
 						<tr>
@@ -228,6 +229,7 @@
 						</tr>
 					</tbody>
 				</table>
+				</div>
 				<% } else { %>
 				<p style="color: var(--text-muted);">Tidak ada item</p>
 				<% } %>
@@ -260,7 +262,7 @@
 			<!-- Total Ringkasan -->
 			<div class="detail-card">
 				<h3>Total Nilai</h3>
-				<div style="font-size: 1.6rem; color: var(--primary); font-weight: 800; letter-spacing: -0.5px;">
+				<div style="font-size: clamp(1.15rem, 4vw, 1.6rem); color: var(--primary); font-weight: 800; letter-spacing: -0.5px; overflow-wrap: anywhere;">
 					Rp <%= Math.round(invoice.total_amount || 0).toLocaleString('id-ID') %>
 				</div>
 				<div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">

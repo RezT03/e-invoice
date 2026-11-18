@@ -12,6 +12,8 @@
 			crossorigin="anonymous"
 			referrerpolicy="no-referrer"
 		/>
+		<!-- Komponen tombol/badge dipakai semua halaman admin, dimuat sebelum layout -->
+		<link rel="stylesheet" href="/css/admin-style.css" />
 		<link rel="stylesheet" href="/css/admin-layout.css" />
 		<% if (additionalStyles) { %> <% additionalStyles.forEach(style => { %>
 		<link rel="stylesheet" href="/css/<%= style %>.css" />
@@ -30,11 +32,9 @@
 				<!-- Top Bar -->
 				<%- include('../partials/admin/topbar', { 
 					pageTitle, 
-					userName: typeof userName !== 'undefined' ? displayName : 'Admin User', 
-					userInitial: typeof
-					userInitial !== 'undefined' ? generatedInitial : 'A', 
-					showUserInfo: typeof
-					showUserInfo !== 'undefined' ? showUserInfo : true 
+					userName: typeof userName !== 'undefined' ? userName : (typeof adminName !== 'undefined' ? adminName : 'Admin User'), 
+					userInitial: typeof userInitial !== 'undefined' ? userInitial : 'A', 
+					showUserInfo: typeof showUserInfo !== 'undefined' ? showUserInfo : true 
 			}) %>
 
 				<!-- Page Content -->

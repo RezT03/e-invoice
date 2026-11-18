@@ -211,6 +211,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
   margin-bottom: 0.5rem;
   padding: 0.5rem 0.75rem;
   background: var(--primary);
@@ -219,7 +220,8 @@
 }
 
 .group-name-input {
-  flex: 1;
+  flex: 1 1 140px;
+  min-width: 120px;
   background: rgba(255,255,255,0.15);
   border: 1px solid rgba(255,255,255,0.3);
   border-radius: 4px;
@@ -532,6 +534,16 @@
 .btn-cancel:hover { background: var(--bg); color: var(--text); }
 
 /* ===================== RESPONSIVE ===================== */
+@media (max-width: 1024px) {
+  .create-container { padding: 1.25rem; }
+  .form-container { padding: 1.5rem; }
+  .form-row.three-col { grid-template-columns: 1fr 1fr; }
+  .item-row {
+    grid-template-columns: 2fr 0.8fr 0.7fr 1.2fr 0.9fr auto;
+    gap: 0.4rem;
+  }
+}
+
 @media (max-width: 768px) {
   .create-container { padding: 1rem; }
   .form-container { padding: 1.25rem; }
@@ -545,17 +557,38 @@
 
   .item-row {
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto;
   }
 
-  .item-row input:first-child { grid-column: 1 / -1; }
+  .item-row .item-description,
+  .item-row .item-price-container { grid-column: 1 / -1; }
+  .item-row .item-total { grid-column: 1; text-align: left; }
+  .item-row .btn-remove { grid-column: 2; justify-self: end; }
 
   .item-price-container { grid-template-columns: 1fr 1fr; }
-  .item-total { text-align: left; }
 
   .tax-row { grid-template-columns: 1fr auto; }
   .tax-row input:first-child { grid-column: 1 / -1; }
 
   .form-actions { flex-direction: column; }
   .btn-submit, .btn-cancel { width: 100%; text-align: center; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  .create-container { padding: 0.75rem; }
+  .form-container { padding: 1rem; }
+  .items-section { padding: 0.75rem; }
+  .group-items-container { margin-left: 0; padding-left: 0.35rem; }
+
+  .item-row,
+  .tax-row { grid-template-columns: 1fr; }
+
+  .item-row > *,
+  .tax-row > * { grid-column: 1 / -1 !important; }
+
+  .item-row .btn-remove { justify-self: stretch; width: 100%; }
+
+  .group-header { flex-direction: column; align-items: stretch; }
+  .group-header .group-name-input { width: 100%; }
+  .group-header .btn-copy-group,
+  .group-header .btn-remove-group { flex: 1; }
 }

@@ -558,8 +558,30 @@ body {
 .btn-danger    { background: var(--secondary-light); color: var(--secondary); border: 1px solid #fca5a5; }
 .btn-danger:hover { background: #ffe0e4; }
 
-.btn-convert   { background: #d97706; color: white; }
-.btn-convert:hover { background: #b45309; }
+.btn-convert   { background: var(--primary); color: white; }
+.btn-convert:hover { background: var(--primary-dark); }
+
+/* Small buttons used by dynamically rendered edit rows */
+.btn-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.6rem;
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid rgba(3,86,252,0.25);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-sm:hover { background: var(--primary); color: white; }
+
+/* Prevent background scrolling while the mobile drawer is open */
+body.sidebar-open { overflow: hidden; }
 
 /* Empty State */
 .empty-state {
@@ -884,6 +906,21 @@ body {
     align-items: flex-start;
     gap: 0.5rem;
   }
+
+  .top-bar { flex-wrap: wrap; }
+  .top-bar h1 { font-size: 1.1rem; overflow-wrap: anywhere; }
+  .user-info { margin-left: auto; }
+
+  .action-buttons .btn {
+    flex: 1 1 140px;
+    justify-content: center;
+  }
+
+  .detail-header > div:first-child { min-width: 0; }
+  .invoice-number-display { font-size: 1.15rem; overflow-wrap: anywhere; }
+  .share-link-box input { min-width: 0; }
+  .value-amount { font-size: 1.5rem; }
+  .empty-state { padding: 1.5rem 1rem; }
 }
 
 @media (max-width: 480px) {
@@ -891,7 +928,7 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .invoices-table font-size: 0.82rem;
+  .invoices-table { font-size: 0.82rem; }
 
   .invoices-table th,
   .invoices-table td {
