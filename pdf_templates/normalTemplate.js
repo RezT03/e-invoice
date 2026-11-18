@@ -25,8 +25,9 @@ module.exports = async function (invoice) {
 
 			const doc = new PDFDocument({
 				size: "A4",
-				margin: 50,
-				bufferPages: true, // penting untuk multipage
+				// Ruang bawah disisihkan untuk footer agar konten tidak menimpanya
+				margins: { top: 50, bottom: 60, left: 50, right: 50 },
+				bufferPages: true // semua halaman ditampung dulu agar total halaman bisa dihitung
 			})
 
 			const buffers = []
@@ -37,7 +38,9 @@ module.exports = async function (invoice) {
 			const PAGE_WIDTH = doc.page.width   // 595
 			const PAGE_HEIGHT = doc.page.height // 842
 			const MARGIN = 50
+			const BOTTOM_MARGIN = 60
 			const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2 // 495
+			const CONTENT_BOTTOM = PAGE_HEIGHT - BOTTOM_MARGIN // 782
 
 			// Column widths for items table
 			const col = {
@@ -48,10 +51,6 @@ module.exports = async function (invoice) {
 				price: { x: MARGIN + 315, w: 90 },
 				total: { x: MARGIN + 405, w: 90 },
 			}
-
-			// Track current page number
-			let pageNumber = 1
-			let isFirstPage = true
 
 			// ======================= HELPERS =======================
 
@@ -87,42 +86,55 @@ module.exports = async function (invoice) {
 				doc.moveTo(MARGIN, y).lineTo(MARGIN + CONTENT_WIDTH, y).lineWidth(width).stroke(color)
 			}
 
-			// ======================= PAGE HEADER (compact, appears on every page except first) =======================
+			// ======================= HEADER & FOOTER =======================
+			// Header/footer digambar di akhir, setelah semua konten selesai,
+			// supaya nomor halaman dan total halaman selalu sesuai isi dokumen.
 
 			function drawPageHeader() {
-				// Minimal repeat header on page 2+
-				if (!isFirstPage) {
-					doc.fontSize(8).font("Helvetica").fillColor(COLOR_MUTED)
-					doc.text(
-						`${isQuotation ? "PENAWARAN HARGA" : "INVOICE"} No. ${invoice.invoice_number}  —  ${invoice.company_name}`,
-						MARGIN,
-						MARGIN - 20,
-						{ width: CONTENT_WIDTH, align: "center" }
-					)
-					drawRule(MARGIN - 5, COLOR_BORDER, 0.5)
-				}
+				// Header ringkas untuk halaman 2 ke atas
+				doc.fontSize(8).font("Helvetica").fillColor(COLOR_MUTED)
+				doc.text(
+					`${isQuotation ? "PENAWARAN HARGA" : "INVOICE"} No. ${invoice.invoice_number}  —  ${invoice.company_name}`,
+					MARGIN,
+					MARGIN - 20,
+					{ width: CONTENT_WIDTH, align: "center" }
+				)
+				drawRule(MARGIN - 5, COLOR_BORDER, 0.5)
 			}
 
-			// ======================= FOOTER (page number) =======================
-
-			function drawPageFooter() {
+			function drawPageFooter(pageNumber, totalPages) {
 				const footerY = PAGE_HEIGHT - 35
 				doc.fontSize(8).font("Helvetica").fillColor(COLOR_MUTED)
-				doc.text(`Halaman ${pageNumber}`, MARGIN, footerY, { width: CONTENT_WIDTH, align: "right" })
+				doc.text(`Halaman ${pageNumber}/${totalPages}`, MARGIN, footerY, {
+					width: CONTENT_WIDTH,
+					align: "right",
+				})
 				drawRule(footerY - 8, COLOR_BORDER, 0.5)
+			}
+
+			function finalizePages() {
+				const range = doc.bufferedPageRange()
+				for (let i = range.start; i < range.start + range.count; i++) {
+					doc.switchToPage(i)
+
+					// Footer digambar di area margin, jadi sesuaikan batas bawah
+					// sementara agar PDFKit tidak membuat halaman baru.
+					const bottomMargin = doc.page.margins.bottom
+					doc.page.margins.bottom = 0
+
+					const pageNumber = i - range.start + 1
+					if (pageNumber > 1) drawPageHeader()
+					drawPageFooter(pageNumber, range.count)
+
+					doc.page.margins.bottom = bottomMargin
+				}
 			}
 
 			// ======================= CHECK & NEW PAGE =======================
 
-			// Returns true if we just added a new page
-			function checkNewPage(neededHeight, currentY) {
-				const footerReserve = 50
-				if (currentY + neededHeight > PAGE_HEIGHT - footerReserve) {
-					drawPageFooter()
+			function ensureSpace(neededHeight, currentY) {
+				if (currentY + neededHeight > CONTENT_BOTTOM) {
 					doc.addPage()
-					pageNumber++
-					isFirstPage = false
-					drawPageHeader()
 					return MARGIN + 15
 				}
 				return currentY
@@ -278,7 +290,7 @@ module.exports = async function (invoice) {
 			// ======================= ITEMS TABLE =======================
 
 			// Table header
-			y = checkNewPage(30, y)
+			y = ensureSpace(30, y)
 			y = drawTableRow(y, [
 				{ x: col.no.x,    w: col.no.w,    text: "No",       align: "center" },
 				{ x: col.desc.x,  w: col.desc.w,  text: "DESKRIPSI BARANG/JASA" },
@@ -296,7 +308,7 @@ module.exports = async function (invoice) {
 			for (const item of items) {
 				if (item.is_group) {
 					// Group header row
-					y = checkNewPage(24, y)
+					y = ensureSpace(24, y)
 					y = drawTableRow(y, [
 						{ x: col.no.x, w: CONTENT_WIDTH, text: `  ${item.group_name || ""}`, align: "left" },
 					], { isGroupHeader: true, rowHeight: 20 })
@@ -311,7 +323,7 @@ module.exports = async function (invoice) {
 						const descHeight = doc.heightOfString(desc, { width: col.desc.w - 4, fontSize: 8 })
 						const rh = Math.max(descHeight + 10, 20)
 
-						y = checkNewPage(rh, y)
+						y = ensureSpace(rh, y)
 
 						globalRowIndex++
 						const lineTotal = (sub.quantity || sub.qty || 0) * (sub.price || sub.unit_price || 0)
@@ -328,7 +340,7 @@ module.exports = async function (invoice) {
 					}
 
 					// Group subtotal row
-					y = checkNewPage(20, y)
+					y = ensureSpace(20, y)
 					y = drawTableRow(y, [
 						{ x: col.no.x,    w: col.no.w + col.desc.w + col.qty.w + col.unit.w + col.price.w,
 						  text: `Subtotal ${item.group_name || ""}`, align: "right" },
@@ -341,7 +353,7 @@ module.exports = async function (invoice) {
 					const descHeight = doc.heightOfString(desc, { width: col.desc.w - 4, fontSize: 8 })
 					const rh = Math.max(descHeight + 10, 20)
 
-					y = checkNewPage(rh, y)
+					y = ensureSpace(rh, y)
 
 					globalRowIndex++
 					const lineTotal = (item.quantity || item.qty || 0) * (item.price || item.unit_price || 0)
@@ -366,7 +378,7 @@ module.exports = async function (invoice) {
 			const summaryW = 90
 
 			function drawSummaryLine(label, value, isBold = false, color = COLOR_TEXT) {
-				y = checkNewPage(18, y)
+				y = ensureSpace(18, y)
 				doc.fontSize(8.5)
 					.font(isBold ? "Helvetica-Bold" : "Helvetica")
 					.fillColor(COLOR_MUTED)
@@ -395,7 +407,7 @@ module.exports = async function (invoice) {
 			})
 
 			// Grand total line
-			y = checkNewPage(28, y)
+			y = ensureSpace(28, y)
 			drawRule(y, COLOR_BORDER, 0.5)
 			y += 5
 			doc.fontSize(10).font("Helvetica-Bold").fillColor(COLOR_MUTED)
@@ -408,7 +420,7 @@ module.exports = async function (invoice) {
 
 			// Always keep signature on last page
 			const signatureHeight = 120
-			y = checkNewPage(signatureHeight, y)
+			y = ensureSpace(signatureHeight, y)
 			y += 15
 
 			// Left: "Hormat Kami" + QR / TTD
@@ -450,8 +462,8 @@ module.exports = async function (invoice) {
 				doc.text(`A/N: ${invoice.bank_account_name}`, bankX, y)
 			}
 
-			// Draw footer on last page
-			drawPageFooter()
+			// Gambar header/footer di semua halaman setelah konten selesai
+			finalizePages()
 
 			doc.end()
 		} catch (error) {

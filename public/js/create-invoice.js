@@ -43,7 +43,7 @@ function toggleDocType() {
 	if (isQuotation) {
 		if (notice) notice.style.display = "block"
 		if (heading) heading.textContent = "Informasi Penawaran Harga"
-		if (submitBtn) submitBtn.textContent = "💾 Simpan Penawaran"
+		if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Penawaran'
 		if (statusGroup) statusGroup.closest(".form-group").style.display = "none"
 		if (statusQuotationGroup) statusQuotationGroup.style.display = "flex"
 		if (dueDateLabel) dueDateLabel.textContent = "Berlaku Hingga"
@@ -55,7 +55,7 @@ function toggleDocType() {
 	} else {
 		if (notice) notice.style.display = "none"
 		if (heading) heading.textContent = "Informasi Invoice"
-		if (submitBtn) submitBtn.textContent = "💾 Simpan Invoice"
+		if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Invoice'
 		if (statusGroup) statusGroup.closest(".form-group").style.display = "flex"
 		if (statusQuotationGroup) statusQuotationGroup.style.display = "none"
 		if (dueDateLabel) dueDateLabel.textContent = "Tanggal Jatuh Tempo"
@@ -115,8 +115,8 @@ function addGroup() {
         onchange="updateItems()"
         oninput="updateItems()"
       >
-      <button type="button" class="btn-copy-group" onclick="copyGroup(this)">📋 Copy Group</button>
-      <button type="button" class="btn-remove-group" onclick="removeGroup(this)">🗑 Hapus Group</button>
+      <button type="button" class="btn-copy-group" onclick="copyGroup(this)"><i class="fa-solid fa-copy"></i> Copy Group</button>
+      <button type="button" class="btn-remove-group" onclick="removeGroup(this)"><i class="fa-solid fa-trash"></i> Hapus Group</button>
     </div>
     <div class="group-items-container" id="${groupId}_items"></div>
     <div style="padding: 0.4rem 0 0.4rem 0.5rem;">
@@ -163,8 +163,8 @@ function copyGroup(btn) {
         onchange="updateItems()"
         oninput="updateItems()"
       >
-      <button type="button" class="btn-copy-group" onclick="copyGroup(this)">📋 Copy Group</button>
-      <button type="button" class="btn-remove-group" onclick="removeGroup(this)">🗑 Hapus Group</button>
+      <button type="button" class="btn-copy-group" onclick="copyGroup(this)"><i class="fa-solid fa-copy"></i> Copy Group</button>
+      <button type="button" class="btn-remove-group" onclick="removeGroup(this)"><i class="fa-solid fa-trash"></i> Hapus Group</button>
     </div>
     <div class="group-items-container" id="${newGroupId}_items"></div>
     <div style="padding: 0.4rem 0 0.4rem 0.5rem;">
@@ -259,7 +259,7 @@ function createItemRow(desc, unit, qty, price, priceType) {
       <input type="number" placeholder="Harga" class="item-price" value="${escapeHtml(price)}" min="0" step="0.01" oninput="updateItemTotal(this)">
     </div>
     <div class="item-total">${qty && price ? formatRupiah(parseFloat(qty) * parseFloat(price)) : "Rp 0"}</div>
-    <button type="button" class="btn-remove" onclick="removeItem(this)" title="Hapus item">✕</button>
+    <button type="button" class="btn-remove" onclick="removeItem(this)" title="Hapus item"><i class="fa-solid fa-xmark"></i></button>
   `
 	return row
 }
@@ -544,7 +544,7 @@ function addTax() {
 	row.innerHTML = `
     <input type="text" placeholder="Nama pajak/biaya (mis: PPN)" class="tax-name">
     <input type="number" placeholder="Persentase %" class="tax-percentage" value="" min="0" max="100" step="0.01">
-    <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updateTaxes();" title="Hapus">✕</button>
+    <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updateTaxes();" title="Hapus"><i class="fa-solid fa-xmark"></i></button>
   `
 
 	container.appendChild(row)
@@ -627,7 +627,9 @@ async function handleFormSubmit(e) {
 			alert("Error: " + (result.error || "Terjadi kesalahan"))
 			if (submitBtn) {
 				submitBtn.disabled = false
-				submitBtn.textContent = isQuotation ? "💾 Simpan Penawaran" : "💾 Simpan Invoice"
+				submitBtn.innerHTML = isQuotation
+					? '<i class="fa-solid fa-floppy-disk"></i> Simpan Penawaran'
+					: '<i class="fa-solid fa-floppy-disk"></i> Simpan Invoice'
 			}
 		}
 	} catch (error) {
@@ -635,7 +637,7 @@ async function handleFormSubmit(e) {
 		alert("Error: " + error.message)
 		if (submitBtn) {
 			submitBtn.disabled = false
-			submitBtn.textContent = "💾 Simpan"
+			submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan'
 		}
 	}
 }

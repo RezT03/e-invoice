@@ -5,24 +5,24 @@
 			<!-- Toggle Jenis Dokumen -->
 			<div class="form-section" style="padding-bottom: 1.25rem; margin-bottom: 1.25rem;">
 				<div class="section-title">
-					<div class="section-icon">📄</div>
+					<div class="section-icon"><i class="fa-regular fa-file"></i></div>
 					<h3>Jenis Dokumen</h3>
 				</div>
 				<div class="doc-type-toggle">
 					<input type="radio" name="document_type" id="type_invoice" class="radio-invoice" value="invoice" checked onchange="toggleDocType()">
-					<label for="type_invoice">🧾 Invoice</label>
+					<label for="type_invoice"><i class="fa-solid fa-receipt"></i> Invoice</label>
 					<input type="radio" name="document_type" id="type_quotation" class="radio-quotation" value="quotation" onchange="toggleDocType()">
-					<label for="type_quotation">📋 Penawaran Harga</label>
+					<label for="type_quotation"><i class="fa-solid fa-clipboard-list"></i> Penawaran Harga</label>
 				</div>
 				<div id="docTypeNotice" class="tip-text" style="margin-top: 0.75rem; display: none;">
-					📋 Mode <strong>Penawaran Harga</strong> — dokumen tidak menyertakan informasi rekening bank. Penawaran bisa dikonversi menjadi Invoice kapan saja.
+					<i class="fa-solid fa-circle-info"></i> Mode <strong>Penawaran Harga</strong> — dokumen tidak menyertakan informasi rekening bank. Penawaran bisa dikonversi menjadi Invoice kapan saja.
 				</div>
 			</div>
 
 			<!-- Informasi Perusahaan -->
 			<div class="form-section">
 				<div class="section-title">
-					<div class="section-icon">🏢</div>
+					<div class="section-icon"><i class="fa-solid fa-building"></i></div>
 					<h3>Informasi Perusahaan</h3>
 				</div>
 				<div class="form-row">
@@ -41,7 +41,7 @@
 			<!-- Informasi Nomor & Tanggal -->
 			<div class="form-section">
 				<div class="section-title">
-					<div class="section-icon">🗓️</div>
+					<div class="section-icon"><i class="fa-regular fa-calendar-days"></i></div>
 					<h3 id="docTypeHeading">Informasi Invoice</h3>
 				</div>
 				<div class="form-row three-col">
@@ -89,7 +89,7 @@
 			<!-- Data Penerima -->
 			<div class="form-section">
 				<div class="section-title">
-					<div class="section-icon">👤</div>
+					<div class="section-icon"><i class="fa-regular fa-user"></i></div>
 					<h3>Data Penerima</h3>
 				</div>
 				<div class="form-row">
@@ -139,11 +139,11 @@
 			<!-- Daftar Barang/Jasa dengan Grouping -->
 			<div class="form-section">
 				<div class="section-title">
-					<div class="section-icon">📦</div>
+					<div class="section-icon"><i class="fa-solid fa-box"></i></div>
 					<h3>Daftar Barang / Jasa</h3>
 				</div>
 				<div class="tip-text">
-					💡 <strong>Tips:</strong> Gunakan <strong>Group</strong> untuk mengelompokkan item (mis: I. Musik, II. FI). Copy group untuk menduplikat struktur yang mirip. Paste dari Excel langsung ke kolom Deskripsi.
+					<i class="fa-solid fa-lightbulb"></i> <strong>Tips:</strong> Gunakan <strong>Group</strong> untuk mengelompokkan item (mis: I. Musik, II. FI). Copy group untuk menduplikat struktur yang mirip. Paste dari Excel langsung ke kolom Deskripsi.
 				</div>
 
 				<div class="items-section">
@@ -165,7 +165,7 @@
 			<!-- Pajak & Biaya -->
 			<div class="form-section">
 				<div class="section-title">
-					<div class="section-icon">📊</div>
+					<div class="section-icon"><i class="fa-solid fa-chart-column"></i></div>
 					<h3>Pajak & Biaya Tambahan <span style="font-weight:400; color: var(--text-muted); font-size:0.85rem;">(opsional)</span></h3>
 				</div>
 				<div class="items-section">
@@ -180,7 +180,7 @@
 			<!-- Diskon -->
 			<div class="form-section">
 				<div class="section-title">
-					<div class="section-icon">🏷️</div>
+					<div class="section-icon"><i class="fa-solid fa-tag"></i></div>
 					<h3>Diskon <span style="font-weight:400; color: var(--text-muted); font-size:0.85rem;">(opsional)</span></h3>
 				</div>
 				<div class="discount-section">
@@ -216,7 +216,7 @@
 			<!-- Ringkasan Total -->
 			<div class="form-section">
 				<div class="section-title">
-					<div class="section-icon">💰</div>
+					<div class="section-icon"><i class="fa-solid fa-money-bill"></i></div>
 					<h3>Ringkasan</h3>
 				</div>
 				<div class="summary-box">
@@ -236,7 +236,7 @@
 			<!-- Actions -->
 			<div class="form-actions">
 				<button type="submit" class="btn-submit" id="submitBtn">
-					💾 Simpan Invoice
+					<i class="fa-solid fa-floppy-disk"></i> Simpan Invoice
 				</button>
 				<a href="/admin/invoice/history" class="btn-cancel">
 					Batal

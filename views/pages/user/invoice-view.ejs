@@ -7,6 +7,13 @@
 		<title>
 			<%= isQuotation ? 'Penawaran' : 'Invoice' %> <%= invoice.invoice_number %> - <%= invoice.company_name %>
 		</title>
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css"
+			integrity="sha512-QeR2VH+lsBE5LSAe1Q5EnTBbe7XTBubt8dG93Y7gidSgdMCr8nVqKcfKAMyN96SV8KDbZVTDXChatu5G2KQGzg=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		/>
 		<link rel="stylesheet" href="/css/style.css" />
 		<style>
 			:root {
@@ -317,7 +324,7 @@
 			data-is-admin="<%= typeof isAdmin !== 'undefined' ? (isAdmin ? 'true' : 'false') : 'false' %>"
 		>
 			<div class="header-left">
-				<h1><%= isQuotation ? '📋 Penawaran Harga' : '🧾 Invoice' %></h1>
+				<h1><i class="<%= isQuotation ? 'fa-solid fa-clipboard-list' : 'fa-solid fa-receipt' %>"></i> <%= isQuotation ? 'Penawaran Harga' : 'Invoice' %></h1>
 			</div>
 			<div class="header-right btn-print-area">
 				<select
@@ -348,7 +355,7 @@
 						<% } %>
 						<h3><%= invoice.company_name %></h3>
 						<p><%= invoice.company_address %></p>
-						<p>📞 <%= invoice.company_phone %></p>
+						<p><i class="fa-solid fa-phone"></i> <%= invoice.company_phone %></p>
 					</div>
 					<div class="invoice-info">
 						<div class="invoice-number"><%= invoice.invoice_number %></div>
@@ -371,7 +378,7 @@
 					<h4>Kepada:</h4>
 					<p style="font-weight: 700; font-size: 1.05rem;"><%= invoice.recipient_name %></p>
 					<% if (invoice.recipient_phone) { %>
-					<p>📞 <%= invoice.recipient_phone %></p>
+					<p><i class="fa-solid fa-phone"></i> <%= invoice.recipient_phone %></p>
 					<% } %>
 					<% if (invoice.recipient_npwp) { %>
 					<p>NPWP: <%= invoice.recipient_npwp %></p>

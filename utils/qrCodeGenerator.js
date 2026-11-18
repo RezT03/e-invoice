@@ -39,13 +39,13 @@ async function generateInvoiceQRCode(
  */
 function formatQRText(share_token, baseUrl = "http://localhost:3000") {
 	// Debug log
-	console.log("🔍 formatQRText Debug:")
+	console.log("[QR] formatQRText Debug:")
 	console.log("  - share_token:", share_token)
 	console.log("  - baseUrl:", baseUrl)
 
 	// Jika share_token tidak ada, kembalikan string kosong
 	if (!share_token) {
-		console.warn("⚠️  share_token kosong/null!")
+		console.warn("[QR] share_token kosong/null!")
 		return ""
 	}
 

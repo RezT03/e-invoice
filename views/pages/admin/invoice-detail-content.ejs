@@ -7,11 +7,11 @@
 				<span class="invoice-number-display"><%= invoice.invoice_number %></span>
 				<% if (isQuotation) { %>
 					<span class="badge" style="background: #fff4e5; color: #d97706; font-size: 0.8rem; padding: 0.3rem 0.75rem;">
-						📋 PENAWARAN HARGA
+						<i class="fa-solid fa-clipboard-list"></i> PENAWARAN HARGA
 					</span>
 				<% } else { %>
 					<span class="badge" style="background: var(--primary-light); color: var(--primary); font-size: 0.8rem; padding: 0.3rem 0.75rem;">
-						🧾 INVOICE
+						<i class="fa-solid fa-receipt"></i> INVOICE
 					</span>
 				<% } %>
 			</div>
@@ -22,7 +22,7 @@
 		<div class="action-buttons">
 			<% if (isQuotation) { %>
 				<button class="btn btn-convert" onclick="convertToInvoice()" style="background: #0356fc; color: white;">
-					🔄 Konversi ke Invoice
+					<i class="fa-solid fa-arrow-right-arrow-left"></i> Konversi ke Invoice
 				</button>
 			<% } %>
 			<button class="btn btn-warning" onclick="openEditM()">

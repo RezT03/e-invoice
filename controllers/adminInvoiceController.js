@@ -548,7 +548,7 @@ exports.downloadPDF = async (req, res) => {
 				 VALUES (?, ?, ?, NOW())`,
 				[uuid, shareToken, expiresAt],
 			)
-			console.log(`✅ Auto-generated share_token for invoice ${uuid}`)
+			console.log(`[OK] Auto-generated share_token for invoice ${uuid}`)
 		}
 
 		const [rows] = await db.execute(

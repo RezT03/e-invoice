@@ -4,6 +4,13 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Error - E-Invoice Restu Production</title>
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css"
+			integrity="sha512-QeR2VH+lsBE5LSAe1Q5EnTBbe7XTBubt8dG93Y7gidSgdMCr8nVqKcfKAMyN96SV8KDbZVTDXChatu5G2KQGzg=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		/>
 		<link rel="stylesheet" href="/css/style.css" />
 		<style>
 			body {
@@ -57,10 +64,10 @@
 	</head>
 	<body>
 		<div class="error-container">
-			<div class="error-icon">⚠️</div>
+			<div class="error-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
 			<h1>Oops!</h1>
 			<p><%= message || 'Halaman tidak ditemukan' %></p>
-			<a href="/">← Kembali ke Halaman Utama</a>
+			<a href="/"><i class="fa-solid fa-arrow-left"></i> Kembali ke Halaman Utama</a>
 		</div>
 	</body>
 </html>

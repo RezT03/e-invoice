@@ -198,7 +198,7 @@ function renderEditItems() {
 						placeholder="Nama Group (mis: I. Musik)"
 						oninput="editItems[${index}].group_name = this.value"
 						style="flex: 1; padding: 4px 8px; border: 1px solid #93b4fd; border-radius: 4px; font-weight: 600;" />
-					<button type="button" class="btn btn-sm" onclick="copyEditGroup(${index})" style="padding: 4px 8px; font-size: 0.78rem; background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe;">📋 Copy</button>
+					<button type="button" class="btn btn-sm" onclick="copyEditGroup(${index})" style="padding: 4px 8px; font-size: 0.78rem; background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe;"><i class="fa-solid fa-copy"></i> Copy</button>
 					<button type="button" class="remove-btn" onclick="removeEditItem(${index})" title="Hapus Group" style="padding: 4px 8px; font-size: 0.78rem;">Hapus Group</button>
 				</div>
 				<div class="sub-items-container" style="padding-left: 8px; border-left: 2px solid #0356fc;">

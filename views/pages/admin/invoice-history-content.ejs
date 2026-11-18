@@ -4,11 +4,11 @@
 		<div>
 			<h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem;">
 				<% if (typeof document_type !== 'undefined' && document_type === 'quotation') { %>
-					📋 Daftar Penawaran Harga
+					<i class="fa-solid fa-clipboard-list"></i> Daftar Penawaran Harga
 				<% } else if (typeof document_type !== 'undefined' && document_type === 'invoice') { %>
-					🧾 Daftar Invoice
+					<i class="fa-solid fa-receipt"></i> Daftar Invoice
 				<% } else { %>
-					📁 Riwayat Dokumen
+					<i class="fa-solid fa-folder-open"></i> Riwayat Dokumen
 				<% } %>
 			</h2>
 			<p style="color: var(--text-muted); font-size: 0.85rem;">
@@ -36,8 +36,8 @@
 			<label for="docTypeFilter">Tipe Dokumen</label>
 			<select id="docTypeFilter">
 				<option value="">Semua Dokumen</option>
-				<option value="invoice">🧾 Invoice</option>
-				<option value="quotation">📋 Penawaran Harga</option>
+				<option value="invoice">Invoice</option>
+				<option value="quotation">Penawaran Harga</option>
 			</select>
 		</div>
 		<div class="filter-group">
@@ -93,11 +93,11 @@
 					<td>
 						<% if (isQuotation) { %>
 							<span class="badge" style="background: #fff4e5; color: #d97706; font-size: 0.72rem;">
-								📋 Penawaran
+								<i class="fa-solid fa-file-import"></i> Penawaran
 							</span>
 						<% } else { %>
 							<span class="badge" style="background: var(--primary-light); color: var(--primary); font-size: 0.72rem;">
-								🧾 Invoice
+								<i class="fa-regular fa-file-invoice"></i> Invoice
 							</span>
 						<% } %>
 					</td>
@@ -169,7 +169,7 @@
 		<% } %> 
 		<% } else { %>
 		<div class="empty-state">
-			<div style="font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.4;">📄</div>
+			<div style="font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.4;"><i class="fa-regular fa-file"></i></div>
 			<p>Tidak ada dokumen yang sesuai dengan filter</p>
 			<a href="/admin/invoice/create" class="btn btn-primary" style="display: inline-flex; margin-top: 0.5rem;">
 				+ Buat Dokumen Baru
