@@ -4,6 +4,11 @@ const _totalAmount = Number(invoice.total_amount) || 0;
 const _totalPaid = (typeof totalPaid !== 'undefined' ? Number(totalPaid) : 0) || 0;
 const _remaining = (typeof remaining !== 'undefined') ? Number(remaining) : (_totalAmount - _totalPaid);
 const _payments = (typeof payments !== 'undefined' && payments) ? payments : [];
+const _progressPercent = invoice.status === 'paid'
+    ? 100
+    : (_totalAmount > 0
+        ? Math.min(100, Math.max(0, Math.round((_totalPaid / _totalAmount) * 100)))
+        : 0);
 const _payUrl = '/admin/payments/create?invoice_id=' + encodeURIComponent(invoice.id) + '&redirect_to=' + encodeURIComponent('/admin/invoice/' + invoice.id);
 %>
 <div class="detail-container-main">
@@ -322,7 +327,7 @@ const _payUrl = '/admin/payments/create?invoice_id=' + encodeURIComponent(invoic
 					<div class="payment-progress-bar">
 						<div
 							class="payment-progress-fill"
-							style="width: <%= Math.min(100, Math.max(0, Math.round((_totalPaid / _totalAmount) * 100))) %>%;"
+							style="width: <%= _progressPercent %>%;"
 						></div>
 					</div>
 					<% } %>

@@ -32,6 +32,59 @@ async function getInvoicePayments(invoiceId) {
 	return { payments: list, totalPaid }
 }
 
+// Tandai invoice otomatis LUNAS saat akumulasi termin mencapai 100%.
+// Dipanggil setelah pembayaran dibuat/diubah/dihapus. Invoice yang dibatalkan
+// tidak diubah, dan paid_date yang sudah ada tidak ditimpa.
+async function syncInvoicePaymentStatus(invoiceId, paymentDate) {
+	if (!invoiceId) return { changed: false }
+
+	try {
+		const [invoiceRows] = await db.execute(
+			`SELECT id, total_amount, status, paid_date, document_type
+			 FROM invoices WHERE id = ?`,
+			[invoiceId],
+		)
+		const invoice = invoiceRows[0]
+		if (
+			!invoice ||
+			invoice.document_type !== "invoice" ||
+			invoice.status === "cancelled"
+		) {
+			return { changed: false }
+		}
+
+		const totalCent = Math.round((Number(invoice.total_amount) || 0) * 100)
+		if (totalCent <= 0) return { changed: false }
+
+		const [sumRows] = await db.execute(
+			"SELECT COALESCE(SUM(amount), 0) AS paid FROM payments WHERE invoice_id = ?",
+			[invoiceId],
+		)
+		const paidCent = Math.round((Number(sumRows[0].paid) || 0) * 100)
+		if (paidCent < totalCent) return { changed: false }
+
+		const date = paymentDate || null
+		if (invoice.status !== "paid") {
+			await db.execute(
+				"UPDATE invoices SET status = 'paid', paid_date = COALESCE(?, CURDATE()) WHERE id = ?",
+				[date, invoiceId],
+			)
+			return { changed: true }
+		}
+
+		if (!invoice.paid_date) {
+			await db.execute(
+				"UPDATE invoices SET paid_date = COALESCE(?, CURDATE()) WHERE id = ?",
+				[date, invoiceId],
+			)
+		}
+		return { changed: false }
+	} catch (error) {
+		console.error("Sync invoice payment status error:", error)
+		return { changed: false, error: error.message }
+	}
+}
+
 // Tujuan redirect setelah simpan: hormati redirect_to bila berupa path internal
 // (mis. kembali ke halaman detail invoice). Cegah open redirect.
 function resolveRedirect(req, fallback) {
@@ -104,19 +157,23 @@ async function getActiveCustomers() {
 async function getInvoiceOptions() {
 	const [rows] = await db.query(
 		`SELECT i.id, i.invoice_number, i.recipient_name, i.total_amount, i.customer_id,
-            i.document_type, COALESCE(SUM(p.amount), 0) AS paid
+            i.document_type, i.status, COALESCE(SUM(p.amount), 0) AS paid
      FROM invoices i
      LEFT JOIN payments p ON p.invoice_id COLLATE ${JOIN_COLLATE} = i.id
      GROUP BY i.id
      ORDER BY i.invoice_date DESC, i.created_at DESC
      LIMIT 200`,
 	)
-	return rows.map((r) => ({
-		...r,
-		total_amount: Number(r.total_amount) || 0,
-		paid: Number(r.paid) || 0,
-		remaining: (Number(r.total_amount) || 0) - (Number(r.paid) || 0),
-	}))
+	return rows.map((r) => {
+		const total = Number(r.total_amount) || 0
+		const paid = Number(r.paid) || 0
+		return {
+			...r,
+			total_amount: total,
+			paid,
+			remaining: r.status === "paid" ? 0 : Math.max(0, total - paid),
+		}
+	})
 }
 
 // LIST PEMBAYARAN
@@ -259,6 +316,8 @@ exports.createPayment = async (req, res) => {
 			],
 		)
 
+		await syncInvoicePaymentStatus(invoice_id, payment_date)
+
 		res.redirect(
 			appendMessage(
 				resolveRedirect(req, "/admin/payments"),
@@ -370,6 +429,8 @@ exports.updatePayment = async (req, res) => {
 			],
 		)
 
+		await syncInvoicePaymentStatus(invoice_id, payment_date)
+
 		res.redirect(
 			"/admin/payments?success=" + encodeURIComponent("Pembayaran berhasil diperbarui"),
 		)
@@ -386,11 +447,12 @@ exports.deletePayment = async (req, res) => {
 	try {
 		const { id } = req.params
 		const [rows] = await db.execute(
-			"SELECT proof_path FROM payments WHERE id = ?",
+			"SELECT proof_path, invoice_id FROM payments WHERE id = ?",
 			[id],
 		)
 		if (rows.length && rows[0].proof_path) removeProofFile(rows[0].proof_path)
 		await db.execute("DELETE FROM payments WHERE id = ?", [id])
+		await syncInvoicePaymentStatus(rows[0] && rows[0].invoice_id)
 		res.redirect(
 			"/admin/payments?success=" + encodeURIComponent("Pembayaran berhasil dihapus"),
 		)
@@ -438,3 +500,4 @@ exports.serveProof = async (req, res) => {
 
 // Ekspor helper untuk dipakai controller lain (mis. halaman detail invoice)
 exports.getInvoicePayments = getInvoicePayments
+exports.syncInvoicePaymentStatus = syncInvoicePaymentStatus

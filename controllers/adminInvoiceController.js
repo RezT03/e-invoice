@@ -343,7 +343,10 @@ exports.viewInvoiceAdmin = async (req, res) => {
 			console.error("Gagal memuat pembayaran invoice:", err.message)
 		}
 		const totalAmount = Number(invoice.total_amount) || 0
-		const remaining = totalAmount - totalPaid
+		// Status lunas adalah keputusan final: sisa tagihan selalu 0 meskipun
+		// pembayaran tercatat kurang (misal invoice dilunasi manual).
+		const remaining =
+			invoice.status === "paid" ? 0 : Math.max(0, totalAmount - totalPaid)
 
 		res.render("pages/admin/invoice-detail", {
 			invoice,
