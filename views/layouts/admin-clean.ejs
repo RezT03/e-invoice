@@ -12,10 +12,10 @@
 			crossorigin="anonymous"
 			referrerpolicy="no-referrer"
 		/>
-		<link rel="stylesheet" href="/css/admin-style.css" />
-		<link rel="stylesheet" href="/css/admin-layout.css" />
+		<link rel="stylesheet" href="/css/admin-style.css?v=<%= assetVersion %>" />
+		<link rel="stylesheet" href="/css/admin-layout.css?v=<%= assetVersion %>" />
 		<% if (additionalStyles) { %> <% additionalStyles.forEach(style => { %>
-		<link rel="stylesheet" href="/css/<%= style %>.css" />
+		<link rel="stylesheet" href="/css/<%= style %>.css?v=<%= assetVersion %>" />
 		<% }); %> <% } %>
 	</head>
 	<body>
@@ -39,9 +39,9 @@
 		</div>
 
 		<!-- Scripts -->
-		<script src="/js/admin-sidebar.js"></script>
+		<script src="/js/admin-sidebar.js?v=<%= assetVersion %>"></script>
 		<% if (additionalScripts) { %> <% additionalScripts.forEach(script => { %>
-		<script src="/js/<%= script %>.js"></script>
+		<script src="/js/<%= script %>.js?v=<%= assetVersion %>"></script>
 		<% }); %> <% } %>
 	</body>
 </html>
