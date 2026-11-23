@@ -182,9 +182,9 @@ function renderEditItems() {
 						<input type="text" placeholder="Satuan" value="${escapeHtmlAttr(sub.unit || "")}" 
 							onchange="updateEditSubItem(${index}, ${subIdx}, 'unit', this.value)" />
 						<input type="number" placeholder="Qty" value="${sub.quantity || 0}" step="0.01" min="0"
-							oninput="updateEditSubItem(${index}, ${subIdx}, 'quantity', parseFloat(this.value) || 0)" required />
+							oninput="updateEditSubItem(${index}, ${subIdx}, 'quantity', parseFloat(this.value) || 0, this)" required />
 						<input type="number" placeholder="Harga" value="${sub.price || 0}" step="0.01" min="0"
-							oninput="updateEditSubItem(${index}, ${subIdx}, 'price', parseFloat(this.value) || 0)" required />
+							oninput="updateEditSubItem(${index}, ${subIdx}, 'price', parseFloat(this.value) || 0, this)" required />
 						<input type="text" readonly value="Rp ${lineTot.toLocaleString('id-ID')}" style="background:#f4f6fb;" />
 						<button type="button" class="remove-btn" onclick="removeEditSubItem(${index}, ${subIdx})" title="Hapus item">×</button>
 					</div>
@@ -218,9 +218,9 @@ function renderEditItems() {
 				<input type="text" placeholder="Satuan" value="${escapeHtmlAttr(item.unit || "")}" 
 					onchange="updateEditItem(${index}, 'unit', this.value)" />
 				<input type="number" placeholder="Qty" value="${item.quantity || 0}" step="0.01" min="0"
-					oninput="updateEditItem(${index}, 'quantity', parseFloat(this.value) || 0)" required />
+					oninput="updateEditItem(${index}, 'quantity', parseFloat(this.value) || 0, this)" required />
 				<input type="number" placeholder="Harga" value="${item.price || 0}" step="0.01" min="0"
-					oninput="updateEditItem(${index}, 'price', parseFloat(this.value) || 0)" required />
+					oninput="updateEditItem(${index}, 'price', parseFloat(this.value) || 0, this)" required />
 				<input type="text" readonly value="Rp ${lineTot.toLocaleString('id-ID')}" style="background:#f4f6fb;" />
 				<button type="button" class="remove-btn" onclick="removeEditItem(${index})">×</button>
 			`
@@ -231,6 +231,20 @@ function renderEditItems() {
 
 function escapeHtmlAttr(str) {
 	return String(str || "").replace(/"/g, "&quot;")
+}
+
+// Perbarui kolom total per baris tanpa mengganti DOM, agar input tetap fokus.
+function updateEditLineTotal(inputEl, quantity, price) {
+	if (!inputEl) return
+	const row = inputEl.closest && inputEl.closest(".item-row")
+	if (!row) return
+	const totalEl = row.querySelector('input[readonly], .item-total')
+	if (!totalEl) return
+
+	const total = Math.round((Number(quantity) || 0) * (Number(price) || 0))
+	const text = `Rp ${total.toLocaleString("id-ID")}`
+	if (totalEl.tagName === "INPUT") totalEl.value = text
+	else totalEl.textContent = text
 }
 
 function addEditGroup() {
@@ -263,11 +277,15 @@ function addEditSubItem(groupIndex) {
 	calculateEditTotal()
 }
 
-function updateEditSubItem(groupIndex, subIndex, field, value) {
-	if (editItems[groupIndex] && editItems[groupIndex].items[subIndex]) {
-		editItems[groupIndex].items[subIndex][field] = value
-		calculateEditTotal()
-	}
+function updateEditSubItem(groupIndex, subIndex, field, value, inputEl) {
+	const sub = editItems[groupIndex] && editItems[groupIndex].items
+		? editItems[groupIndex].items[subIndex]
+		: null
+	if (!sub) return
+
+	sub[field] = value
+	updateEditLineTotal(inputEl, sub.quantity, sub.price)
+	calculateEditTotal()
 }
 
 function removeEditSubItem(groupIndex, subIndex) {
@@ -284,9 +302,12 @@ function addEditItem() {
 	calculateEditTotal()
 }
 
-function updateEditItem(index, field, value) {
-	editItems[index][field] = value
-	renderEditItems()
+function updateEditItem(index, field, value, inputEl) {
+	const item = editItems[index]
+	if (!item) return
+
+	item[field] = value
+	updateEditLineTotal(inputEl, item.quantity, item.price)
 	calculateEditTotal()
 }
 

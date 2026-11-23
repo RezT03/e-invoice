@@ -10,7 +10,7 @@ const app = express()
 
 // Cache-buster aset statis. Naikkan ASSET_VERSION di .env setiap kali deploy
 // agar Cloudflare/browser tidak menyajikan CSS/JS lama.
-app.locals.assetVersion = process.env.ASSET_VERSION || "20261123"
+app.locals.assetVersion = process.env.ASSET_VERSION || "20261124"
 const userInvoiceRoutes = require("./routes/userInvoice")
 const adminInvoiceRoutes = require("./routes/adminInvoice")
 const bookingRoutes = require("./routes/booking")
