@@ -246,24 +246,43 @@ const _payUrl = '/admin/payments/create?invoice_id=' + encodeURIComponent(invoic
 				<% } %>
 			</div>
 
-			<!-- Info Pembayaran (Hanya untuk Invoice, TIDAK untuk Penawaran) -->
-			<% if (!isQuotation && invoice.bank_name) { %>
+			<!-- Info Pembayaran: semua rekening dalam 1 nama company -->
+			<% if (!isQuotation) { %>
 			<div class="detail-card">
 				<h3>Informasi Pembayaran (Transfer Bank)</h3>
 				<div class="detail-row">
-					<div class="detail-label">Bank:</div>
-					<div class="detail-value" style="font-weight: 600;"><%= invoice.bank_name %></div>
+					<div class="detail-label">Perusahaan:</div>
+					<div class="detail-value" style="font-weight: 600;"><%= invoice.company_name %></div>
 				</div>
-				<div class="detail-row">
-					<div class="detail-label">No. Rekening:</div>
-					<div class="detail-value" style="font-weight: 700; color: var(--primary); font-size: 1.05rem;">
-						<%= invoice.bank_account_number %>
+				<% if (bankAccounts && bankAccounts.length) { %>
+					<% bankAccounts.forEach((account, index) => { %>
+					<div style="border-top: 1px solid #eef0f3; padding-top: 0.6rem; margin-top: 0.6rem;">
+						<div class="detail-row">
+							<div class="detail-label">Bank <%= index + 1 %>:</div>
+							<div class="detail-value">
+								<%= account.bank_name %>
+								<% if (account.is_default) { %>
+								<span class="badge" style="background: var(--primary-light); color: var(--primary); font-size: 0.65rem; margin-left: 0.35rem;">Utama</span>
+								<% } %>
+							</div>
+						</div>
+						<div class="detail-row">
+							<div class="detail-label">No. Rekening:</div>
+							<div class="detail-value" style="font-weight: 700; color: var(--primary); font-size: 1.05rem;">
+								<%= account.account_number %>
+							</div>
+						</div>
+						<div class="detail-row">
+							<div class="detail-label">Atas Nama:</div>
+							<div class="detail-value"><%= account.account_name %></div>
+						</div>
 					</div>
-				</div>
-				<div class="detail-row">
-					<div class="detail-label">Atas Nama:</div>
-					<div class="detail-value"><%= invoice.bank_account_name %></div>
-				</div>
+					<% }) %>
+				<% } else { %>
+				<p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">
+					Belum ada rekening terdaftar. Tambahkan di panel "Rekening & Opsi PDF".
+				</p>
+				<% } %>
 			</div>
 			<% } %>
 		</div>
@@ -406,7 +425,85 @@ const _payUrl = '/admin/payments/create?invoice_id=' + encodeURIComponent(invoic
 						Buat Share Link
 					</button>
 				</div>
+				<% if (!isQuotation) { %>
+				<div style="border-top: 1px solid #eef0f3; margin-top: 0.75rem; padding-top: 0.75rem;">
+					<div style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 0.35rem;">
+						Rekening <%= invoice.company_name %>
+					</div>
+					<% if (bankAccounts && bankAccounts.length) { %>
+						<% bankAccounts.forEach((account) => { %>
+						<div style="font-size: 0.82rem; line-height: 1.5;">
+							<strong><%= account.bank_name %></strong> &middot; <%= account.account_number %> &middot; <%= account.account_name %>
+						</div>
+						<% }) %>
+					<% } else { %>
+					<div style="font-size: 0.82rem; color: var(--text-muted);">Belum ada rekening.</div>
+					<% } %>
+				</div>
+				<% } %>
 			</div>
+
+			<% if (!isQuotation) { %>
+			<div class="detail-card" id="pdfOptionsCard">
+				<h3>Rekening & Opsi PDF Normal</h3>
+				<p style="color: var(--text-muted); font-size: 0.8rem; margin: 0.25rem 0 0.75rem;">
+					Pengaturan ini hanya memengaruhi PDF Standar (Normal). Format Dot Matrix tetap seperti semula.
+				</p>
+
+				<div style="border-top: 1px solid #eef0f3; padding-top: 0.75rem;">
+					<div class="detail-row">
+						<div class="detail-label" style="flex: 1;">Tampilkan rekening di PDF</div>
+						<input type="checkbox" id="pdfShowBank" <%= Number(invoice.pdf_show_bank) === 1 ? 'checked' : '' %> />
+					</div>
+					<div id="pdfAccountOptions" style="padding: 0.25rem 0 0.5rem;">
+						<% bankAccounts.forEach((account) => { %>
+						<label style="display: flex; gap: 0.5rem; align-items: flex-start; margin: 0.4rem 0; font-size: 0.85rem;">
+							<input
+								type="checkbox"
+								class="pdf-account-checkbox"
+								value="<%= account.id %>"
+								<%= selectedAccountIds.includes(Number(account.id)) ? 'checked' : '' %>
+							/>
+							<span>
+								<strong><%= account.bank_name %></strong><br />
+								<span style="color: var(--text-muted);"><%= account.account_number %> &middot; <%= account.account_name %></span>
+							</span>
+						</label>
+						<% }) %>
+					</div>
+					<div class="detail-row">
+						<div class="detail-label" style="flex: 1;">Tampilkan keterangan LUNAS</div>
+						<input type="checkbox" id="pdfShowPaidNotice" <%= Number(invoice.pdf_show_paid_notice) === 1 ? 'checked' : '' %> />
+					</div>
+					<div style="display: flex; align-items: center; gap: 0.6rem; margin-top: 0.75rem;">
+						<button type="button" class="btn btn-small" id="savePdfOptions">Simpan Opsi PDF</button>
+						<span id="pdfOptionsStatus" style="font-size: 0.8rem; color: var(--text-muted);"></span>
+					</div>
+				</div>
+
+				<div style="border-top: 1px solid #eef0f3; margin-top: 1rem; padding-top: 0.85rem;">
+					<h4 style="font-size: 0.9rem; margin: 0 0 0.5rem;">Kelola Rekening Perusahaan</h4>
+					<p style="color: var(--text-muted); font-size: 0.78rem; margin: 0 0 0.6rem;">
+						Berlaku untuk semua invoice dari <strong><%= invoice.company_name %></strong>.
+					</p>
+					<div id="bankAccountList" style="margin-bottom: 0.75rem;"></div>
+					<form id="bankAccountForm" style="display: grid; gap: 0.5rem;">
+						<input type="hidden" id="bankAccountId" />
+						<input type="text" id="bankName" placeholder="Nama bank" maxlength="100" />
+						<input type="text" id="bankAccountNumber" placeholder="Nomor rekening" maxlength="50" />
+						<input type="text" id="bankAccountName" placeholder="Atas nama" maxlength="255" />
+						<label style="font-size: 0.82rem; display: flex; gap: 0.4rem; align-items: center;">
+							<input type="checkbox" id="bankAccountDefault" /> Jadikan rekening utama
+						</label>
+						<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+							<button type="submit" class="btn btn-small" id="saveBankAccount">Tambah Rekening</button>
+							<button type="button" class="btn btn-small secondary" id="cancelBankAccountEdit" style="display: none;">Batal</button>
+						</div>
+					</form>
+					<div id="bankAccountStatus" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;"></div>
+				</div>
+			</div>
+			<% } %>
 
 			<!-- Template Info -->
 			<% if (invoice.template_name) { %>
@@ -435,4 +532,5 @@ const _payUrl = '/admin/payments/create?invoice_id=' + encodeURIComponent(invoic
 <!-- Include Modal -->
 <%- include('invoice-edit-modal') %>
 
-<script src="/js/invoice-detail.js"></script>
+<script src="/js/invoice-detail.js?v=<%= assetVersion %>"></script>
+<script src="/js/invoice-pdf-settings.js?v=<%= assetVersion %>"></script>

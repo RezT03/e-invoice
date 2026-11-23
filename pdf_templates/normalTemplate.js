@@ -418,8 +418,13 @@ module.exports = async function (invoice, baseUrl) {
 
 			// ======================= FOOTER SECTION (Tanda Tangan & QR) =======================
 
-			// Always keep signature on last page
-			const signatureHeight = 120
+			// Always keep signature on last page (ruang tambahan untuk rekening)
+			const pdfOptions = invoice.pdfOptions || {}
+			const selectedAccounts = Array.isArray(pdfOptions.accounts) ? pdfOptions.accounts : []
+			const bankHeight = !isQuotation && pdfOptions.showBank && selectedAccounts.length
+				? 24 + selectedAccounts.length * 32
+				: 0
+			const signatureHeight = Math.max(120, 30 + bankHeight)
 			y = ensureSpace(signatureHeight, y)
 			y += 15
 
@@ -439,26 +444,35 @@ module.exports = async function (invoice, baseUrl) {
 			doc.fontSize(9).font("Helvetica-Bold").fillColor(COLOR_TEXT)
 				.text(invoice.company_name, MARGIN, y + 92)
 
-			// Paid stamp
-			if (invoice.paid_date) {
+			// Paid stamp — hanya tampil jika diaktifkan pada opsi PDF normal
+			if (pdfOptions.showPaidNotice && (invoice.paid_date || invoice.status === "paid")) {
 				const stampX = MARGIN + CONTENT_WIDTH / 2 - 40
 				doc.fontSize(16).font("Helvetica-Bold").fillColor("#22c55e")
 					.text("LUNAS", stampX, y + 20)
-				doc.fontSize(8).font("Helvetica-Oblique").fillColor(COLOR_MUTED)
-					.text(formatTanggal(invoice.paid_date), stampX, y + 38)
+				if (invoice.paid_date) {
+					doc.fontSize(8).font("Helvetica-Oblique").fillColor(COLOR_MUTED)
+						.text(formatTanggal(invoice.paid_date), stampX, y + 38)
+				}
 			}
 
-			// Bank info (right side of footer, only for invoice)
-			if (!isQuotation && invoice.bank_name) {
+			// Bank info — hanya rekening yang dicentang pada opsi PDF normal
+			if (!isQuotation && pdfOptions.showBank && selectedAccounts.length) {
 				const bankX = MARGIN + CONTENT_WIDTH / 2 + 20
-				doc.fontSize(8).font("Helvetica-Bold").fillColor(COLOR_TEXT).text("Informasi Pembayaran:", bankX, y)
+				doc.fontSize(8).font("Helvetica-Bold").fillColor(COLOR_TEXT)
+					.text("Informasi Pembayaran:", bankX, y)
 				y += 12
+				doc.text(invoice.company_name || "", bankX, y)
+				y += 12
+
 				doc.font("Helvetica").fillColor(COLOR_MUTED)
-				doc.text(`Bank: ${invoice.bank_name}`, bankX, y)
-				y += 11
-				doc.text(`No. Rek: ${invoice.bank_account_number}`, bankX, y)
-				y += 11
-				doc.text(`A/N: ${invoice.bank_account_name}`, bankX, y)
+				selectedAccounts.forEach((account) => {
+					doc.text(`Bank: ${account.bank_name || "-"}`, bankX, y)
+					y += 10
+					doc.text(`No. Rek: ${account.account_number || "-"}`, bankX, y)
+					y += 10
+					doc.text(`A/N: ${account.account_name || "-"}`, bankX, y)
+					y += 12
+				})
 			}
 
 			// Gambar header/footer di semua halaman setelah konten selesai

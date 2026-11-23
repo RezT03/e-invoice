@@ -5,6 +5,10 @@ const {
 	getDocumentFilename,
 	buildContentDisposition,
 } = require("../utils/documentFilename")
+const {
+	getAccountsByCompany,
+	attachPdfOptions,
+} = require("../utils/companyBankAccounts")
 
 // HALAMAN CEK INVOICE (user check invoice form)
 exports.showCheckInvoice = (req, res) => {
@@ -67,6 +71,7 @@ exports.checkInvoice = async (req, res) => {
 			isAdmin: false,
 			verified: true,
 			shareToken: null,
+			bankAccounts: await getAccountsByCompany(invoice.company_id),
 		})
 	} catch (error) {
 		console.error("Check invoice error:", error)
@@ -133,6 +138,7 @@ exports.viewSharedInvoice = async (req, res) => {
 			isAdmin: false,
 			verified: true,
 			shareToken,
+			bankAccounts: await getAccountsByCompany(invoice.company_id),
 		})
 	} catch (error) {
 		console.error("View shared invoice error:", error)
@@ -181,6 +187,7 @@ exports.downloadPDF = async (req, res) => {
 			invoice.taxes = []
 		}
 
+		await attachPdfOptions(invoice)
 		const pdfBuffer = await generatePDF(invoice, templateType, getBaseUrl(req))
 		res.setHeader("Content-Type", "application/pdf")
 		res.setHeader(
@@ -242,6 +249,7 @@ exports.downloadPDFFromCheck = async (req, res) => {
 			invoice.taxes = []
 		}
 
+		await attachPdfOptions(invoice)
 		const pdfBuffer = await generatePDF(invoice, templateType, getBaseUrl(req))
 		res.setHeader("Content-Type", "application/pdf")
 		res.setHeader(

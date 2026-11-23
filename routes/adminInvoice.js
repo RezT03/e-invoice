@@ -23,6 +23,14 @@ router.post("/:uuid/status", adminInvoiceController.updateStatus)
 router.post("/:uuid/generate-share", adminInvoiceController.generateShareLink)
 router.delete("/:uuid/delete", adminInvoiceController.deleteInvoice)
 router.post("/:uuid/convert-to-invoice", adminInvoiceController.convertToInvoice)
+
+// Rekening perusahaan multi + opsi PDF normal
+router.get("/:uuid/bank-accounts", adminInvoiceController.getBankAccounts)
+router.post("/:uuid/bank-accounts", adminInvoiceController.createBankAccount)
+router.put("/:uuid/bank-accounts/:accountId", adminInvoiceController.updateBankAccount)
+router.delete("/:uuid/bank-accounts/:accountId", adminInvoiceController.deleteBankAccount)
+router.post("/:uuid/pdf-options", adminInvoiceController.savePdfOptions)
+
 router.get("/:uuid", adminInvoiceController.viewInvoiceAdmin) // HARUS PALING BAWAH
 
 module.exports = router

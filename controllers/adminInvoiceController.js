@@ -8,6 +8,12 @@ const {
 	getDocumentFilename,
 	buildContentDisposition,
 } = require("../utils/documentFilename")
+const {
+	getAccountsByCompany,
+	getAccountsByIds,
+	parseSelectedIds,
+	attachPdfOptions,
+} = require("../utils/companyBankAccounts")
 
 // Token 16 hex karakter. Loop kecil ini hanya pengaman terhadap UNIQUE constraint.
 async function generateUniqueShareToken() {
@@ -20,6 +26,30 @@ async function generateUniqueShareToken() {
 		if (rows.length === 0) return token
 	}
 	throw new Error("Gagal membuat share token yang unik")
+}
+
+async function getInvoiceWithCompany(uuid) {
+	const [rows] = await db.execute(
+		`SELECT i.id, i.company_id, c.name AS company_name
+		 FROM invoices i JOIN companies c ON i.company_id = c.id
+		 WHERE i.id = ?`,
+		[uuid],
+	)
+	return rows[0] || null
+}
+
+function normalizeAccountBody(body) {
+	return {
+		bank_name: String(body.bank_name || "").trim().slice(0, 100),
+		account_number: String(body.account_number || "").trim().slice(0, 50),
+		account_name: String(body.account_name || "").trim().slice(0, 255),
+		is_default:
+			body.is_default === true ||
+			body.is_default === "true" ||
+			Number(body.is_default) === 1
+				? 1
+				: 0,
+	}
 }
 
 // Helper: hitung subtotal dari flat array maupun grouped array (backward compatible)
@@ -321,6 +351,11 @@ exports.viewInvoiceAdmin = async (req, res) => {
 			payments,
 			totalPaid,
 			remaining,
+			bankAccounts: await getAccountsByCompany(invoice.company_id),
+			selectedAccountIds:
+				Number(invoice.pdf_show_bank) === 1
+					? parseSelectedIds(invoice.pdf_bank_account_ids)
+					: [],
 		})
 	} catch (error) {
 		console.error("View invoice error:", error)
@@ -671,6 +706,7 @@ exports.downloadPDF = async (req, res) => {
 			invoice.taxes = []
 		}
 
+		await attachPdfOptions(invoice)
 		const pdfBuffer = await generatePDF(invoice, type || "normal", getBaseUrl(req))
 		res.setHeader("Content-Type", "application/pdf")
 		res.setHeader(
@@ -697,6 +733,167 @@ exports.convertToInvoice = async (req, res) => {
 		res.json({ success: true, message: 'Penawaran berhasil dikonversi ke Invoice' })
 	} catch (error) {
 		console.error('Convert to invoice error:', error)
+		res.status(500).json({ success: false, error: error.message })
+	}
+}
+
+// REKENING PERUSAHAAN (multi rekening, dipakai bersama invoice dari company yang sama)
+exports.getBankAccounts = async (req, res) => {
+	try {
+		const invoice = await getInvoiceWithCompany(req.params.uuid)
+		if (!invoice) {
+			return res.status(404).json({ success: false, error: "Invoice tidak ditemukan" })
+		}
+		res.json({
+			success: true,
+			companyName: invoice.company_name,
+			accounts: await getAccountsByCompany(invoice.company_id),
+		})
+	} catch (error) {
+		console.error("Get bank accounts error:", error)
+		res.status(500).json({ success: false, error: error.message })
+	}
+}
+
+exports.createBankAccount = async (req, res) => {
+	try {
+		const invoice = await getInvoiceWithCompany(req.params.uuid)
+		if (!invoice) {
+			return res.status(404).json({ success: false, error: "Invoice tidak ditemukan" })
+		}
+		const account = normalizeAccountBody(req.body)
+		if (!account.bank_name || !account.account_number) {
+			return res.status(400).json({
+				success: false,
+				error: "Nama bank dan nomor rekening wajib diisi",
+			})
+		}
+
+		const [existing] = await db.execute(
+			"SELECT COUNT(*) AS n FROM company_bank_accounts WHERE company_id = ?",
+			[invoice.company_id],
+		)
+		const isDefault = account.is_default || Number(existing[0].n) === 0
+		if (isDefault) {
+			await db.execute(
+				"UPDATE company_bank_accounts SET is_default = 0 WHERE company_id = ?",
+				[invoice.company_id],
+			)
+		}
+
+		const [result] = await db.execute(
+			`INSERT INTO company_bank_accounts
+			 (company_id, bank_name, account_number, account_name, is_default)
+			 VALUES (?, ?, ?, ?, ?)`,
+			[
+				invoice.company_id,
+				account.bank_name,
+				account.account_number,
+				account.account_name,
+				isDefault ? 1 : 0,
+			],
+		)
+		res.json({ success: true, id: result.insertId, isDefault: Boolean(isDefault) })
+	} catch (error) {
+		console.error("Create bank account error:", error)
+		res.status(500).json({ success: false, error: error.message })
+	}
+}
+
+exports.updateBankAccount = async (req, res) => {
+	try {
+		const invoice = await getInvoiceWithCompany(req.params.uuid)
+		if (!invoice) {
+			return res.status(404).json({ success: false, error: "Invoice tidak ditemukan" })
+		}
+		const account = normalizeAccountBody(req.body)
+		if (!account.bank_name || !account.account_number) {
+			return res.status(400).json({
+				success: false,
+				error: "Nama bank dan nomor rekening wajib diisi",
+			})
+		}
+
+		const [owned] = await db.execute(
+			"SELECT id FROM company_bank_accounts WHERE id = ? AND company_id = ?",
+			[req.params.accountId, invoice.company_id],
+		)
+		if (!owned.length) {
+			return res.status(404).json({ success: false, error: "Rekening tidak ditemukan" })
+		}
+
+		if (account.is_default) {
+			await db.execute(
+				"UPDATE company_bank_accounts SET is_default = 0 WHERE company_id = ?",
+				[invoice.company_id],
+			)
+		}
+
+		await db.execute(
+			`UPDATE company_bank_accounts
+			 SET bank_name = ?, account_number = ?, account_name = ?, is_default = ?
+			 WHERE id = ?`,
+			[
+				account.bank_name,
+				account.account_number,
+				account.account_name,
+				account.is_default,
+				req.params.accountId,
+			],
+		)
+		res.json({ success: true })
+	} catch (error) {
+		console.error("Update bank account error:", error)
+		res.status(500).json({ success: false, error: error.message })
+	}
+}
+
+exports.deleteBankAccount = async (req, res) => {
+	try {
+		const invoice = await getInvoiceWithCompany(req.params.uuid)
+		if (!invoice) {
+			return res.status(404).json({ success: false, error: "Invoice tidak ditemukan" })
+		}
+		const [result] = await db.execute(
+			"DELETE FROM company_bank_accounts WHERE id = ? AND company_id = ?",
+			[req.params.accountId, invoice.company_id],
+		)
+		if (!result.affectedRows) {
+			return res.status(404).json({ success: false, error: "Rekening tidak ditemukan" })
+		}
+		res.json({ success: true })
+	} catch (error) {
+		console.error("Delete bank account error:", error)
+		res.status(500).json({ success: false, error: error.message })
+	}
+}
+
+// Opsi tampilan PDF NORMAL (dotmatrix sengaja tidak terpengaruh)
+exports.savePdfOptions = async (req, res) => {
+	try {
+		const invoice = await getInvoiceWithCompany(req.params.uuid)
+		if (!invoice) {
+			return res.status(404).json({ success: false, error: "Invoice tidak ditemukan" })
+		}
+
+		const isTrue = (value) =>
+			value === true || value === "true" || Number(value) === 1
+		const showBank = isTrue(req.body.show_bank)
+		const showPaidNotice = isTrue(req.body.show_paid_notice)
+		const requestedIds = parseSelectedIds(req.body.account_ids)
+		const selected = await getAccountsByIds(invoice.company_id, requestedIds)
+		const safeIds = showBank ? selected.map((account) => account.id) : []
+
+		await db.execute(
+			`UPDATE invoices
+			 SET pdf_show_bank = ?, pdf_bank_account_ids = ?, pdf_show_paid_notice = ?
+			 WHERE id = ?`,
+			[showBank ? 1 : 0, JSON.stringify(safeIds), showPaidNotice ? 1 : 0, req.params.uuid],
+		)
+
+		res.json({ success: true, selectedAccountIds: safeIds })
+	} catch (error) {
+		console.error("Save PDF options error:", error)
 		res.status(500).json({ success: false, error: error.message })
 	}
 }

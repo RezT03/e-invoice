@@ -517,13 +517,18 @@
 					</div>
 				</div>
 
-				<!-- Bank Details (Hanya untuk Invoice, TIDAK untuk Penawaran Harga) -->
-				<% if (!isQuotation && invoice.status != 'paid' && invoice.status != 'cancelled' && invoice.bank_name) { %>
+				<!-- Bank Details: semua rekening perusahaan dalam 1 nama company -->
+				<% if (!isQuotation && invoice.status != 'paid' && invoice.status != 'cancelled' && typeof bankAccounts !== 'undefined' && bankAccounts.length) { %>
 				<div class="bank-details">
 					<h4>Informasi Pembayaran</h4>
-					<p><strong>Nama Bank:</strong> <%= invoice.bank_name %></p>
-					<p><strong>Nomor Rekening:</strong> <%= invoice.bank_account_number %></p>
-					<p><strong>Atas Nama:</strong> <%= invoice.bank_account_name %></p>
+					<div style="font-weight: 600; margin-bottom: 0.5rem;"><%= invoice.company_name %></div>
+					<% bankAccounts.forEach((account, index) => { %>
+					<div style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.06);">
+						<p style="margin: 0.15rem 0;"><strong>Bank <%= index + 1 %>:</strong> <%= account.bank_name %></p>
+						<p style="margin: 0.15rem 0;"><strong>Nomor Rekening:</strong> <%= account.account_number %></p>
+						<p style="margin: 0.15rem 0;"><strong>Atas Nama:</strong> <%= account.account_name %></p>
+					</div>
+					<% }) %>
 				</div>
 				<% } %>
 			</div>

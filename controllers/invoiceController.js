@@ -6,6 +6,7 @@ const {
 	getDocumentFilename,
 	buildContentDisposition,
 } = require("../utils/documentFilename")
+const { attachPdfOptions } = require("../utils/companyBankAccounts")
 
 exports.createInvoice = async (req, res) => {
 	const id = uuidv4()
@@ -162,6 +163,7 @@ exports.downloadPDF = async (req, res) => {
 		invoice.taxes = []
 	}
 
+	await attachPdfOptions(invoice)
 	const pdfBuffer = await generatePDF(invoice, type, getBaseUrl(req))
 	res.setHeader("Content-Type", "application/pdf")
 	res.setHeader(
