@@ -77,7 +77,9 @@ exports.getDashboard = async (req, res) => {
         SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) as paid,
         SUM(CASE WHEN status = 'issued' THEN 1 ELSE 0 END) as issued,
         SUM(CASE WHEN status = 'overdue' THEN 1 ELSE 0 END) as overdue,
-        SUM(total_amount) as total_value
+        SUM(CASE WHEN COALESCE(document_type, 'invoice') = 'invoice' THEN COALESCE(total_amount, 0) ELSE 0 END) as total_value_invoice,
+        SUM(CASE WHEN document_type = 'quotation' THEN COALESCE(total_amount, 0) ELSE 0 END) as total_value_quotation,
+        SUM(COALESCE(total_amount, 0)) as total_value
       FROM invoices
     `)
 

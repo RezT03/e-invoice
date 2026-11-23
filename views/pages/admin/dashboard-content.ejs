@@ -51,14 +51,43 @@
 	</div>
 
 	<!-- Total Value Card -->
+	<%
+		const incomeValues = {
+			invoice: Math.round(Number(stats.total_value_invoice) || 0),
+			quotation: Math.round(Number(stats.total_value_quotation) || 0),
+			total: Math.round(Number(stats.total_value) || 0),
+		}
+		const formatRupiah = (value) => `Rp ${value.toLocaleString('id-ID')}`
+	%>
 	<div class="value-card" style="background: var(--primary); border-radius: var(--radius); padding: 1.5rem 1.75rem; color: white; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; box-shadow: 0 4px 20px rgba(3, 86, 252, 0.18);">
-		<div>
-			<h3 style="font-size: 0.85rem; font-weight: 500; opacity: 0.85; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.5px;">
-				Total Akumulasi Nilai
-			</h3>
-			<p class="value-amount" style="font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; margin: 0;">
-				Rp <%= Math.round(stats.total_value || 0).toLocaleString('id-ID') %>
-			</p>
+		<div class="income-carousel">
+			<div class="income-viewport" id="incomeViewport" tabindex="0" role="group" aria-label="Ringkasan nilai dokumen">
+				<div class="income-slide">
+					<h3 class="income-label"><i class="fa-regular fa-file-invoice"></i> Income Invoice</h3>
+					<p class="value-amount"><%= formatRupiah(incomeValues.invoice) %></p>
+				</div>
+				<div class="income-slide">
+					<h3 class="income-label"><i class="fa-solid fa-file-import"></i> Income Penawaran</h3>
+					<p class="value-amount"><%= formatRupiah(incomeValues.quotation) %></p>
+				</div>
+				<div class="income-slide">
+					<h3 class="income-label"><i class="fa-solid fa-sack-dollar"></i> Total</h3>
+					<p class="value-amount"><%= formatRupiah(incomeValues.total) %></p>
+				</div>
+			</div>
+			<div class="income-controls">
+				<button type="button" class="income-nav" data-income-prev aria-label="Nilai sebelumnya" title="Nilai sebelumnya">
+					<i class="fa-solid fa-chevron-up"></i>
+				</button>
+				<div class="income-dots" aria-label="Pilih ringkasan nilai">
+					<button type="button" class="income-dot is-active" data-income-index="0" aria-label="Income invoice" aria-current="true"></button>
+					<button type="button" class="income-dot" data-income-index="1" aria-label="Income penawaran"></button>
+					<button type="button" class="income-dot" data-income-index="2" aria-label="Total"></button>
+				</div>
+				<button type="button" class="income-nav" data-income-next aria-label="Nilai berikutnya" title="Nilai berikutnya">
+					<i class="fa-solid fa-chevron-down"></i>
+				</button>
+			</div>
 		</div>
 		<div>
 			<a href="/admin/invoice/create" class="btn" style="background: white; color: var(--primary); font-weight: 600; padding: 0.6rem 1.2rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
@@ -66,6 +95,7 @@
 			</a>
 		</div>
 	</div>
+	<script src="/js/dashboard-income.js"></script>
 
 	<!-- Recent Invoices Table -->
 	<div class="recent-section">

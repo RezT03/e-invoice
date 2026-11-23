@@ -92,6 +92,109 @@
 	flex-wrap: wrap;
 }
 
+.income-carousel {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	min-width: 0;
+	flex: 1 1 22rem;
+	max-width: 28rem;
+}
+
+.income-viewport {
+	--income-slide-height: 6rem;
+	flex: 1 1 auto;
+	min-width: 0;
+	height: var(--income-slide-height);
+	overflow-y: auto;
+	overflow-x: hidden;
+	scroll-snap-type: y mandatory;
+	scroll-behavior: smooth;
+	overscroll-behavior: contain;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+	outline: none;
+	border-radius: var(--radius-sm);
+}
+
+.income-viewport::-webkit-scrollbar { display: none; }
+.income-viewport:focus-visible { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.75); }
+
+.income-slide {
+	height: var(--income-slide-height);
+	scroll-snap-align: start;
+	scroll-snap-stop: always;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.income-label {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-size: 0.82rem;
+	font-weight: 600;
+	opacity: 0.85;
+	margin: 0 0 0.35rem;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.income-slide .value-amount {
+	font-size: 2rem;
+	font-weight: 800;
+	letter-spacing: -0.5px;
+	overflow-wrap: anywhere;
+}
+
+.income-controls {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.35rem;
+	flex: 0 0 auto;
+}
+
+.income-nav {
+	width: 1.9rem;
+	height: 1.9rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid rgba(255, 255, 255, 0.45);
+	background: rgba(255, 255, 255, 0.12);
+	color: white;
+	border-radius: 50%;
+	cursor: pointer;
+	font-size: 0.75rem;
+	transition: background 0.15s, opacity 0.15s;
+}
+
+.income-nav:hover:not(:disabled) { background: rgba(255, 255, 255, 0.28); }
+.income-nav:disabled { opacity: 0.35; cursor: default; }
+
+.income-dots {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.3rem;
+}
+
+.income-dot {
+	width: 0.4rem;
+	height: 0.4rem;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.45);
+	cursor: pointer;
+	transition: background 0.15s, transform 0.15s;
+}
+
+.income-dot.is-active { background: white; transform: scale(1.35); }
+.income-dot:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+
 .recent-section {
 	background: var(--white);
 	padding: 1.5rem;
@@ -239,10 +342,14 @@
 	.stat-value { font-size: 1.3rem; }
 	.value-card { flex-direction: column; align-items: flex-start; }
 	.value-amount { font-size: 1.5rem; overflow-wrap: anywhere; }
+	.income-carousel { flex-basis: 100%; max-width: 100%; }
+	.income-viewport { --income-slide-height: 6.5rem; }
+	.income-slide .value-amount { font-size: 1.5rem; }
 	.empty-state { padding: 1.5rem 1rem; }
 }
 
 @media (max-width: 480px) {
 	.stats-grid { grid-template-columns: 1fr; }
 	.value-amount { font-size: 1.3rem; }
+	.income-slide .value-amount { font-size: 1.3rem; }
 }
