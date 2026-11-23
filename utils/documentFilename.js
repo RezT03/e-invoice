@@ -1,8 +1,8 @@
 // Nama file PDF pendek dan konsisten untuk download.
 //   inv-(N)NOMOR.pdf   invoice, template normal
 //   inv-(DX)NOMOR.pdf  invoice, template dotmatrix
-//   pen-(N)NOMOR.pdf   penawaran/quotation, template normal
-//   pen-(DX)NOMOR.pdf  penawaran/quotation, template dotmatrix
+//   qt-(N)NOMOR.pdf   penawaran/quotation, template normal
+//   qt-(DX)NOMOR.pdf  penawaran/quotation, template dotmatrix
 
 const MAX_NUMBER_LENGTH = 80
 
@@ -22,7 +22,7 @@ function sanitizeNumber(value) {
 
 function getDocumentFilename(document, templateType) {
 	const isQuotation = document && document.document_type === "quotation"
-	const prefix = isQuotation ? "pen" : "inv"
+	const prefix = isQuotation ? "qt" : "inv"
 	const marker = templateType === "dotmatrix" ? "DX" : "N"
 	const number = sanitizeNumber(document && document.invoice_number)
 
