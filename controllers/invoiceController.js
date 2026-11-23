@@ -2,6 +2,10 @@ const db = require("../db/connection")
 const { v4: uuidv4 } = require("uuid")
 const generatePDF = require("../utils/pdfGenerator")
 const { getBaseUrl } = require("../utils/appUrl")
+const {
+	getDocumentFilename,
+	buildContentDisposition,
+} = require("../utils/documentFilename")
 
 exports.createInvoice = async (req, res) => {
 	const id = uuidv4()
@@ -162,7 +166,7 @@ exports.downloadPDF = async (req, res) => {
 	res.setHeader("Content-Type", "application/pdf")
 	res.setHeader(
 		"Content-Disposition",
-		`inline; filename=invoice-${invoice.invoice_number}.pdf`,
+		buildContentDisposition("inline", getDocumentFilename(invoice, type)),
 	)
 	res.send(pdfBuffer)
 }

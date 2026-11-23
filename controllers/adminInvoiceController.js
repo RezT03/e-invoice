@@ -3,7 +3,24 @@ const { v4: uuidv4 } = require("uuid")
 const generatePDF = require("../utils/pdfGenerator")
 const { getBaseUrl } = require("../utils/appUrl")
 const { getInvoicePayments } = require("./paymentController")
-const crypto = require("crypto")
+const { generateShareToken } = require("../utils/shareToken")
+const {
+	getDocumentFilename,
+	buildContentDisposition,
+} = require("../utils/documentFilename")
+
+// Token 16 hex karakter. Loop kecil ini hanya pengaman terhadap UNIQUE constraint.
+async function generateUniqueShareToken() {
+	for (let attempt = 0; attempt < 5; attempt++) {
+		const token = generateShareToken()
+		const [rows] = await db.execute(
+			"SELECT 1 FROM invoice_shares WHERE share_token = ? LIMIT 1",
+			[token],
+		)
+		if (rows.length === 0) return token
+	}
+	throw new Error("Gagal membuat share token yang unik")
+}
 
 // Helper: hitung subtotal dari flat array maupun grouped array (backward compatible)
 function calculateSubtotal(items) {
@@ -550,7 +567,7 @@ exports.deleteInvoice = async (req, res) => {
 exports.generateShareLink = async (req, res) => {
 	try {
 		const { uuid } = req.params
-		const shareToken = crypto.randomBytes(32).toString("hex")
+		const shareToken = await generateUniqueShareToken()
 
 		// Set expiry ke 30 hari dari sekarang
 		const expiresAt = new Date()
@@ -604,8 +621,7 @@ exports.downloadPDF = async (req, res) => {
 
 		if (!shareToken) {
 			// Generate share token jika tidak ada
-			const crypto = require("crypto")
-			shareToken = crypto.randomBytes(16).toString("hex")
+			shareToken = await generateUniqueShareToken()
 			const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 hari
 
 			await db.execute(
@@ -657,7 +673,10 @@ exports.downloadPDF = async (req, res) => {
 		res.setHeader("Content-Type", "application/pdf")
 		res.setHeader(
 			"Content-Disposition",
-			`attachment; filename=invoice-${invoice.invoice_number}.pdf`,
+			buildContentDisposition(
+				"attachment",
+				getDocumentFilename(invoice, type || "normal"),
+			),
 		)
 		res.send(pdfBuffer)
 	} catch (error) {
